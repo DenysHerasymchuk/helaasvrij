@@ -10,7 +10,10 @@ public enum PostingStatus
     Invalid,
 
     /// <summary>The page could not be read; the user should paste the text instead.</summary>
-    NeedsPaste
+    NeedsPaste,
+
+    /// <summary>The thing to import does not exist (an Adzuna job that left the snapshot).</summary>
+    NotFound
 }
 
 public sealed record PostingOutcome(PostingStatus Status, Posting? Posting, string? Message)
@@ -20,4 +23,6 @@ public sealed record PostingOutcome(PostingStatus Status, Posting? Posting, stri
     public static PostingOutcome Invalid(string message) => new(PostingStatus.Invalid, null, message);
 
     public static PostingOutcome NeedsPaste(string message) => new(PostingStatus.NeedsPaste, null, message);
+
+    public static PostingOutcome NotFound(string message) => new(PostingStatus.NotFound, null, message);
 }

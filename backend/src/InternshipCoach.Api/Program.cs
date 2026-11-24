@@ -25,7 +25,6 @@ builder.Services.AddCoachRateLimiting(builder.Configuration);
 builder.Services.AddChatRateLimiting(builder.Configuration);
 
 builder.Services.AddControllers();
-builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 builder.Services.AddSwaggerGen();
 

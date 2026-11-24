@@ -3,6 +3,8 @@ using InternshipCoach.Application.Documents.CreateCv;
 using InternshipCoach.Application.Documents.DeleteDocument;
 using InternshipCoach.Application.Documents.ExportDocx;
 using InternshipCoach.Application.Documents.ExtractCvText;
+using InternshipCoach.Application.Documents.Draft;
+using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Documents.GetDocument;
 using InternshipCoach.Application.Documents.ListDocuments;
 using InternshipCoach.Application.Documents.TailorCv;
@@ -114,6 +116,48 @@ public sealed class DocumentsController : ControllerBase
 
         var name = string.Concat(document.Title.Select(c => Path.GetInvalidFileNameChars().Contains(c) || c is '"' ? '_' : c));
         return File(renderer.Render(document.Content), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{name}.docx");
+    }
+
+    [HttpPost("draft")]
+    [Consumes("application/json")]
+    public async Task<IActionResult> Draft(DraftDocumentRequest request, [FromServices] DraftDocumentHandler handler, CancellationToken ct)
+    {
+        DocumentKind? kind = request.Kind switch
+        {
+            "coverLetter" => DocumentKind.CoverLetter,
+            "recruiterMessage" => DocumentKind.RecruiterMessage,
+            _ => null
+        };
+        if (kind is null)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Kind must be coverLetter or recruiterMessage.");
+        }
+
+        try
+        {
+            var document = await handler.HandleAsync(new DraftDocumentCommand(request.PostingId, kind.Value, request.Language), ct);
+            return document is null ? NotFound() : Ok(ToResponse(document, null));
+        }
+        catch (GapInputException ex)
+        {
+            return Problem(statusCode: StatusCodes.Status409Conflict, title: ex.Message);
+        }
+        catch (DraftRejectedException ex)
+        {
+            return Problem(statusCode: StatusCodes.Status422UnprocessableEntity, title: ex.Message);
+        }
+        catch (LlmDailyCapExceededException ex)
+        {
+            return Problem(statusCode: StatusCodes.Status429TooManyRequests, title: ex.Message);
+        }
+        catch (LlmUnavailableException)
+        {
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable, title: "The AI service is not available right now. Try again later.");
+        }
+        catch (LlmException)
+        {
+            return Problem(statusCode: StatusCodes.Status502BadGateway, title: "The AI service did not answer. Try again.");
+        }
     }
 
     [HttpGet]

@@ -13,8 +13,8 @@ import { ChatWidget } from "@/features/chat/chat-widget";
 
 const mainItems: NavItemType[] = [
     { label: "Dashboard", href: "/dashboard", icon: HomeLine },
-    { label: "Postings", href: "/postings", icon: Briefcase01, badge: 4 },
-    { label: "Gap plan", href: "/gaps", icon: CheckDone01, badge: 7 },
+    { label: "Postings", href: "/postings", icon: Briefcase01 },
+    { label: "Gap plan", href: "/gaps", icon: CheckDone01 },
     { label: "Documents", href: "/documents", icon: File06 },
     { label: "Interview prep", href: "/interview", icon: MessageChatCircle },
     { label: "Applications", href: "/applications", icon: Columns03 },
