@@ -175,7 +175,7 @@ public sealed class PostingsController : ControllerBase
 
     private static PostingSummaryResponse ToSummary(Posting p, BasicsView stage) =>
         new(p.Id, p.Company, p.Title, p.City, p.Language.ToCode(), p.Deadline, p.InterviewAt, p.IsDemo,
-            p.Requirements.Count, p.CreatedAt.Value, p.StageStart, p.StageEnd, Fit(p, stage));
+            p.Requirements.Count, p.CreatedAt.Value, p.StageStart, p.StageEnd, Fit(p, stage), p.IsAnalysed, p.IsAnalysed ? p.Score() : null);
 
     private static string Fit(Posting p, BasicsView stage) =>
         p.CheckStage(stage.StageStart, stage.StageEnd).ToString().ToLowerInvariant();

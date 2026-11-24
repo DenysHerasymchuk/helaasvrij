@@ -14,6 +14,8 @@ export type PostingSummary = {
     /** Internship dates from the posting (yyyy-MM-dd). */
     stageStart: string | null;
     stageEnd: string | null;
+    analysed?: boolean;
+    score?: number | null;
     /** Posting dates against the stage period on the profile. */
     stageFit: StageFit;
 };
