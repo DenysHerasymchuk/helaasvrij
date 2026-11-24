@@ -1,6 +1,8 @@
 using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Infrastructure.Auth;
 using InternshipCoach.Infrastructure.Persistence;
 using InternshipCoach.Infrastructure.Time;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,12 @@ public static class DependencyInjection
 
         services.AddDbContext<InternshipCoachDbContext>(options => options.UseNpgsql(connectionString));
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
+        services.AddScoped<IUserRepository, UserRepository>();
+
+        services.AddDataProtection()
+            .SetApplicationName("InternshipCoach")
+            .PersistKeysToDbContext<InternshipCoachDbContext>();
 
         return services;
     }
