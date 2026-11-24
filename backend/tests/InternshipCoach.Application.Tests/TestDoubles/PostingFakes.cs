@@ -3,11 +3,6 @@ using InternshipCoach.Domain.Postings;
 
 namespace InternshipCoach.Application.Tests.TestDoubles;
 
-public sealed class FakeCurrentUser(Guid userId) : ICurrentUser
-{
-    public Guid UserId { get; } = userId;
-}
-
 public sealed class FakePostingRepository : IPostingRepository
 {
     public List<Posting> Items { get; } = [];
