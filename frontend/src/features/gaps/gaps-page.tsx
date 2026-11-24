@@ -74,7 +74,7 @@ export function GapsPage() {
     const groups = useMemo(() => {
         const map = new Map<string, Gap[]>();
         for (const g of visible) {
-            const key = groupBy === "posting" ? `${g.company}: ${g.postingTitle}` : (g.project ?? "No repo");
+            const key = groupBy === "posting" ? `${g.company}: ${g.postingTitle}` : (g.project ? (g.project.startsWith("new:") ? `New project: ${g.project.slice(4)}` : g.project) : "No repo");
             map.set(key, [...(map.get(key) ?? []), g]);
         }
         return [...map.entries()];

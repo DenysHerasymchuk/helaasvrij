@@ -64,7 +64,7 @@ function QuestionCard({ postingId, question, onAnswered }: { postingId: string; 
         <li className="flex flex-col gap-4 rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary sm:p-5">
             <div className="flex flex-wrap items-center gap-2">
                 <Badge size="sm" color={sourceColor[question.source]}>{sourceLabel[question.source]}</Badge>
-                {question.project && <Badge size="sm" color="gray">{question.project}</Badge>}
+                {question.project && <Badge size="sm" color="gray">{question.project.replace(/^new:/, "")}</Badge>}
             </div>
             <p className="text-md font-semibold text-primary">{question.text}</p>
 

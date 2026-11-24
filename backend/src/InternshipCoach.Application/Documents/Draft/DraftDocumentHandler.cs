@@ -152,7 +152,7 @@ public sealed partial class DraftDocumentHandler(
         var closed = requirements.Where(r => r.Done && r.Action is not null).ToList();
         var closedText = closed.Count == 0
             ? "(none)"
-            : string.Join('\n', closed.Select(r => $"- {r.Text}: done in {r.ActionProject} ({r.Action})"));
+            : string.Join('\n', closed.Select(r => $"- {r.Text}: done in {r.ActionProject?.Replace("new:", "")} ({r.Action})"));
         var open = requirements.Where(r => !r.Done && r.Coverage != Coverage.Strong).Select(r => $"- {r.Text}");
 
         return $"{UntrustedInput.Wrap("posting", posted)}\n\n{UntrustedInput.Wrap("evidence_quotes", quotes)}\n\n" +

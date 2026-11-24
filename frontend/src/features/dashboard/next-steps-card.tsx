@@ -24,7 +24,7 @@ export function NextStepsCard({ postings }: { postings: DashboardPosting[] }) {
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                                 <p className="text-sm font-medium text-primary">{a.action}</p>
                                 <p className="text-sm text-tertiary">
-                                    In <span className="font-mono text-secondary">{a.project}</span>{a.due && `, due ${fmt(a.due)}`}
+                                    In <span className="font-mono text-secondary">{a.project?.replace(/^new:/, "")}</span>{a.due && `, due ${fmt(a.due)}`}
                                 </p>
                             </div>
                             <p className="shrink-0 text-right text-sm text-tertiary">
