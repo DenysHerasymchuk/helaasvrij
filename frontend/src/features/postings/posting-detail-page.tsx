@@ -11,6 +11,7 @@ import { GenericAnswerPanel } from "./generic-answer";
 import { NextSteps } from "./next-steps";
 import { SHORT_POSTING_CHARS, ShortTextHint } from "./short-text-hint";
 import { type PostingDetail, formatDate, formatDateTime, formatStagePeriod, toLocalInput } from "./types";
+import { pageTitleClass } from "@/core/ui";
 
 
 function safeHref(url: string | null) {
@@ -97,7 +98,7 @@ export function PostingDetailPage() {
 
     if (error) {
         return (
-            <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 md:px-8">
+            <div className="flex max-w-6xl flex-col gap-4 px-4 py-8 md:px-8">
                 {back}
                 <p role="alert" className="text-md text-error-primary">
                     {error.message}
@@ -130,12 +131,12 @@ export function PostingDetailPage() {
     const boardStatus = <BoardStatus postingId={posting.id} byPosting={board.byPosting} onAdded={board.added} />;
 
     return (
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             {back}
 
             <header className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-display-xs font-semibold text-primary">{posting.title}</h1>
+                    <h1 className={pageTitleClass}>{posting.title}</h1>
                 </div>
                 <p className="text-md text-tertiary">
                     {posting.company}

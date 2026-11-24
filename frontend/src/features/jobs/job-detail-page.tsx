@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle, LinkExternal01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { AdzunaLink, CompanyLogo, type Job, JobFacts } from "./job-meta";
+import { pageTitleClass } from "@/core/ui";
 
 const safeHref = (url: string) => (/^https?:\/\//i.test(url) ? url : null);
 
@@ -56,7 +57,7 @@ export function JobDetailPage() {
 
     if (error) {
         return (
-            <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-8 md:px-8">
+            <div className="flex max-w-4xl flex-col gap-4 px-4 py-8 md:px-8">
                 {back}
                 <p role="alert" className="text-md text-error-primary">
                     {error.message}
@@ -85,13 +86,13 @@ export function JobDetailPage() {
     const href = safeHref(job.url);
 
     return (
-        <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             {back}
 
             <header className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <CompanyLogo company={job.company} size="xl" />
                 <div className="flex min-w-0 flex-col gap-2">
-                    <h1 className="text-display-xs font-semibold text-primary">{job.title}</h1>
+                    <h1 className={pageTitleClass}>{job.title}</h1>
                     {job.company && <p className="text-lg font-medium text-secondary">{job.company}</p>}
                     <JobFacts job={job} />
                 </div>

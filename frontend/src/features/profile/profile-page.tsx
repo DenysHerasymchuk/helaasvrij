@@ -30,6 +30,7 @@ import {
     syncGitHub,
     uploadCv,
 } from "./api";
+import { PageHeader } from "@/core/ui";
 
 const message = (error: unknown) => (error instanceof ApiError ? error.message : "Something went wrong. Try again.");
 
@@ -89,11 +90,8 @@ export function ProfilePage() {
     useEffect(load, [load]);
 
     return (
-        <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div>
-                <h1 className="text-display-xs font-semibold text-primary">Profile</h1>
-                <p className="mt-1 text-md text-tertiary">Connect your sources, then confirm what we found. Drafts only use items you confirm.</p>
-            </div>
+        <div className="flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader title="Profile" description="Connect your sources, then confirm what we found. Drafts only use items you confirm." />
             <JourneyBar />
 
             {loadError ? (
@@ -101,7 +99,7 @@ export function ProfilePage() {
             ) : !sources || !profile ? (
                 <div aria-busy="true" aria-label="Loading profile" className="flex flex-col gap-6">
                     {[0, 1, 2].map((key) => (
-                        <div key={key} className="h-40 animate-pulse rounded-xl bg-secondary" />
+                        <div key={key} className="h-40 animate-pulse rounded-xl bg-tertiary" />
                     ))}
                 </div>
             ) : (
@@ -148,7 +146,7 @@ function SourcesSection({ sources, reload }: { sources: Source[]; reload: () => 
                     {sources.map((source) => (
                         <li key={source.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                             <SourceIcon kind={source.kind} />
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 basis-52">
                                 <p className="truncate text-sm font-medium text-primary">
                                     {sourceTitle[source.kind]}: {source.label}
                                 </p>

@@ -9,7 +9,7 @@ export function AuthCard({ title, subtitle, children, footer }: { title: string;
                 <div className="flex flex-col items-center gap-6 text-center">
                     <Logo className="h-9 w-auto" />
                     <div className="flex flex-col gap-2 md:gap-3">
-                        <h1 className="text-xl font-semibold text-primary md:text-display-xs">{title}</h1>
+                        <h1 className="font-display text-display-xs font-semibold tracking-tight text-primary md:text-display-sm">{title}</h1>
                         <p className="text-md text-tertiary">{subtitle}</p>
                     </div>
                 </div>

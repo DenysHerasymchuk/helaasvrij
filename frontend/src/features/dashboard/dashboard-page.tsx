@@ -9,6 +9,7 @@ import { NextStepsCard } from "./next-steps-card";
 import { HeaderLink, Panel } from "./panel";
 import { SourcesCard } from "./sources-card";
 import { type DashboardData, useDashboard } from "./use-dashboard";
+import { PageHeader } from "@/core/ui";
 
 // Step 1 with nothing yet: no synced source, no posting, no application. Show one pointer instead of empty cards.
 const nothingYet = (data: DashboardData) =>
@@ -20,9 +21,9 @@ export function DashboardPage() {
     const { data, error, reload } = useDashboard();
 
     return (
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <div className="flex flex-col gap-4">
-                <h1 className="text-display-xs font-semibold text-primary">Goeiemorgen, {firstName}</h1>
+                <PageHeader title={`Goeiemorgen, ${firstName}`} />
                 <JourneyBar />
                 <nav aria-label="Quick actions" className="flex flex-wrap gap-3">
                     <Button size="md" href="/postings" iconLeading={Plus}>
