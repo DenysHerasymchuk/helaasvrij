@@ -12,9 +12,9 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 2 | Login and register pages | Untitled UI templates, placeholders for now | done |
 | 3 | route33 LLM client | Anthropic C# SDK, custom base URL, Bearer auth. Test one call first (untested from .NET). `max_tokens` >= 4000. Retry once on empty text or invalid JSON. No forced `tool_choice` (route33 rejects it). Schema goes in the prompt. | done (real smoke test skipped until R33_API_KEY is set) |
 | 4 | Token and cost log per run | Log input/output tokens and model per LLM call, never the prompt content. EUR 50 cap, route33 prices unknown. | done (table `LlmCalls`; per-user daily cap, default 200) |
-| 5 | Start without sign-up | Enter a GitHub username and paste CV text, then get a result. No account wall before the first result. | todo |
-| 6 | GitHub ingest | REST API with a server token (unauthenticated limit is 60/h). Repos, languages, README, file tree (Dockerfile, tests, CI), commit count. | todo |
-| 7 | CV ingest | Paste text first; PDF upload (CV or LinkedIn "Save to PDF") after. | todo |
+| 5 | Start without sign-up | Enter a GitHub username and paste CV text, then get a result. No account wall before the first result. | todo (sources API exists; the no-account flow is not built here) |
+| 6 | GitHub ingest | REST API with a server token (unauthenticated limit is 60/h). Repos, languages, README, file tree (Dockerfile, tests, CI), commit count. | done (`/api/sources/github`; up to 10 non-fork repos, inline sync; needs `COACH_GitHub__Token` for the 5,000/h limit) |
+| 7 | CV ingest | Paste text first; PDF upload (CV or LinkedIn "Save to PDF") after. | done (`/api/sources/cv` PDF via PdfPig, `/api/sources/text` paste, `/api/sources/site` website with SSRF guard; no UI until the Profile page) |
 | 8 | Profile extraction | LLM turns sources into skills, projects, experience, languages. Each item stores its source (repo, file, CV line). Items without a source are dropped. | todo |
 | 9 | Verbatim-quote check | Code checks that every evidence quote is an exact substring of its source text. Drop or retry on failure. Count failures (target 0). In tests, GLM spliced quotes in 3 of 12 runs; this check caught every one. | done (`QuoteCheck`; failure counting is wired in by profile extraction) |
 | 10 | Confirm/remove profile items | Student confirms or removes each extracted item. Drafts use only confirmed items. | todo |

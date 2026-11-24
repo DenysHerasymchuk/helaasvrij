@@ -2,7 +2,10 @@ using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Infrastructure.Llm;
 using InternshipCoach.Infrastructure.Auth;
+using InternshipCoach.Application.Sources;
+using InternshipCoach.Application.Sources.GitHub;
 using InternshipCoach.Infrastructure.Persistence;
+using InternshipCoach.Infrastructure.Sources;
 using InternshipCoach.Infrastructure.Time;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +40,12 @@ public static class DependencyInjection
         services.AddSingleton(new LlmLimits(configuration.GetValue("Llm:DailyCallCap", 200)));
         services.AddSingleton<ILlmTransport>(_ => new Route33LlmTransport(route33));
         services.AddScoped<ILlmCallLog, LlmCallLog>();
+
+        services.AddScoped<ISourceRepository, SourceRepository>();
+        services.AddSingleton(configuration.GetSection(GitHubIngestOptions.SectionName).Get<GitHubIngestOptions>() ?? new GitHubIngestOptions());
+        services.AddSingleton<IGitHubClient>(provider => new GitHubClient(provider.GetRequiredService<GitHubIngestOptions>()));
+        services.AddSingleton<IPdfTextExtractor, PdfPigTextExtractor>();
+        services.AddSingleton<IWebPageFetcher, WebPageFetcher>();
 
         services.AddDataProtection()
             .SetApplicationName("InternshipCoach")
