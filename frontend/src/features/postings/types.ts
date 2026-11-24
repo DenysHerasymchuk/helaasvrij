@@ -31,7 +31,10 @@ export type PostingRequirement = {
     analysedAt: string | null;
 };
 
-export type GapAnalysis = { analysed: boolean; score: number; noClearFit: boolean; analysedAt: string | null };
+/** fromDemoCache: demo postings only, the AI call failed or was slow and the last saved analysis is shown. */
+export type GapAnalysis = { analysed: boolean; score: number; noClearFit: boolean; analysedAt: string | null; fromDemoCache?: boolean };
+
+export type GenericAnswer = { text: string; capturedAt: string; isDemo: boolean };
 
 export type PostingDetail = Omit<PostingSummary, "requirementCount"> & {
     url: string | null;

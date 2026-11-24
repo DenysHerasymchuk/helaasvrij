@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, LinkExternal01, Trash01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
+import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { ApiError, api } from "@/core/api";
 import { DateField, Field } from "./fields";
 import { GapMatrix, GapPanel } from "./gap-analysis";
+import { GenericAnswerPanel } from "./generic-answer";
 import { type PostingDetail, formatDate, formatDateTime, toLocalInput } from "./types";
 
 
@@ -23,6 +25,7 @@ export function PostingDetailPage() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [compare, setCompare] = useState(false);
 
     const load = useCallback(async () => {
         setError(null);
@@ -129,11 +132,33 @@ export function PostingDetailPage() {
                         Open original posting <LinkExternal01 className="size-4" aria-hidden="true" />
                     </a>
                 )}
+                <Checkbox
+                    className="mt-2"
+                    size="md"
+                    isSelected={compare}
+                    onChange={setCompare}
+                    label="Compare with a generic answer"
+                    hint="See what a general chatbot says about this posting next to your evidence-backed gap matrix."
+                />
             </header>
+
+            {compare && (
+                <div className="grid items-start gap-6 lg:grid-cols-2">
+                    {posting.analysis.analysed ? (
+                        <GapMatrix posting={posting} />
+                    ) : (
+                        <section className="rounded-xl bg-primary px-5 py-4 shadow-xs ring-1 ring-secondary">
+                            <h2 className="text-md font-semibold text-primary">Gap matrix</h2>
+                            <p className="mt-2 text-md text-tertiary">Analyse this posting first. Your gap matrix then appears here, next to the generic answer.</p>
+                        </section>
+                    )}
+                    <GenericAnswerPanel postingId={posting.id} />
+                </div>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="flex flex-col gap-6 lg:col-span-2">
-                    {posting.analysis.analysed && <GapMatrix posting={posting} />}
+                    {posting.analysis.analysed && !compare && <GapMatrix posting={posting} />}
 
                     <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
                         <h2 className="border-b border-secondary px-5 py-4 text-md font-semibold text-primary">Requirements</h2>
