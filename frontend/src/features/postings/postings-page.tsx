@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Plus, SearchLg } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/base/input/input";
 import { ApiError, api } from "@/core/api";
 import { BoardStatus, useBoard } from "@/features/applications/board-status";
 import { AddPostingModal } from "./add-posting-modal";
+import { PostingsTabs } from "./postings-tabs";
 import { type PostingSummary, formatDate, formatStagePeriod } from "./types";
 
 
@@ -47,12 +48,19 @@ export function PostingsPage() {
 
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
+                <p className="mt-1 text-md text-tertiary">Your saved list: track each posting and apply on your own.</p>
+            </div>
+
+            <PostingsTabs />
+
+            <div className="flex flex-col items-start gap-3 rounded-xl bg-secondary p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                 <div>
-                    <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
-                    <p className="mt-1 text-md text-tertiary">Internships you want to apply for.</p>
+                    <p className="text-md font-semibold text-primary">Found one elsewhere? Add it here.</p>
+                    <p className="text-sm text-tertiary">Paste the posting text or a link.</p>
                 </div>
-                <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
+                <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)} className="shrink-0">
                     Add posting
                 </Button>
             </div>
@@ -87,12 +95,12 @@ export function PostingsPage() {
                     <div className="flex flex-col items-start gap-3 p-6">
                         <p className="text-md font-semibold text-primary">{filtered ? "No postings match." : "No postings yet."}</p>
                         <p className="text-md text-tertiary">
-                            {filtered ? "Try another search or show postings outside your stage period." : "Paste a posting or add a link to see what it asks for."}
+                            {filtered ? "Try another search or show postings outside your stage period." : "Save a posting from Find internships or add your own."}
                         </p>
                         {!filtered && (
-                            <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
-                                Add posting
-                            </Button>
+                            <Link to="/postings" className="text-md font-semibold text-brand-secondary outline-focus-ring hover:underline focus-visible:rounded-sm focus-visible:outline-2">
+                                Find internships
+                            </Link>
                         )}
                     </div>
                 ) : (

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
+import { PostingsTabs } from "@/features/postings/postings-tabs";
 import { AdzunaLink, CompanyLogo, type Job, JobFacts } from "./job-meta";
 
 const field = "w-full rounded-lg bg-primary px-3 py-2 text-md text-primary shadow-xs ring-1 ring-primary outline-none placeholder:text-placeholder focus:ring-2 focus:ring-brand";
@@ -35,13 +36,10 @@ export function JobsPage() {
         <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             <div className="flex flex-col gap-1">
                 <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
-                <p className="text-md text-tertiary">
-                    Internships in Belgium. Open one to read it, then save it to see what it asks from you.{" "}
-                    <Link to="/postings/saved" className="font-semibold text-brand-secondary hover:underline">
-                        Your saved postings
-                    </Link>
-                </p>
+                <p className="text-md text-tertiary">Internships in Belgium. Open one to read it, then save it to see what it asks from you.</p>
             </div>
+
+            <PostingsTabs />
 
             <form onSubmit={search} className="flex flex-col gap-3 sm:flex-row">
                 <input aria-label="Role" className={field} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Role or keyword, e.g. marketing, IT, .NET" />
