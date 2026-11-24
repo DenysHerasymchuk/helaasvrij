@@ -223,7 +223,7 @@ export function GapsPage() {
                                             {g.project && (
                                                 <>
                                                     {" "}
-                                                    · <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{g.project}</code>
+                                                    · <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{g.project.replace(/^new:/, "")}</code>
                                                 </>
                                             )}
                                             {" "}
@@ -233,6 +233,7 @@ export function GapsPage() {
                                             </Link>
                                             {g.dueDate && ` · by ${formatDate(g.dueDate)}`}
                                         </p>
+                                        {g.project?.startsWith("new:") && <p className="text-sm text-tertiary">Add the repo to GitHub and sync your profile to raise your score.</p>}
                                         <div className="flex flex-wrap gap-2">
                                             <Badge type="pill-color" size="sm" color={g.importance === "required" ? "brand" : "gray"}>
                                                 {g.importance === "required" ? "Required" : "Nice to have"}

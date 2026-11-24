@@ -100,6 +100,23 @@ public class RescanTests
     }
 
     [Fact]
+    public async Task Ticking_a_new_project_action_marks_it_done_without_rescan_or_score_change()
+    {
+        var s = Build();
+        s.Requirement.RecordAnalysis(Coverage.None, null, null, "Start `docker-demo-api`: containerise it with Docker",
+            "new:docker-demo-api", new DateOnly(2026, 12, 1), Clock.UtcNow);
+        s.GitHub.FailWith = "must not be called";
+
+        var result = (await s.Handler.HandleAsync(s.Requirement.Id, default))!;
+
+        Assert.True(s.Requirement.Done);
+        Assert.Equal(result.OldScore, result.NewScore);
+        Assert.Equal(Coverage.None, result.NewCoverage);
+        Assert.Empty(s.Transport.Requests);
+        Assert.Empty(s.Posting.Snapshots);
+    }
+
+    [Fact]
     public async Task Rescan_is_limited_to_one_per_requirement_per_minute()
     {
         var s = Build(Extraction, Label);

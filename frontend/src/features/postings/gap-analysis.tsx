@@ -138,8 +138,9 @@ function GapRow({ requirement: r }: { requirement: PostingRequirement }) {
             )}
             {r.action && (
                 <p className="text-sm text-primary">
-                    <span className="font-semibold">Next step</span> in <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{r.actionProject}</code>: {r.action}
+                    <span className="font-semibold">Next step</span> in <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{r.actionProject?.replace(/^new:/, "")}</code>: {r.action}
                     {r.dueDate && <span className="text-tertiary"> · by {formatDate(r.dueDate)}</span>}
+                    {r.actionProject?.startsWith("new:") && <span className="block text-tertiary">Add the repo to GitHub and sync your profile to raise your score.</span>}
                 </p>
             )}
             {!r.action && r.coverage !== "strong" && <p className="text-sm text-tertiary">No action suggested. Connect your GitHub so actions can name one of your projects.</p>}

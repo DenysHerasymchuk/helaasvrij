@@ -40,6 +40,15 @@ public sealed class MarkGapDoneHandler(
             throw new GapInputException("This gap has no action to tick. Analyse the posting again.");
         }
 
+        // A new-project action has no repo to re-read yet: tick it, coverage and score stay until the repo is synced.
+        if (GapAnalyser.IsNewProject(requirement.ActionProject))
+        {
+            requirement.MarkDone();
+            await postings.SaveAsync(ct);
+            var score = posting.Score();
+            return new RescanResult(GapItem.From(posting, requirement), score, score, requirement.Coverage, requirement.Coverage, 0, 0);
+        }
+
         var gitHubSource = await sources.FindByKindAsync(SourceKind.GitHub, ct);
         if (gitHubSource is null)
         {

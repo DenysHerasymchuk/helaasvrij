@@ -75,12 +75,27 @@ public class InterviewHandlerTests
     }
 
     [Fact]
-    public async Task Needs_an_analysed_posting_and_a_repo()
+    public async Task Needs_an_analysed_posting()
     {
         var unanalysed = Build(false, true);
         await Assert.ThrowsAsync<InterviewInputException>(() => unanalysed.Get.HandleAsync(unanalysed.Posting.Id, default));
-        var s = Build(true, false);
-        await Assert.ThrowsAsync<InterviewInputException>(() => s.Get.HandleAsync(s.Posting.Id, default));
+    }
+
+    [Fact]
+    public async Task Without_repos_builds_questions_from_gaps_and_confirmed_cv_items()
+    {
+        var reply = """
+            {"gapQuestions":[{"req":1,"question":"How would you ship your C# API with Docker?","project":"C#"},
+                             {"req":2,"question":"How would you deploy weather-app to Kubernetes?","project":"weather-app"}],
+             "repoQuestions":[{"question":"What did you learn building a REST API in C#?","project":"C#"}]}
+            """;
+        var s = Build(true, false, reply, reply);
+
+        var view = (await s.Get.HandleAsync(s.Posting.Id, default))!;
+
+        Assert.Equal(2, view.Questions.Count); // the question naming an unknown repo is dropped
+        Assert.All(view.Questions, q => Assert.Equal("C#", q.Project));
+        Assert.Contains("<untrusted_data name=\"student_items\">", s.Transport.Requests[0].Turns[0].Content);
     }
 
     [Fact]
