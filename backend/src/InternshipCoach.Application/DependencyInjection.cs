@@ -29,6 +29,7 @@ using InternshipCoach.Application.Documents.GetDocument;
 using InternshipCoach.Application.Documents.ListDocuments;
 using InternshipCoach.Application.Documents.TailorCv;
 using InternshipCoach.Application.Documents.UpdateDocument;
+using InternshipCoach.Application.Interview;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace InternshipCoach.Application;
@@ -80,6 +81,9 @@ public static class DependencyInjection
         services.AddScoped<GetDocumentHandler>();
         services.AddScoped<UpdateDocumentHandler>();
         services.AddScoped<DeleteDocumentHandler>();
+        services.AddScoped<InterviewQuestionGenerator>();
+        services.AddScoped<GetInterviewHandler>();
+        services.AddScoped<SubmitAnswerHandler>();
         services.AddScoped<ListApplicationsHandler>();
         services.AddScoped<CreateApplicationHandler>();
         services.AddScoped<UpdateApplicationHandler>();

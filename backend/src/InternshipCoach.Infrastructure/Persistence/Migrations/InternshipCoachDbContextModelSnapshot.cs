@@ -119,6 +119,227 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("documents", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Interview.CompanyQuestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Company")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("company");
+
+                    b.Property<string>("CompanyKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("company_key");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyKey");
+
+                    b.ToTable("company_questions", "coach");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000101"),
+                            Company = "Brightlane",
+                            CompanyKey = "brightlane",
+                            Text = "Why do you want to build software for healthcare organisations?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000102"),
+                            Company = "Brightlane",
+                            CompanyKey = "brightlane",
+                            Text = "Tell us about a time a test caught a bug before a user did."
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000103"),
+                            Company = "Brightlane",
+                            CompanyKey = "brightlane",
+                            Text = "How would you explain a failing deployment to a non-technical colleague?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000201"),
+                            Company = "Northwind Data",
+                            CompanyKey = "northwind data",
+                            Text = "How do you check that the output of a data pipeline is correct?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000202"),
+                            Company = "Northwind Data",
+                            CompanyKey = "northwind data",
+                            Text = "Describe a messy dataset you worked with and how you cleaned it."
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000203"),
+                            Company = "Northwind Data",
+                            CompanyKey = "northwind data",
+                            Text = "When would you pick SQL over Python for a transformation?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000301"),
+                            Company = "Atelier Lumen",
+                            CompanyKey = "atelier lumen",
+                            Text = "Pourquoi voulez-vous développer des applications pour des musées ?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000302"),
+                            Company = "Atelier Lumen",
+                            CompanyKey = "atelier lumen",
+                            Text = "Comment testez-vous une application mobile sur plusieurs tailles d'écran ?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000303"),
+                            Company = "Atelier Lumen",
+                            CompanyKey = "atelier lumen",
+                            Text = "Parlez-moi d'un projet que vous avez mené en équipe."
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000401"),
+                            Company = "Havenstad Logistics",
+                            CompanyKey = "havenstad logistics",
+                            Text = "Wat trekt je aan in software voor de logistieke sector?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000402"),
+                            Company = "Havenstad Logistics",
+                            CompanyKey = "havenstad logistics",
+                            Text = "Hoe zou je een REST API ontwerpen om containers te volgen?"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-4000-8000-000000000403"),
+                            Company = "Havenstad Logistics",
+                            CompanyKey = "havenstad logistics",
+                            Text = "Hoe los je een merge-conflict op met je team?"
+                        });
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Interview.InterviewAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
+                        .HasColumnName("answer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("ExampleSentence")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("example_sentence");
+
+                    b.Property<Guid>("PostingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posting_id");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("question_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("WhatToAdd")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("what_to_add");
+
+                    b.Property<string>("WhatWasGood")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("what_was_good");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostingId", "QuestionId");
+
+                    b.ToTable("interview_answers", "coach");
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Interview.InterviewQuestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<Guid>("PostingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posting_id");
+
+                    b.Property<string>("Project")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("project");
+
+                    b.Property<Guid?>("RequirementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requirement_id");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("source");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostingId", "Position");
+
+                    b.ToTable("interview_questions", "coach");
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Llm.LlmCall", b =>
                 {
                     b.Property<Guid>("Id")
@@ -648,6 +869,24 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("InternshipCoach.Domain.Applications.JobApplication", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
+                        .WithMany()
+                        .HasForeignKey("PostingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Interview.InterviewAnswer", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
+                        .WithMany()
+                        .HasForeignKey("PostingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Interview.InterviewQuestion", b =>
                 {
                     b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
                         .WithMany()
