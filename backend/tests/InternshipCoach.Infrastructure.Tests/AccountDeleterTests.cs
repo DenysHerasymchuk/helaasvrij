@@ -1,3 +1,4 @@
+using InternshipCoach.Domain.Documents;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Llm;
@@ -33,6 +34,8 @@ public class AccountDeleterTests
         db.Sources.Add(source);
         db.ProfileItems.Add(ProfileItem.Create(user.Id, ProfileItemKind.Project, "a", null, document.Id, "Repository: a", new CreatedAt(DateTimeOffset.UtcNow)));
         db.ProfileBasics.Add(ProfileBasics.Create(user.Id, "School", null, null));
+        db.Sources.Add(Source.Create(user.Id, SourceKind.GitHub, "gh"));
+        db.Documents.Add(Document.Create(user.Id, DocumentKind.Cv, "en", "CV", "# CV", new CreatedAt(DateTimeOffset.UtcNow)));
         await db.SaveChangesAsync();
         return user;
     }

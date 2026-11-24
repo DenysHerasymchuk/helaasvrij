@@ -12,7 +12,10 @@ export function useTheme() {
 
     const toggle = () => {
         const next: Theme = theme === "dark" ? "light" : "dark";
-        document.documentElement.classList.toggle("dark-mode", next === "dark");
+        const root = document.documentElement;
+        root.classList.add("theme-fade");
+        root.classList.toggle("dark-mode", next === "dark");
+        setTimeout(() => root.classList.remove("theme-fade"), 250);
         try {
             localStorage.setItem(KEY, next);
         } catch {
