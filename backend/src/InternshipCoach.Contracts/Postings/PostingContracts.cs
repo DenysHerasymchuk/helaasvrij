@@ -4,6 +4,8 @@ public sealed record PastePostingRequest(string? Text, string? Url);
 
 public sealed record UrlPostingRequest(string? Url);
 
+public sealed record ReplacePostingTextRequest(string? Text);
+
 public sealed record UpdatePostingDatesRequest(DateOnly? Deadline, DateTimeOffset? InterviewAt, DateOnly? StageStart, DateOnly? StageEnd);
 
 public sealed record EvidenceSourceResponse(Guid SourceId, string Kind, string Label, string Path, string? Url);
