@@ -1,11 +1,13 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { FaGithub } from "react-icons/fa";
-import { Check, File05, Globe01, Trash01, Type01, UploadCloud02 } from "@untitledui/icons";
+import { Check, File05, Globe01, Trash01, Type01 } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
+import { InputFile } from "@/components/base/input/input-file";
 import { ApiError } from "@/core/api";
-import { DateField, Field, TextArea } from "@/features/postings/fields";
+import { BelgianDateInput, Field, NativeSelect, TextArea } from "@/features/postings/fields";
+import { formatDateTime } from "@/features/postings/types";
 import {
     type ExtractResult,
     type Profile,
@@ -14,6 +16,7 @@ import {
     type Source,
     addSite,
     addText,
+    cefrLevels,
     confirmAllItems,
     deleteProfileItem,
     deleteSource,
@@ -22,6 +25,7 @@ import {
     listSources,
     saveBasics,
     setItemConfirmed,
+    setItemLevel,
     syncGitHub,
     uploadCv,
 } from "./api";
@@ -65,7 +69,7 @@ function ErrorBox({ text, onRetry }: { text: string; onRetry: () => void }) {
 }
 
 function formatDate(iso: string | null) {
-    return iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "never";
+    return iso ? formatDateTime(iso) : "never";
 }
 
 export function ProfilePage() {
@@ -118,7 +122,6 @@ function SourcesSection({ sources, reload }: { sources: Source[]; reload: () => 
     const [url, setUrl] = useState("");
     const [pasting, setPasting] = useState(false);
     const [text, setText] = useState("");
-    const fileInput = useRef<HTMLInputElement>(null);
 
     const run = async (key: string, action: () => Promise<unknown>, done?: () => void) => {
         setBusy(key);
@@ -198,25 +201,20 @@ function SourcesSection({ sources, reload }: { sources: Source[]; reload: () => 
                     </Button>
                 </form>
 
-                <div className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-secondary">CV or LinkedIn PDF</span>
-                    <input
-                        ref={fileInput}
-                        type="file"
-                        accept="application/pdf,.pdf"
-                        aria-label="Choose a PDF file"
-                        className="sr-only"
-                        onChange={(event) => {
-                            const file = event.target.files?.[0];
-                            event.target.value = "";
-                            if (file) run("cv", () => uploadCv(file));
-                        }}
-                    />
-                    <Button color="secondary" size="md" iconLeading={UploadCloud02} isLoading={busy === "cv"} onPress={() => fileInput.current?.click()} className="self-start">
-                        Upload PDF
-                    </Button>
-                    <span className="text-sm text-tertiary">PDF up to 5 MB. LinkedIn: Save to PDF from your profile.</span>
-                </div>
+                <InputFile
+                    size="md"
+                    label="CV or LinkedIn PDF"
+                    placeholder="Choose a PDF"
+                    buttonText="Upload PDF"
+                    acceptedFileTypes={["application/pdf", ".pdf"]}
+                    isLoading={busy === "cv"}
+                    isDisabled={busy === "cv"}
+                    hint="PDF up to 5 MB. LinkedIn: Save to PDF from your profile."
+                    onChange={(files) => {
+                        const file = files?.[0];
+                        if (file) run("cv", () => uploadCv(file));
+                    }}
+                />
 
                 <div className="flex flex-col items-start gap-2">
                     <span className="text-sm font-medium text-secondary">No PDF?</span>
@@ -369,10 +367,10 @@ function ItemsSection({ sources, profile, reloadProfile }: { sources: Source[]; 
 }
 
 function ItemCard({ item, reload }: { item: ProfileItem; reload: () => Promise<void> }) {
-    const [busy, setBusy] = useState<"confirm" | "remove" | null>(null);
+    const [busy, setBusy] = useState<"confirm" | "remove" | "level" | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const run = async (kind: "confirm" | "remove", action: () => Promise<unknown>) => {
+    const run = async (kind: "confirm" | "remove" | "level", action: () => Promise<unknown>) => {
         setBusy(kind);
         setError(null);
         try {
@@ -380,6 +378,7 @@ function ItemCard({ item, reload }: { item: ProfileItem; reload: () => Promise<v
             await reload();
         } catch (caught) {
             setError(message(caught));
+        } finally {
             setBusy(null);
         }
     };
@@ -388,10 +387,26 @@ function ItemCard({ item, reload }: { item: ProfileItem; reload: () => Promise<v
         <li className="flex flex-col gap-3 rounded-lg p-4 ring-1 ring-secondary">
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-md font-semibold text-primary">{item.name}</span>
-                {item.level && (
+                {item.level && item.kind !== "Language" && (
                     <Badge type="pill-color" size="sm" color="brand">
                         {item.level}
                     </Badge>
+                )}
+                {item.kind === "Language" && (
+                    <NativeSelect
+                        aria-label={`CEFR level for ${item.name}`}
+                        value={item.level ?? ""}
+                        disabled={busy === "level"}
+                        onChange={(event) => run("level", () => setItemLevel(item.id, event.target.value || null))}
+                        className="w-auto py-1 text-sm"
+                    >
+                        <option value="">No level</option>
+                        {cefrLevels.map((level) => (
+                            <option key={level} value={level}>
+                                {level}
+                            </option>
+                        ))}
+                    </NativeSelect>
                 )}
                 {item.confirmed && (
                     <Badge type="pill-color" size="sm" color="success">
@@ -480,17 +495,13 @@ function BasicsSection({ basics, onSaved }: { basics: Profile["basics"]; onSaved
     };
 
     return (
-        <Section title="School and stage period" description="Used later to check a posting's dates against when you can start.">
+        <Section title="School and stage period" description="Postings with internship dates outside this period are flagged on the postings list.">
             <div className="grid gap-4 md:grid-cols-3">
                 <div className="md:col-span-3">
                     <Input label="School" placeholder="Howest, Thomas More, KU Leuven..." value={school} onChange={edit(setSchool)} isInvalid={!!fieldError("school")} hint={fieldError("school")} />
                 </div>
-                <Field label="Stage starts">
-                    <DateField type="date" value={start} max={end || undefined} onChange={(event) => edit(setStart)(event.target.value)} />
-                </Field>
-                <Field label="Stage ends" hint={fieldError("stageEnd")}>
-                    <DateField type="date" value={end} min={start || undefined} onChange={(event) => edit(setEnd)(event.target.value)} aria-invalid={!!fieldError("stageEnd")} />
-                </Field>
+                <BelgianDateInput label="Stage starts" value={start} max={end || undefined} onChange={edit(setStart)} />
+                <BelgianDateInput label="Stage ends" value={end} min={start || undefined} onChange={edit(setEnd)} isInvalid={!!fieldError("stageEnd")} hint={fieldError("stageEnd")} />
             </div>
             <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Button size="md" isLoading={state === "saving"} onPress={save}>

@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import { parseDate } from "@internationalized/date";
+import { I18nProvider } from "react-aria-components";
+import { InputDate } from "@/components/base/input/input-date";
 import { cx } from "@/utils/cx";
 
 const control =
@@ -25,4 +28,29 @@ export function NativeSelect(props: React.SelectHTMLAttributes<HTMLSelectElement
 
 export function DateField(props: React.InputHTMLAttributes<HTMLInputElement>) {
     return <input {...props} className={cx(control, props.className)} />;
+}
+
+/** Untitled UI date input in Belgian day/month/year order. Value is "yyyy-MM-dd" or "" for empty. */
+export function BelgianDateInput({ label, value, onChange, hint, isInvalid, min, max }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    hint?: string;
+    isInvalid?: boolean;
+    min?: string;
+    max?: string;
+}) {
+    return (
+        <I18nProvider locale="en-BE">
+            <InputDate
+                label={label}
+                hint={hint}
+                isInvalid={isInvalid}
+                value={value ? parseDate(value) : null}
+                minValue={min ? parseDate(min) : undefined}
+                maxValue={max ? parseDate(max) : undefined}
+                onChange={(date) => onChange(date ? date.toString() : "")}
+            />
+        </I18nProvider>
+    );
 }

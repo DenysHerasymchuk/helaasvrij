@@ -11,7 +11,14 @@ export type PostingSummary = {
     isDemo: boolean;
     requirementCount: number;
     createdAt: string;
+    /** Internship dates from the posting (yyyy-MM-dd). */
+    stageStart: string | null;
+    stageEnd: string | null;
+    /** Posting dates against the stage period on the profile. */
+    stageFit: StageFit;
 };
+
+export type StageFit = "fits" | "conflict" | "unknown";
 
 export type Coverage = "none" | "partial" | "strong";
 
@@ -55,4 +62,12 @@ export function toLocalInput(iso: string | null): string {
     const d = new Date(iso);
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** "1 Feb 2027 to 31 May 2027", "from 1 Feb 2027", or null when the posting has no stage dates. */
+export function formatStagePeriod(start: string | null, end: string | null): string | null {
+    if (start && end) return `${formatDate(start)} to ${formatDate(end)}`;
+    if (start) return `from ${formatDate(start)}`;
+    if (end) return `until ${formatDate(end)}`;
+    return null;
 }

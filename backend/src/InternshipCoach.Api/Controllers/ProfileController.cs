@@ -5,6 +5,7 @@ using InternshipCoach.Application.Profile.Extract;
 using InternshipCoach.Application.Profile.Get;
 using InternshipCoach.Application.Profile.Items;
 using InternshipCoach.Contracts.Profile;
+using InternshipCoach.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -49,6 +50,20 @@ public sealed class ProfileController : ControllerBase
     public async Task<IActionResult> SetConfirmed(
         Guid id, SetConfirmedRequest request, [FromServices] SetItemConfirmedHandler handler, CancellationToken ct) =>
         await handler.HandleAsync(id, request.Confirmed, ct) ? NoContent() : NotFound();
+
+    [HttpPut("items/{id:guid}/level")]
+    [Consumes("application/json")]
+    public async Task<IActionResult> SetLevel(Guid id, SetLevelRequest request, [FromServices] SetItemLevelHandler handler, CancellationToken ct)
+    {
+        try
+        {
+            return await handler.HandleAsync(id, request.Level, ct) ? NoContent() : NotFound();
+        }
+        catch (DomainException ex)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: ex.Message);
+        }
+    }
 
     [HttpPost("items/confirm-all")]
     [Consumes("application/json")]

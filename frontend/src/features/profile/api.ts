@@ -93,6 +93,10 @@ export const deleteProfileItem = (id: string) => api.del(`/api/profile/items/${i
 
 export const confirmAllItems = () => api.post<{ confirmed: number }>("/api/profile/items/confirm-all");
 
+export const setItemLevel = (id: string, level: string | null) => api.put(`/api/profile/items/${id}/level`, { level });
+
+export const cefrLevels = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
 export const saveBasics = (basics: ProfileBasics) => api.put<ProfileBasics>("/api/profile/basics", basics);
 
 /** `api` has no PATCH helper; this keeps the same JSON-only contract and error type. */

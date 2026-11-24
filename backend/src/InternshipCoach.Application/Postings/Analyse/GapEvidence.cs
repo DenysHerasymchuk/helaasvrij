@@ -1,4 +1,5 @@
 using InternshipCoach.Application.Profile;
+using InternshipCoach.Domain.Profile;
 using InternshipCoach.Domain.Sources;
 
 namespace InternshipCoach.Application.Postings.Analyse;
@@ -26,7 +27,7 @@ public sealed class GapEvidenceLoader(IProfileRepository profile)
             .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
             .SelectMany(item => item.Evidence
                 .Where(e => texts.ContainsKey(e.SourceDocumentId))
-                .Select(e => new EvidenceQuote(e.SourceDocumentId, item.Name, item.Kind.ToString().ToLowerInvariant(), e.Quote)))
+                .Select(e => new EvidenceQuote(e.SourceDocumentId, NameWithLevel(item), item.Kind.ToString().ToLowerInvariant(), e.Quote)))
             .Take(MaxQuotes)
             .ToList();
 
@@ -40,4 +41,7 @@ public sealed class GapEvidenceLoader(IProfileRepository profile)
 
         return new GapEvidence(quotes, repos, texts);
     }
+
+    // The CEFR level travels with the language name, so gap checks and drafts can use it ("Dutch (B2)").
+    private static string NameWithLevel(ProfileItem item) => item.Level is null ? item.Name : $"{item.Name} ({item.Level})";
 }
