@@ -2,6 +2,7 @@ using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Auth.GitHubSignIn;
 using InternshipCoach.Application.Llm;
 using InternshipCoach.Application.Applications;
+using InternshipCoach.Application.Calendar;
 using InternshipCoach.Application.Dashboard;
 using InternshipCoach.Application.Journey;
 using InternshipCoach.Application.Auth.Login;
@@ -105,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<GetApplicationStatsHandler>();
         services.AddScoped<GetDashboardHandler>();
         services.AddScoped<GetJourneyHandler>();
+        services.AddScoped<GetCalendarHandler>();
         return services;
     }
 }
