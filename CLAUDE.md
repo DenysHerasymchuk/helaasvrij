@@ -23,7 +23,7 @@ Pitch: "Drop in your links, see exactly what each Belgian internship wants from 
 
 ## Privacy and data ownership
 
-- Sign-in with GitHub OAuth. No anonymous access to any page except the landing page.
+- Sign-in with GitHub OAuth. No anonymous access to any page except login and register.
 - Every user-owned table has a `UserId`. Every query and endpoint filters by the signed-in user. Never return another user's data; enforce this in the data layer (EF Core global query filter on `UserId`), not only in controllers.
 - Shared data is limited to: anonymous `CompanyQuestions` (interview questions per company) and public postings that arrive through the webhook, copied into a user's list only when matched.
 - "Delete my data" removes every row owned by the user.
@@ -42,7 +42,7 @@ Pitch: "Drop in your links, see exactly what each Belgian internship wants from 
 | Profile | `/profile` | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback), extracted items with source links and confirm/remove, school and stage period |
 | Settings | `/settings` | Email alerts and strong-match threshold, default language, delete all my data, sign out |
 
-The landing page `/` has the pitch and "Sign in with GitHub".
+No landing page: `/` redirects to `/login`.
 
 ## Stack
 

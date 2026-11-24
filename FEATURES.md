@@ -34,7 +34,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | --- | --- | --- | --- |
 | 20 | GitHub OAuth sign-in | Cookie session. Saves the profile and runs. Optional: P0 works without it. | todo |
 | 21 | Per-user data isolation | `UserId` on every owned table, EF Core global query filter. Needed once accounts exist. | todo |
-| 22 | Sidebar layout + dashboard | Profile strength, top postings, top gap actions, score trend. | todo |
+| 22 | Sidebar layout + dashboard | Profile strength, top postings, top gap actions, score trend. Design done with mock data (`features/demo/demo-user.ts`); connect to `GET /api/dashboard`. | done (mock) |
 | 23 | Postings list + detail | Filters (language, score, new); detail shows the gap matrix and score. | todo |
 | 24 | CV draft | Confirmed items only, in the posting's language, print to PDF. | todo |
 | 25 | Cover letter draft | Uses closed gaps as evidence. | todo |
@@ -42,6 +42,10 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 27 | Demo safety | Cached demo run, recorded backup video, postings labelled "demo data", synthetic or consenting persona. | todo |
 | 28 | Gold set | About 10 hand-labelled cases; report quote-check failures and score variance over 5 runs. | todo |
 | 29 | Side-by-side with ChatGPT | Same posting, plain ChatGPT answer vs our evidence-backed matrix. | todo |
+| 30 | Profile page | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback), extracted items with source links and confirm/remove, school and stage period. | todo |
+| 31 | Belgian layer | Output in the posting's language (NL/FR/EN), CEFR language levels on profile and requirements, stage period checked against the posting's dates. | todo |
+| 32 | Add posting by URL | Fetch the page, read JobPosting JSON-LD when present, fall back to paste. Never LinkedIn, Student.be or JobTeaser. | todo |
+| 33 | Settings page (basic) | Default language, sign out. | todo |
 
 ## Next (pitch slide, not built)
 
