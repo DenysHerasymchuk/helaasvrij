@@ -3,6 +3,7 @@ using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Llm;
 using InternshipCoach.Domain.Settings;
+using InternshipCoach.Domain.Profile;
 using InternshipCoach.Domain.Sources;
 using InternshipCoach.Domain.Postings;
 using InternshipCoach.Domain.Users;
@@ -41,6 +42,12 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
     public DbSet<Source> Sources => Set<Source>();
 
     public DbSet<SourceDocument> SourceDocuments => Set<SourceDocument>();
+    public DbSet<ProfileItem> ProfileItems => Set<ProfileItem>();
+
+    public DbSet<ProfileEvidence> ProfileEvidence => Set<ProfileEvidence>();
+
+    public DbSet<ProfileBasics> ProfileBasics => Set<ProfileBasics>();
+
     public DbSet<Posting> Postings => Set<Posting>();
 
     public DbSet<Requirement> Requirements => Set<Requirement>();

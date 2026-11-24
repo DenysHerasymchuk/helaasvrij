@@ -2,6 +2,7 @@ using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Infrastructure.Llm;
 using InternshipCoach.Infrastructure.Auth;
+using InternshipCoach.Application.Profile;
 using InternshipCoach.Application.Sources;
 using InternshipCoach.Application.Sources.GitHub;
 using InternshipCoach.Infrastructure.Persistence;
@@ -47,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<ILlmCallLog, LlmCallLog>();
 
         services.AddScoped<ISourceRepository, SourceRepository>();
+        services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddSingleton(configuration.GetSection(GitHubIngestOptions.SectionName).Get<GitHubIngestOptions>() ?? new GitHubIngestOptions());
         services.AddSingleton<IGitHubClient>(provider => new GitHubClient(provider.GetRequiredService<GitHubIngestOptions>()));
         services.AddSingleton<IPdfTextExtractor, PdfPigTextExtractor>();

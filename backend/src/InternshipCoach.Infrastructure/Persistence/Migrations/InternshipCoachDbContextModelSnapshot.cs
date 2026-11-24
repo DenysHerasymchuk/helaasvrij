@@ -176,6 +176,127 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("requirements", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileBasics", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("School")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("school");
+
+                    b.Property<DateOnly?>("StageEnd")
+                        .HasColumnType("date")
+                        .HasColumnName("stage_end");
+
+                    b.Property<DateOnly?>("StageStart")
+                        .HasColumnType("date")
+                        .HasColumnName("stage_start");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("profile_basics", "coach");
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileEvidence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ProfileItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("profile_item_id");
+
+                    b.Property<string>("Quote")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("quote");
+
+                    b.Property<Guid>("SourceDocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_document_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileItemId");
+
+                    b.HasIndex("SourceDocumentId");
+
+                    b.ToTable("profile_evidence", "coach");
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Confirmed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("confirmed");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Level")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("level");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<string>("Quote")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("quote");
+
+                    b.Property<Guid>("SourceDocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_document_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceDocumentId");
+
+                    b.HasIndex("UserId", "Kind", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("profile_items", "coach");
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Settings.UserSettings", b =>
                 {
                     b.Property<Guid>("Id")
@@ -365,6 +486,30 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileEvidence", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Profile.ProfileItem", null)
+                        .WithMany("Evidence")
+                        .HasForeignKey("ProfileItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InternshipCoach.Domain.Sources.SourceDocument", null)
+                        .WithMany()
+                        .HasForeignKey("SourceDocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileItem", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Sources.SourceDocument", null)
+                        .WithMany()
+                        .HasForeignKey("SourceDocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Sources.SourceDocument", b =>
                 {
                     b.HasOne("InternshipCoach.Domain.Sources.Source", null)
@@ -377,6 +522,11 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("InternshipCoach.Domain.Postings.Posting", b =>
                 {
                     b.Navigation("Requirements");
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileItem", b =>
+                {
+                    b.Navigation("Evidence");
                 });
 
             modelBuilder.Entity("InternshipCoach.Domain.Sources.Source", b =>
