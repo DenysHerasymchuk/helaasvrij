@@ -2,6 +2,7 @@ using System.Reflection;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Llm;
+using InternshipCoach.Domain.Settings;
 using InternshipCoach.Domain.Sources;
 using InternshipCoach.Domain.Postings;
 using InternshipCoach.Domain.Users;
@@ -36,6 +37,7 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<LlmCall> LlmCalls => Set<LlmCall>();
 
+    public DbSet<UserSettings> UserSettings => Set<UserSettings>();
     public DbSet<Source> Sources => Set<Source>();
 
     public DbSet<SourceDocument> SourceDocuments => Set<SourceDocument>();

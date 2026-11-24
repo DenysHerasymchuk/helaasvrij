@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ISettingsRepository, SettingsRepository>();
+        services.AddScoped<IAccountDeleter, AccountDeleter>();
         services.AddScoped<IPostingRepository, PostingRepository>();
         services.AddSingleton<IPageFetcher, SafePageFetcher>();
 

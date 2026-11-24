@@ -45,7 +45,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 30 | Profile page | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback), extracted items with source links and confirm/remove, school and stage period. | todo |
 | 31 | Belgian layer | Output in the posting's language (NL/FR/EN), CEFR language levels on profile and requirements, stage period checked against the posting's dates. | todo |
 | 32 | Add posting by URL | Fetch the page, read JobPosting JSON-LD when present, fall back to paste. Never LinkedIn, Student.be or JobTeaser. | done (`SafePageFetcher`: SSRF guard at connect time and on redirects, 10 s timeout, 1 MB cap, one User-Agent) |
-| 33 | Settings page (basic) | Default language, sign out. | todo |
+| 33 | Settings page (basic) | Default language, sign out. | done (also strong-match threshold, email-alerts toggle stored only, and delete my data via `DELETE /api/me`, generic over every `IUserOwned` table) |
 | 34 | AI chat assistant | Round button bottom-right on every signed-in page, opens a chat through route33 (`anthropic/claude-sonnet-5-5`). Answers questions about the app and suggests a page with a "Go to" chip (whitelisted routes only). Later: navigates and acts on the user's data. See `BUILD.md` prompt 10. | done (answers and "Go to" chip; no actions yet, no chat history) |
 
 ## Next (pitch slide, not built)
@@ -58,7 +58,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | Zapier/webhook job alerts | Depends on accounts and postings |
 | CV in all three languages at once | One language (the posting's) is enough for the demo |
 | Shared company questions | Needs many users |
-| Settings: email alerts, delete my data | Needs accounts; delete-my-data is required before real users |
+| Settings: sending email alerts | Preference is stored; nothing sends yet. Delete-my-data is built (row 33) |
 | ESCO / O*NET skill normalisation | ESCO misses modern tooling (docker 0 hits) |
 
 ## Rules that apply to every feature
