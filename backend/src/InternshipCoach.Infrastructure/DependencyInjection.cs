@@ -1,4 +1,6 @@
 using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Application.Abstractions.Llm;
+using InternshipCoach.Infrastructure.Llm;
 using InternshipCoach.Infrastructure.Auth;
 using InternshipCoach.Infrastructure.Persistence;
 using InternshipCoach.Infrastructure.Time;
@@ -24,6 +26,17 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddScoped<IUserRepository, UserRepository>();
+
+        var route33 = configuration.GetSection(Route33Options.SectionName).Get<Route33Options>() ?? new Route33Options();
+        if (string.IsNullOrWhiteSpace(route33.BaseUrl))
+        {
+            route33.BaseUrl = Route33Options.DefaultBaseUrl;
+        }
+
+        services.AddSingleton(route33);
+        services.AddSingleton(new LlmLimits(configuration.GetValue("Llm:DailyCallCap", 200)));
+        services.AddSingleton<ILlmTransport>(_ => new Route33LlmTransport(route33));
+        services.AddScoped<ILlmCallLog, LlmCallLog>();
 
         services.AddDataProtection()
             .SetApplicationName("InternshipCoach")
