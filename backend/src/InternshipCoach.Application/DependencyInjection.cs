@@ -7,6 +7,7 @@ using InternshipCoach.Application.Auth.Register;
 using InternshipCoach.Application.Postings;
 using InternshipCoach.Application.Postings.Add;
 using InternshipCoach.Application.Postings.Browse;
+using InternshipCoach.Application.Chat.Send;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace InternshipCoach.Application;
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<LoginHandler>();
         services.AddScoped<GitHubSignInHandler>();
         services.AddScoped<MeHandler>();
+        services.AddScoped<SendChatHandler>();
         services.AddScoped<ILlmClient, LlmClient>();
         services.AddScoped<PostingExtractor>();
         services.AddScoped<PostingImporter>();
