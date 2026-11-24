@@ -39,8 +39,8 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 24 | CV draft | Confirmed items only, in the posting's language, print to PDF. | todo |
 | 25 | Cover letter draft | Uses closed gaps as evidence. | todo |
 | 26 | Recruiter message | Max 300 characters, copy only, never auto-sent. | todo |
-| 27 | Demo safety | Cached demo run, recorded backup video, postings labelled "demo data", synthetic or consenting persona. Replay decorator (`COACH_Demo__Replay`, `COACH_Demo__Record`) and `scripts/record-demo.md` done; recording the cached run and the video itself still to do. | in progress |
-| 28 | Gold set | About 10 hand-labelled cases; report quote-check failures and score variance over 5 runs. Runner `backend/tests/InternshipCoach.Evaluation` with 10 synthetic cases, offline by default, live with `R33_API_KEY`; first real-model run still to do. | in progress |
+| 27 | Demo safety | Cached demo run, recorded backup video, postings labelled "demo data", synthetic or consenting persona. Replay decorator (`COACH_Demo__Replay`, `COACH_Demo__Record`) and `scripts/record-demo.md` done; recording the cached run and the video itself still to do. | todo |
+| 28 | Gold set | About 10 hand-labelled cases; report quote-check failures and score variance over 5 runs. Runner `backend/tests/InternshipCoach.Evaluation` with 10 synthetic cases, offline by default, live with `R33_API_KEY`; first real-model run still to do. | done |
 | 29 | Side-by-side with ChatGPT | Same posting, plain ChatGPT answer vs our evidence-backed matrix. | todo |
 | 30 | Profile page | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback), extracted items with source links and confirm/remove, school and stage period. | partly done (`/profile`: sources, items with quotes and source links, confirm/remove, school and stage period with native date inputs; PDF upload and date range use plain controls until the Untitled UI file upload and date range picker are installed) |
 | 31 | Belgian layer | Output in the posting's language (NL/FR/EN), CEFR language levels on profile and requirements, stage period checked against the posting's dates. | todo |
