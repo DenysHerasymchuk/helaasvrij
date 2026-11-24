@@ -55,7 +55,20 @@ public static class DependencyInjection
 
         services.AddSingleton(route33);
         services.AddSingleton(new LlmLimits(configuration.GetValue("Llm:DailyCallCap", 200)));
-        services.AddSingleton<ILlmTransport>(_ => new Route33LlmTransport(route33));
+        // Llm:Fallback = ClaudeCli (or claude-cli): when route33 is unavailable, use the user's Claude Code CLI.
+        var fallback = configuration["Llm:Fallback"]?.Replace("-", "");
+        if (string.Equals(fallback, "ClaudeCli", StringComparison.OrdinalIgnoreCase))
+        {
+            var cli = configuration.GetSection(ClaudeCliOptions.SectionName).Get<ClaudeCliOptions>() ?? new ClaudeCliOptions();
+            services.AddSingleton<ILlmTransport>(provider => new FallbackLlmTransport(
+                new Route33LlmTransport(route33),
+                new ClaudeCliLlmTransport(cli),
+                provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FallbackLlmTransport>>()));
+        }
+        else
+        {
+            services.AddSingleton<ILlmTransport>(_ => new Route33LlmTransport(route33));
+        }
         services.AddScoped<ILlmCallLog, LlmCallLog>();
         services.AddDemoReplay(configuration);
 
