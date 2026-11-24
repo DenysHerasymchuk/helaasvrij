@@ -8,6 +8,7 @@ import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { type CurrentUser, initialsOf, useAuth } from "@/core/auth";
 import { generateAvatarUrl } from "@/core/avatar";
+import { Logo } from "@/core/logo";
 import { useTheme } from "@/core/theme";
 import { ChatWidget } from "@/features/chat/chat-widget";
 
@@ -37,7 +38,7 @@ function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: Curr
     return (
         <nav aria-label="Main" className="flex h-full w-full flex-col justify-between overflow-auto bg-primary pt-6 lg:pt-8">
             <div>
-                <p className="px-6 text-lg font-semibold text-brand-secondary">Internship Coach</p>
+                <Logo className="mx-6 block h-7 w-auto" />
                 <NavList activeUrl={activeUrl} items={mainItems} />
             </div>
             <div className="flex flex-col gap-4 pb-6">
