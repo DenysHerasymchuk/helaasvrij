@@ -132,10 +132,17 @@ export function PostingsPage() {
                                             <span className="text-sm text-tertiary">Stage {formatStagePeriod(p.stageStart, p.stageEnd)}</span>
                                         )}
                                         <span className="text-sm text-tertiary">{p.deadline ? `Deadline ${formatDate(p.deadline)}` : "No deadline"}</span>
-                                        <span className="w-28 text-sm text-quaternary md:text-right">Not analysed</span>
+                                        {p.analysed && p.score != null ? (
+                                            <span className="w-28 text-sm font-semibold text-primary md:text-right">{p.score}% match</span>
+                                        ) : (
+                                            <span className="w-28 text-sm text-quaternary md:text-right">Not checked yet</span>
+                                        )}
                                     </div>
                                 </button>
-                                <div className="px-5 pb-4 md:w-64 md:shrink-0 md:py-4 md:pl-0">
+                                <div className="flex flex-wrap items-center gap-3 px-5 pb-4 md:w-80 md:shrink-0 md:py-4 md:pl-0">
+                                    <Button size="sm" color="secondary" onClick={() => navigate(`/postings/${p.id}${p.analysed ? "" : "?review=1"}`)}>
+                                        {p.analysed ? "See what I miss" : "What am I missing?"}
+                                    </Button>
                                     <BoardStatus postingId={p.id} byPosting={board.byPosting} onAdded={board.added} />
                                 </div>
                             </li>

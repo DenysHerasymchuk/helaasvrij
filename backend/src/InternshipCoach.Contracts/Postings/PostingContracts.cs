@@ -26,7 +26,8 @@ public sealed record GenericAnswerResponse(string Text, DateTimeOffset CapturedA
 /// <summary>StageFit: "fits", "conflict" or "unknown" against the student's stage period on the profile.</summary>
 public sealed record PostingSummaryResponse(
     Guid Id, string Company, string Title, string City, string Language, DateOnly? Deadline, DateTimeOffset? InterviewAt,
-    bool IsDemo, int RequirementCount, DateTimeOffset CreatedAt, DateOnly? StageStart, DateOnly? StageEnd, string StageFit);
+    bool IsDemo, int RequirementCount, DateTimeOffset CreatedAt, DateOnly? StageStart, DateOnly? StageEnd, string StageFit,
+    bool Analysed = false, int? Score = null);
 
 public sealed record PostingDetailResponse(
     Guid Id, string Company, string Title, string City, string Language, string? Url, string RawText, DateOnly? Deadline,

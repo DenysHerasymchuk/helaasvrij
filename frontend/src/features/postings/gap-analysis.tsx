@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
@@ -21,6 +21,17 @@ export function GapPanel({ posting, onUpdated }: { posting: PostingDetail; onUpd
     const [error, setError] = useState<string | null>(null);
     const { analysis } = posting;
     const missing = posting.requirements.filter((r) => r.coverage === "none").length;
+
+    // "What am I missing?" from the postings list opens this page with ?review=1 and starts the check once.
+    const [params, setParams] = useSearchParams();
+    const autoRan = useRef(false);
+    useEffect(() => {
+        if (params.get("review") !== "1" || autoRan.current) return;
+        autoRan.current = true;
+        setParams((p) => { p.delete("review"); return p; }, { replace: true });
+        if (!analysis.analysed) void run();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     async function run() {
         setBusy(true);
@@ -85,7 +96,7 @@ export function GapPanel({ posting, onUpdated }: { posting: PostingDetail; onUpd
                 )}
                 <div>
                     <Button size="md" onPress={run} isLoading={busy}>
-                        {analysis.analysed ? "Re-analyse" : "Analyse this posting"}
+                        {analysis.analysed ? "Check again" : "What am I missing?"}
                     </Button>
                 </div>
             </div>
