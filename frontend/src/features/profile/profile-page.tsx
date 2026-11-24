@@ -6,6 +6,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { InputFile } from "@/components/base/input/input-file";
 import { ApiError } from "@/core/api";
+import { JourneyBar } from "@/features/journey/journey-bar";
 import { BelgianDateInput, Field, NativeSelect, TextArea } from "@/features/postings/fields";
 import { formatDateTime } from "@/features/postings/types";
 import {
@@ -93,6 +94,7 @@ export function ProfilePage() {
                 <h1 className="text-display-xs font-semibold text-primary">Profile</h1>
                 <p className="mt-1 text-md text-tertiary">Connect your sources, then confirm what we found. Drafts only use items you confirm.</p>
             </div>
+            <JourneyBar />
 
             {loadError ? (
                 <ErrorBox text={loadError} onRetry={load} />

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
+import { JourneyBar } from "@/features/journey/journey-bar";
 import { Field, NativeSelect } from "@/features/postings/fields";
 import type { PostingSummary } from "@/features/postings/types";
 import { Board } from "./board";
@@ -102,6 +103,7 @@ export function ApplicationsPage() {
                     </div>
                 )}
             </div>
+            <JourneyBar />
 
             {notice && (
                 <p role="alert" className="rounded-lg bg-error-primary px-4 py-3 text-sm text-error-primary ring-1 ring-error_subtle">

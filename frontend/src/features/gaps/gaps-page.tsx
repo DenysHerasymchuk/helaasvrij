@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
+import { JourneyBar } from "@/features/journey/journey-bar";
 import { type Coverage, formatDate } from "@/features/postings/types";
 
 type Gap = {
@@ -119,6 +120,7 @@ export function GapsPage() {
                 <h1 className="text-display-xs font-semibold text-primary">Gap plan</h1>
                 <p className="mt-1 text-md text-tertiary">Every gap from your postings in one checklist, biggest impact first. Tick one after you changed the repo and it is re-scanned.</p>
             </div>
+            <JourneyBar />
 
             {notice && (
                 <div
