@@ -1,85 +1,141 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { Plus, SearchLg } from "@untitledui/icons";
+import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
+import { Input } from "@/components/base/input/input";
+import { ApiError, api } from "@/core/api";
+import { AddPostingModal } from "./add-posting-modal";
+import { NativeSelect } from "./fields";
+import { type PostingSummary, formatDate } from "./types";
 
-type Job = { id: string; title: string; company?: string; location?: string; description?: string; created?: string; url: string };
-
-const field = "w-full rounded-lg bg-primary px-3 py-2 text-md text-primary shadow-xs ring-1 ring-primary outline-none placeholder:text-placeholder focus:ring-2 focus:ring-brand";
-const dateFmt = new Intl.DateTimeFormat("en-BE", { day: "numeric", month: "short" });
+const languageLabel = { nl: "NL", fr: "FR", en: "EN" } as const;
 
 export function PostingsPage() {
-    const [what, setWhat] = useState("stage developer");
-    const [where, setWhere] = useState("");
-    const [jobs, setJobs] = useState<Job[] | null>(null);
+    const navigate = useNavigate();
+    const [items, setItems] = useState<PostingSummary[] | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    async function search(e?: React.FormEvent) {
-        e?.preventDefault();
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch(`/api/jobs?${new URLSearchParams({ what, where })}`, { credentials: "include" });
-            if (!res.ok) throw new Error(res.status === 503 ? "Job search is not set up yet (Adzuna keys missing)." : "Could not load postings. Try again.");
-            setJobs(await res.json());
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Could not load postings. Try again.");
-        } finally {
-            setLoading(false);
-        }
-    }
+    const [query, setQuery] = useState("");
+    const [debounced, setDebounced] = useState("");
+    const [language, setLanguage] = useState("");
+    const [adding, setAdding] = useState(false);
+    const filtered = debounced !== "" || language !== "";
 
     useEffect(() => {
-        void search();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        const timer = setTimeout(() => setDebounced(query.trim()), 250);
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    const load = useCallback(async () => {
+        setError(null);
+        setItems(null);
+        try {
+            const params = new URLSearchParams();
+            if (language) params.set("language", language);
+            if (debounced) params.set("q", debounced);
+            setItems((await api.get<PostingSummary[]>(`/api/postings?${params}`)) ?? []);
+        } catch (e) {
+            setError(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
+        }
+    }, [language, debounced]);
+
+    useEffect(() => {
+        load();
+    }, [load]);
 
     return (
-        <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
-                <p className="text-md text-tertiary">Internships in Belgium. Search by role and city.</p>
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
+                    <p className="mt-1 text-md text-tertiary">Internships you want to apply for.</p>
+                </div>
+                <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
+                    Add posting
+                </Button>
             </div>
 
-            <form onSubmit={search} className="flex flex-col gap-3 sm:flex-row">
-                <input aria-label="Role" className={field} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Role, e.g. stage developer" />
-                <input aria-label="City" className={field} value={where} onChange={(e) => setWhere(e.target.value)} placeholder="City, e.g. Gent" />
-                <Button type="submit" isLoading={loading} isDisabled={loading} className="shrink-0">
-                    Search
-                </Button>
-            </form>
-
-            {error && (
-                <div className="flex items-center justify-between gap-4 rounded-xl bg-primary px-5 py-4 ring-1 ring-secondary">
-                    <p className="text-sm text-error-primary">{error}</p>
-                    <Button size="sm" color="secondary" onClick={() => search()}>
-                        Try again
-                    </Button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="sm:max-w-sm sm:flex-1">
+                    <Input aria-label="Search postings" icon={SearchLg} placeholder="Search company, title or city" value={query} onChange={setQuery} />
                 </div>
-            )}
+                <NativeSelect aria-label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} className="sm:w-44">
+                    <option value="">All languages</option>
+                    <option value="nl">Dutch</option>
+                    <option value="fr">French</option>
+                    <option value="en">English</option>
+                </NativeSelect>
+            </div>
 
-            {jobs && jobs.length === 0 && <p className="text-md text-tertiary">No postings found. Try another role or city.</p>}
+            <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
+                {error ? (
+                    <div className="flex flex-col items-start gap-3 p-6">
+                        <p role="alert" className="text-md text-error-primary">
+                            {error}
+                        </p>
+                        <Button color="secondary" size="md" onPress={load}>
+                            Try again
+                        </Button>
+                    </div>
+                ) : items === null ? (
+                    <p role="status" className="p-6 text-md text-tertiary">
+                        Loading postings...
+                    </p>
+                ) : items.length === 0 ? (
+                    <div className="flex flex-col items-start gap-3 p-6">
+                        <p className="text-md font-semibold text-primary">{filtered ? "No postings match." : "No postings yet."}</p>
+                        <p className="text-md text-tertiary">
+                            {filtered ? "Try another search or language." : "Paste a posting or add a link to see what it asks for."}
+                        </p>
+                        {!filtered && (
+                            <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
+                                Add posting
+                            </Button>
+                        )}
+                    </div>
+                ) : (
+                    <ul className="flex flex-col divide-y divide-secondary">
+                        {items.map((p) => (
+                            <li key={p.id}>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(`/postings/${p.id}`)}
+                                    className="flex w-full cursor-pointer flex-col gap-2 px-5 py-4 text-left outline-focus-ring transition hover:bg-primary_hover focus-visible:outline-2 md:flex-row md:items-center md:gap-6"
+                                >
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-md font-semibold text-primary">{p.title}</p>
+                                        <p className="truncate text-sm text-tertiary">
+                                            {p.company}
+                                            {p.city && `, ${p.city}`}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                                        <Badge type="pill-color" size="sm" color="gray">
+                                            {languageLabel[p.language]}
+                                        </Badge>
+                                        {p.isDemo && (
+                                            <Badge type="pill-color" size="sm" color="brand">
+                                                Demo data
+                                            </Badge>
+                                        )}
+                                        <span className="text-sm text-tertiary">{p.deadline ? `Deadline ${formatDate(p.deadline)}` : "No deadline"}</span>
+                                        <span className="w-28 text-sm text-quaternary md:text-right">Not analysed</span>
+                                    </div>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
 
-            {jobs && jobs.length > 0 && (
-                <ul className="flex flex-col divide-y divide-secondary rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
-                    {jobs.map((j) => (
-                        <li key={j.id} className="flex flex-col gap-1 px-5 py-4">
-                            <div className="flex items-start justify-between gap-4">
-                                <a href={j.url} target="_blank" rel="noopener noreferrer" className="text-md font-semibold text-primary hover:underline">
-                                    {j.title}
-                                </a>
-                                {j.created && <span className="shrink-0 text-sm text-tertiary">{dateFmt.format(new Date(j.created))}</span>}
-                            </div>
-                            <p className="text-sm text-secondary">{[j.company, j.location].filter(Boolean).join(", ")}</p>
-                            {j.description && <p className="line-clamp-2 text-sm text-tertiary">{j.description}</p>}
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            {/* Required by the Adzuna API terms on every page that shows their ads. */}
-            <a href="https://www.adzuna.be" target="_blank" rel="noopener noreferrer" className="self-start text-sm font-semibold text-secondary hover:underline">
-                Jobs by Adzuna
-            </a>
+            <AddPostingModal
+                isOpen={adding}
+                onClose={() => setAdding(false)}
+                onAdded={(posting) => {
+                    setAdding(false);
+                    navigate(`/postings/${posting.id}`);
+                }}
+            />
         </div>
     );
 }

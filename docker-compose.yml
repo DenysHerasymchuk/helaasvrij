@@ -30,6 +30,8 @@ services:
       COACH_Adzuna__AppId: ${ADZUNA_APP_ID:-}
       COACH_Adzuna__AppKey: ${ADZUNA_APP_KEY:-}
       COACH_GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
+      COACH_Route33__ApiKey: ${R33_API_KEY:-}
+      COACH_GitHub__Token: ${GITHUB_TOKEN:-}
     ports:
       - "5080:8080"
 

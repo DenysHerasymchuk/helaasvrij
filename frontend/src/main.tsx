@@ -6,6 +6,9 @@ import { AuthProvider } from '@/core/auth'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
+import { SettingsPage } from '@/features/settings/settings-page'
+import { PostingDetailPage } from '@/features/postings/posting-detail-page'
+import { JobsPage } from '@/features/jobs/jobs-page'
 import { PostingsPage } from '@/features/postings/postings-page'
 import { ComingSoonPage } from '@/features/placeholder/coming-soon-page'
 import './index.css'
@@ -16,7 +19,6 @@ const placeholders = [
   ['interview', 'Interview prep'],
   ['applications', 'Applications'],
   ['profile', 'Profile'],
-  ['settings', 'Settings'],
 ] as const
 
 const router = createBrowserRouter([
@@ -27,7 +29,10 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/settings', element: <SettingsPage /> },
       { path: '/postings', element: <PostingsPage /> },
+      { path: '/postings/:id', element: <PostingDetailPage /> },
+      { path: '/jobs', element: <JobsPage /> },
       ...placeholders.map(([path, title]) => ({ path: `/${path}`, element: <ComingSoonPage title={title} /> })),
     ],
   },

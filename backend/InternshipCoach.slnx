@@ -10,5 +10,6 @@
     <Project Path="tests/InternshipCoach.Application.Tests/InternshipCoach.Application.Tests.csproj" />
     <Project Path="tests/InternshipCoach.Architecture.Tests/InternshipCoach.Architecture.Tests.csproj" />
     <Project Path="tests/InternshipCoach.Domain.Tests/InternshipCoach.Domain.Tests.csproj" />
+    <Project Path="tests/InternshipCoach.Infrastructure.Tests/InternshipCoach.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

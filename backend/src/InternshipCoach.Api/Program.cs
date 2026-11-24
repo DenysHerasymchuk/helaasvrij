@@ -1,7 +1,9 @@
 using InternshipCoach.Application.Auth.Register;
 using DotNetEnv;
 using InternshipCoach.Api.Auth;
+using InternshipCoach.Api.Chat;
 using InternshipCoach.Application;
+using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Infrastructure;
 using InternshipCoach.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,9 +17,12 @@ builder.Configuration.AddEnvironmentVariables("COACH_");
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddCoachForwardedHeaders();
 builder.Services.AddCoachAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddCoachRateLimiting(builder.Configuration);
+builder.Services.AddChatRateLimiting(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
@@ -42,12 +47,17 @@ if (args.Contains("--migrate"))
     {
         await scope.ServiceProvider.GetRequiredService<RegisterHandler>()
             .HandleAsync(new RegisterCommand("Lotte Peeters", "lotte@demo.test", "Demo1234!"), CancellationToken.None);
+
+        await DemoDataSeeder.SeedPostingsAsync(
+            scope.ServiceProvider.GetRequiredService<DbContextOptions<InternshipCoachDbContext>>(),
+            scope.ServiceProvider.GetRequiredService<IClock>(), "lotte@demo.test", CancellationToken.None);
     }
 
     return;
 }
 
 app.UseForwardedHeaders();
+app.UseMiddleware<UnauthorizedExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
