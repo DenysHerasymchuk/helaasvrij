@@ -30,6 +30,7 @@ public class AccountDeleterTests
         db.UserSettings.Add(UserSettings.Create(user.Id, "nl", 60, true));
         var posting = Posting.Create(user.Id, "Acme", "Intern", null, PostingLanguage.Nl, null, "text", null,
             [("Knows Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow));
+        posting.RecordSnapshot("analyse", DateTimeOffset.UtcNow);
         db.Postings.Add(posting);
         db.Applications.Add(JobApplication.Create(user.Id, posting.Id, new CreatedAt(DateTimeOffset.UtcNow)));
         var source = Source.Create(user.Id, SourceKind.GitHub, "gh");

@@ -37,6 +37,13 @@ public sealed class PostingConfiguration : IEntityTypeConfiguration<Posting>
             .OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(posting => posting.Requirements).UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.HasMany(posting => posting.Snapshots)
+            .WithOne()
+            .HasForeignKey(snapshot => snapshot.PostingId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(posting => posting.Snapshots).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Ignore(posting => posting.IsAnalysed);
+
         builder.HasIndex(posting => new { posting.UserId, posting.CreatedAt });
     }
 
@@ -60,7 +67,37 @@ public sealed class RequirementConfiguration : IEntityTypeConfiguration<Requirem
             .HasMaxLength(10)
             .HasConversion<string>()
             .IsRequired();
+        builder.Property(requirement => requirement.Coverage)
+            .HasColumnName("coverage")
+            .HasMaxLength(10)
+            .HasConversion<string>()
+            .HasDefaultValue(Coverage.None)
+            .IsRequired();
+        builder.Property(requirement => requirement.EvidenceQuote).HasColumnName("evidence_quote").HasMaxLength(Requirement.QuoteMaxLength);
+        builder.Property(requirement => requirement.EvidenceSourceDocumentId).HasColumnName("evidence_source_document_id");
+        builder.Property(requirement => requirement.Action).HasColumnName("action").HasMaxLength(Requirement.ActionMaxLength);
+        builder.Property(requirement => requirement.ActionProject).HasColumnName("action_project").HasMaxLength(Requirement.ProjectMaxLength);
+        builder.Property(requirement => requirement.DueDate).HasColumnName("due_date");
+        builder.Property(requirement => requirement.Done).HasColumnName("done");
+        builder.Property(requirement => requirement.AnalysedAt).HasColumnName("analysed_at");
 
         builder.HasIndex(requirement => requirement.PostingId);
+    }
+}
+
+public sealed class ScoreSnapshotConfiguration : IEntityTypeConfiguration<ScoreSnapshot>
+{
+    public void Configure(EntityTypeBuilder<ScoreSnapshot> builder)
+    {
+        builder.ToTable("score_snapshots");
+        builder.HasKey(snapshot => snapshot.Id);
+        builder.Property(snapshot => snapshot.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(snapshot => snapshot.UserId).HasColumnName("user_id").IsRequired();
+        builder.Property(snapshot => snapshot.PostingId).HasColumnName("posting_id").IsRequired();
+        builder.Property(snapshot => snapshot.Score).HasColumnName("score");
+        builder.Property(snapshot => snapshot.Reason).HasColumnName("reason").HasMaxLength(ScoreSnapshot.ReasonMaxLength).IsRequired();
+        builder.Property(snapshot => snapshot.TakenAt).HasColumnName("taken_at");
+
+        builder.HasIndex(snapshot => new { snapshot.PostingId, snapshot.TakenAt });
     }
 }

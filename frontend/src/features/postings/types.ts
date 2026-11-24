@@ -13,12 +13,31 @@ export type PostingSummary = {
     createdAt: string;
 };
 
-export type PostingRequirement = { id: string; text: string; importance: "required" | "nice" };
+export type Coverage = "none" | "partial" | "strong";
+
+export type EvidenceSource = { sourceId: string; kind: string; label: string; path: string; url: string | null };
+
+export type PostingRequirement = {
+    id: string;
+    text: string;
+    importance: "required" | "nice";
+    coverage: Coverage;
+    evidenceQuote: string | null;
+    evidenceSource: EvidenceSource | null;
+    action: string | null;
+    actionProject: string | null;
+    dueDate: string | null;
+    done: boolean;
+    analysedAt: string | null;
+};
+
+export type GapAnalysis = { analysed: boolean; score: number; noClearFit: boolean; analysedAt: string | null };
 
 export type PostingDetail = Omit<PostingSummary, "requirementCount"> & {
     url: string | null;
     rawText: string;
     requirements: PostingRequirement[];
+    analysis: GapAnalysis;
 };
 
 const dateFmt = new Intl.DateTimeFormat("en-BE", { day: "numeric", month: "short", year: "numeric" });

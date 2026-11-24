@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Plus, SearchLg } from "@untitledui/icons";
-import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { ApiError, api } from "@/core/api";
 import { AddPostingModal } from "./add-posting-modal";
-import { NativeSelect } from "./fields";
 import { type PostingSummary, formatDate } from "./types";
 
-const languageLabel = { nl: "NL", fr: "FR", en: "EN" } as const;
 
 export function PostingsPage() {
     const navigate = useNavigate();
@@ -17,9 +14,8 @@ export function PostingsPage() {
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState("");
     const [debounced, setDebounced] = useState("");
-    const [language, setLanguage] = useState("");
-    const [adding, setAdding] = useState(false);
-    const filtered = debounced !== "" || language !== "";
+        const [adding, setAdding] = useState(false);
+    const filtered = debounced !== "";
 
     useEffect(() => {
         const timer = setTimeout(() => setDebounced(query.trim()), 250);
@@ -31,13 +27,12 @@ export function PostingsPage() {
         setItems(null);
         try {
             const params = new URLSearchParams();
-            if (language) params.set("language", language);
             if (debounced) params.set("q", debounced);
             setItems((await api.get<PostingSummary[]>(`/api/postings?${params}`)) ?? []);
         } catch (e) {
             setError(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
         }
-    }, [language, debounced]);
+    }, [debounced]);
 
     useEffect(() => {
         load();
@@ -59,12 +54,6 @@ export function PostingsPage() {
                 <div className="sm:max-w-sm sm:flex-1">
                     <Input aria-label="Search postings" icon={SearchLg} placeholder="Search company, title or city" value={query} onChange={setQuery} />
                 </div>
-                <NativeSelect aria-label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} className="sm:w-44">
-                    <option value="">All languages</option>
-                    <option value="nl">Dutch</option>
-                    <option value="fr">French</option>
-                    <option value="en">English</option>
-                </NativeSelect>
             </div>
 
             <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
@@ -85,7 +74,7 @@ export function PostingsPage() {
                     <div className="flex flex-col items-start gap-3 p-6">
                         <p className="text-md font-semibold text-primary">{filtered ? "No postings match." : "No postings yet."}</p>
                         <p className="text-md text-tertiary">
-                            {filtered ? "Try another search or language." : "Paste a posting or add a link to see what it asks for."}
+                            {filtered ? "Try another search." : "Paste a posting or add a link to see what it asks for."}
                         </p>
                         {!filtered && (
                             <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
@@ -110,14 +99,6 @@ export function PostingsPage() {
                                         </p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                                        <Badge type="pill-color" size="sm" color="gray">
-                                            {languageLabel[p.language]}
-                                        </Badge>
-                                        {p.isDemo && (
-                                            <Badge type="pill-color" size="sm" color="brand">
-                                                Demo data
-                                            </Badge>
-                                        )}
                                         <span className="text-sm text-tertiary">{p.deadline ? `Deadline ${formatDate(p.deadline)}` : "No deadline"}</span>
                                         <span className="w-28 text-sm text-quaternary md:text-right">Not analysed</span>
                                     </div>
