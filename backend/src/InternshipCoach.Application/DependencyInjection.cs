@@ -18,6 +18,7 @@ using InternshipCoach.Application.Sources.GitHub;
 using InternshipCoach.Application.Sources.List;
 using InternshipCoach.Application.Sources.Site;
 using InternshipCoach.Application.Sources.Text;
+using InternshipCoach.Application.Gaps;
 using InternshipCoach.Application.Postings;
 using InternshipCoach.Application.Postings.Add;
 using InternshipCoach.Application.Postings.Analyse;
@@ -64,6 +65,10 @@ public static class DependencyInjection
         services.AddScoped<AnalysePostingHandler>();
         services.AddScoped<RecheckRequirementHandler>();
         services.AddScoped<ResolveEvidenceSourcesHandler>();
+        services.AddSingleton<RescanThrottle>();
+        services.AddScoped<ListGapsHandler>();
+        services.AddScoped<MarkGapDoneHandler>();
+        services.AddScoped<UndoGapHandler>();
         services.AddScoped<ExtractProfileHandler>();
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<SetItemConfirmedHandler>();
