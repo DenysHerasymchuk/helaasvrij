@@ -7,6 +7,8 @@ namespace InternshipCoach.Infrastructure.Persistence;
 public sealed class InternshipCoachDbContext(DbContextOptions<InternshipCoachDbContext> options)
     : DbContext(options), IDataProtectionKeyContext
 {
+    public const string SchemaName = "coach";
+
     public DbSet<User> Users => Set<User>();
 
     // Cookie-encryption keys live in the database so sessions survive an api container restart.
@@ -14,7 +16,7 @@ public sealed class InternshipCoachDbContext(DbContextOptions<InternshipCoachDbC
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("coach");
+        modelBuilder.HasDefaultSchema(SchemaName);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(InternshipCoachDbContext).Assembly);
     }
 }

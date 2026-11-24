@@ -22,6 +22,7 @@ public sealed class AuthController(IAuthenticationSchemeProvider schemes) : Cont
     private const string DefaultReturnUrl = "/dashboard";
     private const string GitHubErrorUrl = "/login?error=github";
 
+    // shortcut: no email verification or password reset; add both before real users sign up with email.
     [HttpPost("register")]
     [Consumes("application/json")]
     [EnableRateLimiting(AuthSchemes.RateLimitPolicy)]

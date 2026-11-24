@@ -62,6 +62,7 @@ public static class AuthExtensions
         return services;
     }
 
+    // shortcut: in-memory limiter, so limits are per api instance; move to a shared store when running more than one.
     public static IServiceCollection AddCoachRateLimiting(this IServiceCollection services, IConfiguration configuration)
     {
         var permitLimit = configuration.GetValue("RateLimit:AuthPerMinute", 10);
@@ -83,6 +84,7 @@ public static class AuthExtensions
         return services;
     }
 
+    // shortcut: any private-network peer is trusted as the proxy; pin it to the nginx address in production.
     // Trust X-Forwarded-* only from loopback and private networks (the Docker network), not the internet.
     public static IServiceCollection AddCoachForwardedHeaders(this IServiceCollection services)
     {
