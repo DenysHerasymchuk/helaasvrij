@@ -10,7 +10,7 @@ export class ApiError extends Error {
     }
 }
 
-type Method = "GET" | "POST" | "PUT" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /** A 401 means the session is gone: send the user to /login and bring them back to this page afterwards. */
 function redirectToLogin() {
@@ -20,7 +20,7 @@ function redirectToLogin() {
 }
 
 async function request<T>(url: string, method: Method, body?: unknown): Promise<T | null> {
-    const hasBody = method === "POST" || method === "PUT" || (method === "DELETE" && body !== undefined);
+    const hasBody = method === "POST" || method === "PUT" || method === "PATCH" || (method === "DELETE" && body !== undefined);
     const response = await fetch(url, {
         method,
         credentials: "same-origin",
@@ -54,5 +54,6 @@ export const api = {
     get: <T>(url: string) => request<T>(url, "GET"),
     post: <T>(url: string, body?: unknown) => request<T>(url, "POST", body),
     put: <T>(url: string, body?: unknown) => request<T>(url, "PUT", body),
+    patch: <T>(url: string, body?: unknown) => request<T>(url, "PATCH", body),
     del: (url: string, body?: unknown) => request<null>(url, "DELETE", body),
 };

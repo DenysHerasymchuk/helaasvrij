@@ -57,7 +57,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | Feature | Why it waits |
 | --- | --- |
 | Interview prep (gap, repo and company questions, answer feedback) | Needs the core and drafts first |
-| Applications kanban | Not part of the core value |
+| Applications kanban | Built, not part of the core value: `/applications` board (Saved, Applied, Interview, Offer, Rejected) with drag and drop and a "Move to" menu, `GET/POST /api/applications`, `PATCH /api/applications/{id}`, `GET /api/applications/stats?months=6`. Stats are not wired into the dashboard yet. Not run against a real database or browser. |
 | Adzuna postings | Free tier is evaluation only; Belgium not confirmed |
 | Zapier/webhook job alerts | Depends on accounts and postings |
 | CV in all three languages at once | One language (the posting's) is enough for the demo |

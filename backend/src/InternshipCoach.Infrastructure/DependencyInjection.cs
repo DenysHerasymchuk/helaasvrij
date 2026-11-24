@@ -3,6 +3,7 @@ using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Infrastructure.Llm;
 using InternshipCoach.Infrastructure.Llm.Replay;
 using InternshipCoach.Infrastructure.Auth;
+using InternshipCoach.Application.Applications;
 using InternshipCoach.Application.Profile;
 using InternshipCoach.Application.Sources;
 using InternshipCoach.Application.Sources.GitHub;
@@ -37,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IPostingRepository, PostingRepository>();
         services.AddSingleton<IPageFetcher, SafePageFetcher>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IApplicationRepository, ApplicationRepository>();
 
         var route33 = configuration.GetSection(Route33Options.SectionName).Get<Route33Options>() ?? new Route33Options();
         if (string.IsNullOrWhiteSpace(route33.BaseUrl))

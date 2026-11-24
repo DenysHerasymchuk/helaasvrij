@@ -1,3 +1,4 @@
+using InternshipCoach.Domain.Applications;
 using InternshipCoach.Domain.Documents;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
@@ -31,6 +32,7 @@ public class AccountDeleterTests
             [("Knows Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow));
         posting.RecordSnapshot("analyse", DateTimeOffset.UtcNow);
         db.Postings.Add(posting);
+        db.Applications.Add(JobApplication.Create(user.Id, posting.Id, new CreatedAt(DateTimeOffset.UtcNow)));
         var source = Source.Create(user.Id, SourceKind.GitHub, "gh");
         var document = source.AddDocument("a/summary", "Repository: a");
         db.Sources.Add(source);
