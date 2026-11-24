@@ -26,6 +26,7 @@ services:
       COACH_Hosting__HttpsTerminatedAtProxy: "true"
       COACH_GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
       COACH_GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
+      COACH_Route33__ApiKey: ${R33_API_KEY:-}
     ports:
       - "5080:8080"
 
