@@ -27,6 +27,7 @@ services:
       COACH_GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
       COACH_GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
       COACH_Route33__ApiKey: ${R33_API_KEY:-}
+      COACH_GitHub__Token: ${GITHUB_TOKEN:-}
     ports:
       - "5080:8080"
 

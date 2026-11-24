@@ -1,6 +1,8 @@
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Llm;
+using InternshipCoach.Domain.Postings;
+using InternshipCoach.Domain.Sources;
 using InternshipCoach.Domain.Settings;
 using InternshipCoach.Domain.Users;
 using InternshipCoach.Infrastructure.Persistence;
@@ -23,6 +25,9 @@ public class AccountDeleterTests
         db.LlmCalls.Add(LlmCall.Create(user.Id, "f", "m", 1, 1, 1, true, new CreatedAt(DateTimeOffset.UtcNow)));
         db.LlmCalls.Add(LlmCall.Create(user.Id, "f", "m", 1, 1, 1, true, new CreatedAt(DateTimeOffset.UtcNow)));
         db.UserSettings.Add(UserSettings.Create(user.Id, "nl", 60, true));
+        db.Postings.Add(Posting.Create(user.Id, "Acme", "Intern", null, PostingLanguage.Nl, null, "text", null,
+            [("Knows Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow)));
+        db.Sources.Add(Source.Create(user.Id, SourceKind.GitHub, "gh"));
         await db.SaveChangesAsync();
         return user;
     }
