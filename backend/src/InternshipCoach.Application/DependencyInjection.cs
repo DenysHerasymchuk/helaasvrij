@@ -2,6 +2,7 @@ using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Auth.GitHubSignIn;
 using InternshipCoach.Application.Llm;
 using InternshipCoach.Application.Applications;
+using InternshipCoach.Application.Dashboard;
 using InternshipCoach.Application.Auth.Login;
 using InternshipCoach.Application.Auth.Me;
 using InternshipCoach.Application.Auth.Register;
@@ -25,10 +26,13 @@ using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Postings.Browse;
 using InternshipCoach.Application.Chat.Send;
 using InternshipCoach.Application.Documents.DeleteDocument;
+using InternshipCoach.Application.Documents.ExtractCvText;
 using InternshipCoach.Application.Documents.GetDocument;
 using InternshipCoach.Application.Documents.ListDocuments;
+using InternshipCoach.Application.Documents.Draft;
 using InternshipCoach.Application.Documents.TailorCv;
 using InternshipCoach.Application.Documents.UpdateDocument;
+using InternshipCoach.Application.Interview;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace InternshipCoach.Application;
@@ -77,14 +81,20 @@ public static class DependencyInjection
         services.AddScoped<DeleteItemHandler>();
         services.AddScoped<UpdateBasicsHandler>();
         services.AddScoped<TailorCvHandler>();
+        services.AddScoped<ExtractCvTextHandler>();
+        services.AddScoped<DraftDocumentHandler>();
         services.AddScoped<ListDocumentsHandler>();
         services.AddScoped<GetDocumentHandler>();
         services.AddScoped<UpdateDocumentHandler>();
         services.AddScoped<DeleteDocumentHandler>();
+        services.AddScoped<InterviewQuestionGenerator>();
+        services.AddScoped<GetInterviewHandler>();
+        services.AddScoped<SubmitAnswerHandler>();
         services.AddScoped<ListApplicationsHandler>();
         services.AddScoped<CreateApplicationHandler>();
         services.AddScoped<UpdateApplicationHandler>();
         services.AddScoped<GetApplicationStatsHandler>();
+        services.AddScoped<GetDashboardHandler>();
         return services;
     }
 }

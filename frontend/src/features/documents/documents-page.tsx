@@ -1,8 +1,12 @@
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
-import { AlertCircle, Copy01, Edit05, Printer, Trash01 } from "@untitledui/icons";
+import { Link } from "react-router";
+import { AlertCircle, Copy01, Download01, Edit05, Printer, Trash01 } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
+import { InputFile } from "@/components/base/input/input-file";
+import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
 import { ApiError, api } from "@/core/api";
+import type { PostingSummary } from "@/features/postings/types";
 import { cx } from "@/utils/cx";
 
 type Language = "nl" | "fr" | "en";
@@ -19,6 +23,12 @@ interface DocumentResponse {
 }
 
 type DocumentSummary = Omit<DocumentResponse, "content" | "droppedCount">;
+
+
+type DraftKind = "coverLetter" | "recruiterMessage";
+
+const kindNames: Record<string, string> = { cv: "CV", coverLetter: "Cover letter", recruiterMessage: "Recruiter message" };
+const RECRUITER_MAX = 300;
 
 const languageNames: Record<Language, string> = { nl: "Nederlands", fr: "Français", en: "English" };
 const MAX_CHARS = 20000;
@@ -76,13 +86,57 @@ function Markdown({ source }: { source: string }) {
     return <div className="flex flex-col gap-2">{blocks}</div>;
 }
 
+/** Reads a problem title from a failed response, or falls back to a generic message. */
+async function problemTitle(response: Response, fallback: string) {
+    try {
+        const problem = await response.json();
+        if (typeof problem.title === "string") return problem.title as string;
+    } catch {
+        // Not JSON: keep the fallback.
+    }
+    return fallback;
+}
+
+/** The upload is multipart, so it bypasses the JSON-only `api` helper. Only the extracted text comes back; the file is not kept. */
+async function extractCvText(file: File): Promise<string> {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await fetch("/api/documents/cv/extract", { method: "POST", credentials: "same-origin", body: form });
+    if (response.ok) return ((await response.json()) as { text: string }).text;
+    throw new ApiError(response.status, await problemTitle(response, "Could not read this file. Try again."));
+}
+
+async function downloadDocx(id: string, title: string) {
+    const response = await fetch(`/api/documents/${id}/docx`, { credentials: "same-origin" });
+    if (!response.ok) throw new ApiError(response.status, await problemTitle(response, "Could not download. Try again."));
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${title}.docx`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
 function formatDate(iso: string) {
     return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(iso));
 }
 
 export function DocumentsPage() {
+    const [cvSource, setCvSource] = useState<"paste" | "upload">("paste");
     const [cvText, setCvText] = useState("");
+    const [cvFile, setCvFile] = useState<File | null>(null);
+    const [extracting, setExtracting] = useState(false);
+    const [extractError, setExtractError] = useState<string | null>(null);
+
+    const [postingSource, setPostingSource] = useState<"saved" | "paste">("paste");
     const [postingText, setPostingText] = useState("");
+    const [postingId, setPostingId] = useState("");
+    const [postings, setPostings] = useState<PostingSummary[] | null>(null);
+    const [postingsError, setPostingsError] = useState(false);
+    const [downloading, setDownloading] = useState(false);
+    const [downloadError, setDownloadError] = useState<string | null>(null);
     const [language, setLanguage] = useState<"" | Language>("");
     const [tailoring, setTailoring] = useState(false);
     const [formError, setFormError] = useState<ApiError | null>(null);
@@ -95,6 +149,12 @@ export function DocumentsPage() {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
+    const [draftPostingId, setDraftPostingId] = useState("");
+    const [draftKind, setDraftKind] = useState<DraftKind>("coverLetter");
+    const [draftLanguage, setDraftLanguage] = useState<"" | Language>("");
+    const [drafting, setDrafting] = useState(false);
+    const [draftError, setDraftError] = useState<string | null>(null);
+
     const [list, setList] = useState<DocumentSummary[] | null>(null);
     const [listError, setListError] = useState(false);
 
@@ -106,10 +166,76 @@ export function DocumentsPage() {
     };
     useEffect(loadList, []);
 
+    const loadPostings = () => {
+        setPostingsError(false);
+        setPostings(null);
+        api.get<PostingSummary[]>("/api/postings")
+            .then((items) => {
+                setPostings(items ?? []);
+                if (items && items.length > 0) setPostingSource("saved");
+            })
+            .catch(() => setPostingsError(true));
+    };
+    useEffect(loadPostings, []);
+
+    const onExtract = async (file: File | null) => {
+        setCvFile(file);
+        setExtractError(null);
+        if (!file) return;
+        if (file.size > MAX_FILE_BYTES) {
+            setExtractError("The file is larger than 5 MB.");
+            return;
+        }
+        setExtracting(true);
+        try {
+            setCvText(await extractCvText(file));
+        } catch (error) {
+            setExtractError(error instanceof ApiError ? error.message : "Could not read this file. Try again.");
+        } finally {
+            setExtracting(false);
+        }
+    };
+
+    const onDownload = async () => {
+        if (!current) return;
+        setDownloading(true);
+        setDownloadError(null);
+        try {
+            await downloadDocx(current.id, current.title);
+        } catch (error) {
+            setDownloadError(error instanceof ApiError ? error.message : "Could not download. Try again.");
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const onDraft = async (event: FormEvent) => {
+        event.preventDefault();
+        if (!draftPostingId) return;
+        setDrafting(true);
+        setDraftError(null);
+        try {
+            const doc = await api.post<DocumentResponse>("/api/documents/draft", {
+                postingId: draftPostingId,
+                kind: draftKind,
+                language: draftLanguage || null,
+            });
+            if (doc) {
+                show(doc);
+                loadList();
+            }
+        } catch (error) {
+            setDraftError(error instanceof ApiError ? error.message : "Something went wrong. Try again.");
+        } finally {
+            setDrafting(false);
+        }
+    };
+
     const show = (doc: DocumentResponse) => {
         setCurrent(doc);
         setEditing(false);
         setSaveError(null);
+        setDownloadError(null);
     };
 
     const onTailor = async (event: FormEvent) => {
@@ -117,13 +243,20 @@ export function DocumentsPage() {
         setTailoring(true);
         setFormError(null);
         try {
-            const doc = await api.post<DocumentResponse>("/api/documents/cv/tailor", { cvText, postingText, language: language || null });
+            const posting = postingSource === "saved" ? { postingId } : { postingText };
+            const doc = await api.post<DocumentResponse>("/api/documents/cv/tailor", { cvText, ...posting, language: language || null });
             if (doc) {
                 show(doc);
                 loadList();
             }
         } catch (error) {
-            setFormError(error instanceof ApiError ? error : new ApiError(0, "Something went wrong. Try again."));
+            if (error instanceof ApiError && error.status === 404 && postingSource === "saved") {
+                setFormError(new ApiError(404, "", { postingId: "This posting no longer exists. Pick another one." }));
+                setPostingId("");
+                loadPostings();
+            } else {
+                setFormError(error instanceof ApiError ? error : new ApiError(0, "Something went wrong. Try again."));
+            }
         } finally {
             setTailoring(false);
         }
@@ -182,53 +315,162 @@ export function DocumentsPage() {
     };
 
     const cvError = formError?.fieldErrors.cvText;
-    const postingError = formError?.fieldErrors.postingText;
+    const postingError = formError?.fieldErrors.postingText ?? formError?.fieldErrors.postingId;
     const generalError = formError && !cvError && !postingError ? formError.message : null;
+    const showCvText = cvSource === "paste" || cvText.length > 0;
 
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <style>{printCss}</style>
             <div className="flex flex-col gap-1">
                 <h1 className="text-display-xs font-semibold text-primary">Documents</h1>
-                <p className="text-md text-tertiary">Paste your CV and a job posting. You get your CV rewritten for that posting, using only what your CV already says.</p>
+                <p className="text-md text-tertiary">Your CV, a cover letter and a recruiter message for one posting, built only from what you have confirmed on your profile. You send them yourself; nothing is sent for you.</p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
+                <div className="flex flex-col gap-6">
                 <Panel title="Tailor your CV">
                     <form onSubmit={onTailor} className="flex flex-col gap-5 p-5">
-                        <div className="flex flex-col gap-1.5">
-                            <label htmlFor="cv-text" className="text-sm font-medium text-secondary">Your CV</label>
-                            <textarea
-                                id="cv-text"
-                                required
-                                rows={10}
-                                maxLength={MAX_CHARS}
-                                value={cvText}
-                                onChange={(e) => setCvText(e.target.value)}
-                                placeholder="Paste your CV as plain text"
-                                aria-invalid={!!cvError}
-                                aria-describedby={cvError ? "cv-text-error" : undefined}
-                                className={fieldClass}
-                            />
-                            {cvError && <p id="cv-text-error" className="text-sm text-error-primary">{cvError}</p>}
-                        </div>
+                        <fieldset className="flex flex-col gap-3">
+                            <legend className="mb-3 text-sm font-medium text-secondary">Your CV</legend>
+                            <RadioGroup
+                                aria-label="How to add your CV"
+                                value={cvSource}
+                                onChange={(value) => setCvSource(value as "paste" | "upload")}
+                                className="flex-row flex-wrap gap-x-6 gap-y-2"
+                            >
+                                <RadioButton value="paste" label="Paste text" />
+                                <RadioButton value="upload" label="Upload PDF or Word" />
+                            </RadioGroup>
 
-                        <div className="flex flex-col gap-1.5">
-                            <label htmlFor="posting-text" className="text-sm font-medium text-secondary">Job posting</label>
-                            <textarea
-                                id="posting-text"
-                                required
-                                rows={8}
-                                maxLength={MAX_CHARS}
-                                value={postingText}
-                                onChange={(e) => setPostingText(e.target.value)}
-                                placeholder="Paste the full job posting"
-                                aria-invalid={!!postingError}
-                                aria-describedby={postingError ? "posting-text-error" : undefined}
-                                className={fieldClass}
-                            />
-                            {postingError && <p id="posting-text-error" className="text-sm text-error-primary">{postingError}</p>}
-                        </div>
+                            {cvSource === "upload" && (
+                                <div className="flex flex-col gap-2">
+                                    <InputFile
+                                        size="md"
+                                        label="CV file"
+                                        hint="PDF or .docx, up to 5 MB. We read the text and do not keep the file."
+                                        acceptedFileTypes={[".pdf", ".docx"]}
+                                        buttonText="Choose file"
+                                        isLoading={extracting}
+                                        isDisabled={extracting}
+                                        isInvalid={!!extractError}
+                                        onChange={(files) => onExtract(files?.[0] ?? null)}
+                                    />
+                                    {extracting && <p role="status" className="text-sm text-tertiary">Reading your file...</p>}
+                                    {extractError && (
+                                        <div role="alert" className="flex flex-wrap items-center gap-3">
+                                            <p className="flex items-center gap-2 text-sm text-error-primary">
+                                                <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                                {extractError}
+                                            </p>
+                                            {cvFile && cvFile.size <= MAX_FILE_BYTES && (
+                                                <Button size="sm" color="secondary" onPress={() => onExtract(cvFile)}>
+                                                    Try again
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {showCvText && (
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="cv-text" className={cvSource === "upload" ? "text-sm font-medium text-secondary" : "sr-only"}>
+                                        {cvSource === "upload" ? "Text from your file" : "CV text"}
+                                    </label>
+                                    {cvSource === "upload" && (
+                                        <p id="cv-text-hint" className="text-sm text-tertiary">
+                                            Check this text and fix anything that came out wrong. Only this text is used.
+                                        </p>
+                                    )}
+                                    <textarea
+                                        id="cv-text"
+                                        required
+                                        rows={10}
+                                        maxLength={MAX_CHARS}
+                                        value={cvText}
+                                        onChange={(e) => setCvText(e.target.value)}
+                                        placeholder="Paste your CV as plain text"
+                                        aria-invalid={!!cvError}
+                                        aria-describedby={cx(cvSource === "upload" && "cv-text-hint", cvError && "cv-text-error") || undefined}
+                                        className={fieldClass}
+                                    />
+                                </div>
+                            )}
+                            {cvError && <p id="cv-text-error" className="text-sm text-error-primary">{cvError}</p>}
+                        </fieldset>
+
+                        <fieldset className="flex flex-col gap-3">
+                            <legend className="mb-3 text-sm font-medium text-secondary">Job posting</legend>
+                            <RadioGroup
+                                aria-label="Which job posting"
+                                value={postingSource}
+                                onChange={(value) => setPostingSource(value as "saved" | "paste")}
+                                className="flex-row flex-wrap gap-x-6 gap-y-2"
+                            >
+                                <RadioButton value="saved" label="One of my postings" />
+                                <RadioButton value="paste" label="Paste text" />
+                            </RadioGroup>
+
+                            {postingSource === "saved" &&
+                                (postingsError ? (
+                                    <div role="alert" className="flex flex-wrap items-center gap-3">
+                                        <p className="text-sm text-error-primary">Could not load your postings.</p>
+                                        <Button size="sm" color="secondary" onPress={loadPostings}>
+                                            Try again
+                                        </Button>
+                                    </div>
+                                ) : postings === null ? (
+                                    <p role="status" className="text-sm text-tertiary">Loading your postings...</p>
+                                ) : postings.length === 0 ? (
+                                    <p className="text-sm text-tertiary">
+                                        You have no saved postings yet. Save one on the{" "}
+                                        <Link to="/postings" className="font-semibold text-brand-secondary underline-offset-2 hover:underline focus-visible:underline">
+                                            Postings
+                                        </Link>{" "}
+                                        page, or paste the text instead.
+                                    </p>
+                                ) : (
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="posting-id" className="sr-only">Saved posting</label>
+                                        <select
+                                            id="posting-id"
+                                            required
+                                            value={postingId}
+                                            onChange={(e) => setPostingId(e.target.value)}
+                                            aria-invalid={!!postingError}
+                                            aria-describedby={postingError ? "posting-error" : undefined}
+                                            className={fieldClass}
+                                        >
+                                            <option value="">Choose a posting</option>
+                                            {postings.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.city ? `${p.title}, ${p.company} (${p.city})` : `${p.title}, ${p.company}`}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                ))}
+
+                            {postingSource === "paste" && (
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="posting-text" className="sr-only">Job posting text</label>
+                                    <textarea
+                                        id="posting-text"
+                                        required
+                                        rows={8}
+                                        maxLength={MAX_CHARS}
+                                        value={postingText}
+                                        onChange={(e) => setPostingText(e.target.value)}
+                                        placeholder="Paste the full job posting"
+                                        aria-invalid={!!postingError}
+                                        aria-describedby={postingError ? "posting-error" : undefined}
+                                        className={fieldClass}
+                                    />
+                                </div>
+                            )}
+                            {postingError && <p id="posting-error" className="text-sm text-error-primary">{postingError}</p>}
+                        </fieldset>
 
                         <div className="flex flex-col gap-1.5">
                             <label htmlFor="cv-language" className="text-sm font-medium text-secondary">Language</label>
@@ -248,15 +490,72 @@ export function DocumentsPage() {
                         )}
 
                         <div>
-                            <Button type="submit" size="md" isLoading={tailoring} isDisabled={tailoring} showTextWhileLoading>
+                            <Button type="submit" size="md" isLoading={tailoring} isDisabled={tailoring || extracting} showTextWhileLoading>
                                 {tailoring ? "Tailoring your CV..." : "Tailor CV"}
                             </Button>
                         </div>
                     </form>
                 </Panel>
 
+                <Panel title="Cover letter or recruiter message">
+                    <form onSubmit={onDraft} className="flex flex-col gap-5 p-5">
+                        {postingsError ? (
+                            <div className="flex flex-col items-start gap-3">
+                                <p className="text-sm text-error-primary">Could not load your postings.</p>
+                                <Button size="sm" color="secondary" onPress={loadPostings}>Try again</Button>
+                            </div>
+                        ) : postings === null ? (
+                            <p role="status" className="text-sm text-tertiary">Loading...</p>
+                        ) : postings.length === 0 ? (
+                            <p className="text-sm text-tertiary">Add a posting first. Drafts are written for one of your postings.</p>
+                        ) : (
+                            <>
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="draft-posting" className="text-sm font-medium text-secondary">Posting</label>
+                                    <select id="draft-posting" required value={draftPostingId} onChange={(e) => setDraftPostingId(e.target.value)} className={fieldClass}>
+                                        <option value="">Choose a posting</option>
+                                        {postings.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.company} - {p.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="draft-kind" className="text-sm font-medium text-secondary">Type</label>
+                                        <select id="draft-kind" value={draftKind} onChange={(e) => setDraftKind(e.target.value as DraftKind)} className={fieldClass}>
+                                            <option value="coverLetter">Cover letter</option>
+                                            <option value="recruiterMessage">Recruiter message (max {RECRUITER_MAX} characters)</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="draft-language" className="text-sm font-medium text-secondary">Language</label>
+                                        <select id="draft-language" value={draftLanguage} onChange={(e) => setDraftLanguage(e.target.value as "" | Language)} className={fieldClass}>
+                                            <option value="">Same as posting</option>
+                                            <option value="nl">Nederlands</option>
+                                            <option value="fr">Français</option>
+                                            <option value="en">English</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                {draftError && (
+                                    <p role="alert" className="flex items-center gap-2 text-sm text-error-primary">
+                                        <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                        {draftError}
+                                    </p>
+                                )}
+                                <div>
+                                    <Button type="submit" size="md" isLoading={drafting} isDisabled={drafting || !draftPostingId} showTextWhileLoading>
+                                        {drafting ? "Writing your draft..." : "Write draft"}
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </form>
+                </Panel>
+                </div>
+
                 <Panel
-                    title={current ? current.title : "Tailored CV"}
+                    title={current ? current.title : "Your draft"}
                     action={
                         current && !editing ? (
                             <div className="flex flex-wrap gap-2">
@@ -265,6 +564,9 @@ export function DocumentsPage() {
                                 </Button>
                                 <Button size="sm" color="secondary" iconLeading={Edit05} onPress={onEdit}>
                                     Edit
+                                </Button>
+                                <Button size="sm" color="secondary" iconLeading={Download01} onPress={onDownload} isLoading={downloading} isDisabled={downloading} showTextWhileLoading>
+                                    Download Word (.docx)
                                 </Button>
                                 <Button size="sm" color="secondary" iconLeading={Printer} onPress={() => window.print()}>
                                     Print / Save as PDF
@@ -275,10 +577,25 @@ export function DocumentsPage() {
                 >
                     <div className="flex flex-col gap-4 p-5">
                         {!current && !tailoring && (
-                            <p className="text-sm text-tertiary">Your tailored CV shows up here. Every line in it comes from your own CV.</p>
+                            <p className="text-sm text-tertiary">Your CV, cover letter or recruiter message shows up here. Every claim in it comes from your own evidence.</p>
                         )}
                         {!current && tailoring && (
-                            <p role="status" className="text-sm text-tertiary">Rewriting your CV for this posting. This takes up to a minute.</p>
+                            <p role="status" className="text-sm text-tertiary">Writing your document. This takes up to a minute.</p>
+                        )}
+
+                        {current?.kind === "recruiterMessage" && !editing && (
+                            <p className={cx("text-sm", current.content.length > RECRUITER_MAX ? "text-error-primary" : "text-tertiary")}>
+                                {current.content.length}/{RECRUITER_MAX} characters. Copy it and send it yourself.
+                            </p>
+                        )}
+
+                        {downloadError && !editing && (
+                            <div role="alert" className="flex flex-wrap items-center gap-3">
+                                <p className="text-sm text-error-primary">{downloadError}</p>
+                                <Button size="sm" color="secondary" onPress={onDownload}>
+                                    Try again
+                                </Button>
+                            </div>
                         )}
 
                         {current && !!current.droppedCount && (
@@ -295,7 +612,17 @@ export function DocumentsPage() {
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label htmlFor="edit-content" className="text-sm font-medium text-secondary">Content (markdown)</label>
-                                    <textarea id="edit-content" rows={18} value={draftContent} onChange={(e) => setDraftContent(e.target.value)} className={cx(fieldClass, "font-mono text-sm")} />
+                                    <textarea
+                                        id="edit-content"
+                                        rows={current.kind === "recruiterMessage" ? 6 : 18}
+                                        maxLength={current.kind === "recruiterMessage" ? RECRUITER_MAX : undefined}
+                                        value={draftContent}
+                                        onChange={(e) => setDraftContent(e.target.value)}
+                                        className={cx(fieldClass, "font-mono text-sm")}
+                                    />
+                                    {current.kind === "recruiterMessage" && (
+                                        <p className="text-sm text-tertiary">{draftContent.length}/{RECRUITER_MAX} characters</p>
+                                    )}
                                 </div>
                                 {saveError && <p role="alert" className="text-sm text-error-primary">{saveError}</p>}
                                 <div className="flex gap-2">
@@ -318,10 +645,10 @@ export function DocumentsPage() {
                 </Panel>
             </div>
 
-            <Panel title="Your tailored CVs">
+            <Panel title="Your documents">
                 {listError ? (
                     <div className="flex flex-col items-start gap-3 p-5">
-                        <p className="text-sm text-error-primary">Could not load your CVs.</p>
+                        <p className="text-sm text-error-primary">Could not load your documents.</p>
                         <Button size="sm" color="secondary" onPress={loadList}>
                             Try again
                         </Button>
@@ -329,7 +656,7 @@ export function DocumentsPage() {
                 ) : list === null ? (
                     <p role="status" className="p-5 text-sm text-tertiary">Loading...</p>
                 ) : list.length === 0 ? (
-                    <p className="p-5 text-sm text-tertiary">No tailored CVs yet. Fill in the form above to make your first one.</p>
+                    <p className="p-5 text-sm text-tertiary">No documents yet. Use one of the forms above to make your first one.</p>
                 ) : (
                     <ul className="flex flex-col divide-y divide-secondary">
                         {list.map((doc) => (
@@ -338,6 +665,7 @@ export function DocumentsPage() {
                                     <p className="truncate text-sm font-medium text-primary">{doc.title}</p>
                                     <p className="text-sm text-tertiary">{formatDate(doc.createdAt)}</p>
                                 </div>
+                                <Badge size="sm" color="brand">{kindNames[doc.kind] ?? doc.kind}</Badge>
                                 <Badge size="sm" color="gray">{languageNames[doc.language] ?? doc.language}</Badge>
                                 <Button size="sm" color="secondary" onPress={() => onOpen(doc.id)} aria-label={`Open ${doc.title}`}>
                                     Open

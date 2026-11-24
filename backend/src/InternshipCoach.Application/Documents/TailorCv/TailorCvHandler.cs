@@ -8,15 +8,18 @@ using InternshipCoach.Domain.Documents;
 
 namespace InternshipCoach.Application.Documents.TailorCv;
 
-public sealed record TailorCvResult(Document? Document, int DroppedCount, IReadOnlyDictionary<string, string[]>? Errors)
+public sealed record TailorCvResult(Document? Document, int DroppedCount, IReadOnlyDictionary<string, string[]>? Errors, bool PostingNotFound = false)
 {
     public bool Succeeded => Document is not null;
+
+    public static TailorCvResult NotFound() => new(null, 0, null, true);
 
     public static TailorCvResult Invalid(string field, string message) => new(null, 0, new Dictionary<string, string[]> { [field] = [message] });
 }
 
-// Rewrites a pasted CV for a pasted posting. Every bullet and skill must quote the CV verbatim; the rest is dropped and counted.
-public sealed partial class TailorCvHandler(ILlmClient llm, IDocumentRepository documents, ICurrentUser currentUser, IClock clock)
+// Rewrites the student's confirmed CV text for a pasted or saved posting. Every bullet and skill must quote the CV verbatim; the rest is dropped and counted.
+public sealed partial class TailorCvHandler(
+    ILlmClient llm, IDocumentRepository documents, IPostingRepository postings, ICurrentUser currentUser, IClock clock)
 {
     public const int MaxTextLength = 20_000;
     public const string Feature = "cv-tailor";
@@ -80,6 +83,17 @@ public sealed partial class TailorCvHandler(ILlmClient llm, IDocumentRepository 
     {
         var cv = command.CvText?.Trim() ?? string.Empty;
         var posting = command.PostingText?.Trim() ?? string.Empty;
+        if (command.PostingId is { } postingId)
+        {
+            // The repository filters by the signed-in user, so another user's posting is not found.
+            var saved = await postings.FindAsync(postingId, ct);
+            if (saved is null)
+            {
+                return TailorCvResult.NotFound();
+            }
+
+            posting = saved.RawText.Trim();
+        }
 
         if (cv.Length == 0)
         {

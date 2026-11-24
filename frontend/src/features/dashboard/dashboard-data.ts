@@ -1,16 +1,29 @@
-import { type Posting, type Requirement, impact, postings, score } from "@/features/demo/demo-user";
+import type { DashboardPosting, DashboardRequirement } from "./use-dashboard";
 
 export const dateFmt = new Intl.DateTimeFormat("en-BE", { day: "numeric", month: "short" });
+export const timeFmt = new Intl.DateTimeFormat("en-BE", { hour: "2-digit", minute: "2-digit" });
 export const fmt = (iso: string) => dateFmt.format(new Date(iso));
 
-export const ranked = [...postings].sort((a, b) => score(b.requirements) - score(a.requirements));
+export const ranked = (postings: DashboardPosting[]) => [...postings].sort((a, b) => b.score - a.score);
 
-// Match points a posting gains when this requirement becomes fully covered.
-const gain = (p: Posting, r: Requirement) => score(p.requirements.map((x) => (x === r ? { ...x, coverage: "strong" as const } : x))) - score(p.requirements);
+export type NextStep = DashboardRequirement & { company: string };
 
-export const actions = postings
-    .flatMap((p) => p.requirements.filter((r) => r.action && impact(r) > 0).map((r) => ({ ...r, company: p.company, gain: gain(p, r) })))
-    .sort((a, b) => b.gain - a.gain || (a.due ?? "").localeCompare(b.due ?? ""));
+/** Open gaps with an action, biggest gain first, then earliest due date. */
+export const nextSteps = (postings: DashboardPosting[]): NextStep[] =>
+    postings
+        .flatMap((p) => p.requirements.filter((r) => r.action && !r.done && r.coverage !== "strong").map((r) => ({ ...r, company: p.company })))
+        .sort((a, b) => b.gain - a.gain || (a.due ?? "9999").localeCompare(b.due ?? "9999"));
 
-export const nextDeadline = [...postings].sort((a, b) => a.deadline.localeCompare(b.deadline))[0];
-export const nextInterview = postings.find((p) => p.interviewAt);
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** Closest deadline that has not passed yet. */
+export const nextDeadline = (postings: DashboardPosting[]) =>
+    postings
+        .filter((p): p is DashboardPosting & { deadline: string } => p.deadline !== null && p.deadline >= today())
+        .sort((a, b) => a.deadline.localeCompare(b.deadline))[0];
+
+/** Closest interview that has not happened yet. */
+export const nextInterview = (postings: DashboardPosting[]) =>
+    postings
+        .filter((p): p is DashboardPosting & { interviewAt: string } => p.interviewAt !== null && new Date(p.interviewAt).getTime() >= Date.now())
+        .sort((a, b) => a.interviewAt.localeCompare(b.interviewAt))[0];

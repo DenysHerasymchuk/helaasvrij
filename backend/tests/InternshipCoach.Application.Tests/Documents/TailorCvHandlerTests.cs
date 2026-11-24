@@ -3,6 +3,8 @@ using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Documents.TailorCv;
 using InternshipCoach.Application.Llm;
 using InternshipCoach.Application.Tests.TestDoubles;
+using InternshipCoach.Domain.Common;
+using InternshipCoach.Domain.Postings;
 
 namespace InternshipCoach.Application.Tests.Documents;
 
@@ -26,7 +28,39 @@ public class TailorCvHandlerTests
         var clock = new FakeClock(new DateTimeOffset(2026, 11, 24, 10, 0, 0, TimeSpan.Zero));
         var llm = new LlmClient(transport, log, clock, new LlmLimits());
         var repo = new FakeDocumentRepository();
-        return (new TailorCvHandler(llm, repo, new FakeCurrentUser(UserId), clock), transport, log, repo);
+        return (new TailorCvHandler(llm, repo, Postings, new FakeCurrentUser(UserId), clock), transport, log, repo);
+    }
+
+    // The real repository filters by user (PostingInfrastructureTests); here only the student's own posting is in the fake.
+    private static readonly Domain.Postings.Posting SavedPosting = Domain.Postings.Posting.Create(UserId, "Acme", "Stage .NET", "Gent", PostingLanguage.Nl, null,
+        "Saved posting: .NET stage in Gent, Docker required.", null, [("Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow));
+
+    private static readonly FakePostingRepository Postings = new() { Items = { SavedPosting } };
+
+    [Fact]
+    public async Task Saved_posting_text_is_sent_instead_of_the_pasted_text()
+    {
+        var (handler, transport, _, _) = Create(Reply());
+
+        var result = await handler.HandleAsync(new TailorCvCommand(Cv, "pasted text that must be ignored", null, SavedPosting.Id), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        var prompt = transport.Requests.Single().Turns[0].Content;
+        Assert.Contains("Saved posting: .NET stage in Gent", prompt);
+        Assert.DoesNotContain("pasted text that must be ignored", prompt);
+    }
+
+    [Fact]
+    public async Task Unknown_or_other_users_posting_id_is_not_found_without_calling_the_model()
+    {
+        var (handler, transport, _, repo) = Create(Reply());
+
+        var result = await handler.HandleAsync(new TailorCvCommand(Cv, null, null, Guid.NewGuid()), CancellationToken.None);
+
+        Assert.True(result.PostingNotFound);
+        Assert.False(result.Succeeded);
+        Assert.Empty(transport.Requests);
+        Assert.Empty(repo.Documents);
     }
 
     private static string Reply(string language = "nl", object[]? bullets = null, object[]? skills = null, string summary = "Student met .NET-ervaring.") =>
