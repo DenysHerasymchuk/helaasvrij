@@ -17,6 +17,13 @@ cp .env.example .env
 
 Open `.env` and replace `CHANGE_ME` with a database password of your choice. Never commit `.env`.
 
+Other keys in `.env` (all optional for a first start, the app runs without them):
+
+- `R33_API_KEY` -> route33 LLM key. Without it every AI feature (profile extraction, gap matrix, drafts, interview prep, chat) answers with an error.
+- `GITHUB_TOKEN` -> raises the GitHub ingest limit from 60 to 5,000 requests per hour (no scopes needed).
+- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` -> "Sign in with GitHub" (see below).
+- `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` -> search real postings on the Postings page.
+
 ## GitHub sign-in (optional)
 
 Email and password work without this. To enable "Sign in with GitHub":
@@ -46,6 +53,10 @@ docker compose up --build
 | API health | http://localhost:5080/api/health |
 | Swagger | http://localhost:5080/swagger |
 
+In development the API creates a demo student and four demo postings on first start. Sign in with `lotte@demo.test` / `Demo1234!` to try the app without registering.
+
+Typical first walk-through: Profile (add a GitHub username, paste CV text, confirm items), Postings (open a demo posting, Analyse), Gap plan (tick a gap to re-scan), Documents (CV, cover letter, recruiter message), Interview prep.
+
 Stop with `Ctrl+C`, or `docker compose down` (add `-v` to also delete the database).
 
 ## Frontend development (hot reload)
@@ -58,7 +69,7 @@ npm install
 npm run dev -- --port 5174
 ```
 
-Open http://localhost:5174. Calls to `/api` are proxied to the API on port 5080. Register a real account (email and password, or GitHub) to reach the dashboard; the dashboard data itself is still demo data.
+Open http://localhost:5174. Calls to `/api` are proxied to the API on port 5080. Register an account or use the demo student above.
 
 ## Build and test
 
