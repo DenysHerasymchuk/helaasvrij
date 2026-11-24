@@ -1,0 +1,143 @@
+{
+  "note": "Synthetic personas only. No real CV or GitHub data. Expected coverage is hand-labelled: strong = a quote clearly shows it, partial = related or weaker, none = no quote shows it.",
+  "personas": {
+    "alex-web": {
+      "repos": ["weather-app", "chat-api", "portfolio-site"],
+      "documents": [
+        { "id": "alex-cv", "text": "Alex Example. Student Applied Computer Science, year 2. Skills: JavaScript, TypeScript, React, HTML and CSS. Built a weather app in React that calls a public REST API and caches results. Wrote a small Node.js and Express chat API with 12 unit tests in Jest. Group project: Scrum with 4 students, weekly sprint demo. Languages: Dutch (native), English (B2)." }
+      ],
+      "evidence": [
+        { "document": "alex-cv", "kind": "skill", "item": "React", "quote": "Skills: JavaScript, TypeScript, React, HTML and CSS" },
+        { "document": "alex-cv", "kind": "project", "item": "weather-app", "quote": "Built a weather app in React that calls a public REST API and caches results" },
+        { "document": "alex-cv", "kind": "project", "item": "chat-api", "quote": "Wrote a small Node.js and Express chat API with 12 unit tests in Jest" },
+        { "document": "alex-cv", "kind": "experience", "item": "Group project", "quote": "Group project: Scrum with 4 students, weekly sprint demo" },
+        { "document": "alex-cv", "kind": "language", "item": "Languages", "quote": "Dutch (native), English (B2)" }
+      ]
+    },
+    "sam-data": {
+      "repos": ["sales-dashboard", "ml-notebooks", "csv-cleaner"],
+      "documents": [
+        { "id": "sam-cv", "text": "Sam Example. Student Applied Computer Science, year 3. Skills: Python, pandas, SQL and Excel. Built a sales dashboard in Python with pandas and matplotlib for a local shop. Trained a simple scikit-learn classifier in a school machine learning course. Cleaned messy CSV exports with a small Python script that removes duplicates. Languages: French (native), Dutch (B2), English (C1)." }
+      ],
+      "evidence": [
+        { "document": "sam-cv", "kind": "skill", "item": "Python", "quote": "Skills: Python, pandas, SQL and Excel" },
+        { "document": "sam-cv", "kind": "project", "item": "sales-dashboard", "quote": "Built a sales dashboard in Python with pandas and matplotlib for a local shop" },
+        { "document": "sam-cv", "kind": "project", "item": "ml-notebooks", "quote": "Trained a simple scikit-learn classifier in a school machine learning course" },
+        { "document": "sam-cv", "kind": "project", "item": "csv-cleaner", "quote": "Cleaned messy CSV exports with a small Python script that removes duplicates" },
+        { "document": "sam-cv", "kind": "language", "item": "Languages", "quote": "French (native), Dutch (B2), English (C1)" }
+      ]
+    },
+    "robin-sec": {
+      "repos": ["port-scanner", "ctf-writeups", "home-lab"],
+      "documents": [
+        { "id": "robin-cv", "text": "Robin Example. Student Electronics-ICT, year 2. Skills: Linux, Bash, Python and networking basics. Wrote a TCP port scanner in Python for a school project. Published 6 capture-the-flag write-ups on a personal blog. Runs a home lab with Proxmox and two Ubuntu servers behind a firewall. Languages: Dutch (native), English (B2)." }
+      ],
+      "evidence": [
+        { "document": "robin-cv", "kind": "skill", "item": "Linux", "quote": "Skills: Linux, Bash, Python and networking basics" },
+        { "document": "robin-cv", "kind": "project", "item": "port-scanner", "quote": "Wrote a TCP port scanner in Python for a school project" },
+        { "document": "robin-cv", "kind": "project", "item": "ctf-writeups", "quote": "Published 6 capture-the-flag write-ups on a personal blog" },
+        { "document": "robin-cv", "kind": "project", "item": "home-lab", "quote": "Runs a home lab with Proxmox and two Ubuntu servers behind a firewall" },
+        { "document": "robin-cv", "kind": "language", "item": "Languages", "quote": "Dutch (native), English (B2)" }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "frontend-en", "company": "Pixel Works", "title": "Frontend intern", "persona": "alex-web", "language": "En",
+      "requirements": [
+        { "text": "Experience with React and TypeScript", "importance": "Required", "expected": "Strong" },
+        { "text": "Can consume REST APIs from a web app", "importance": "Required", "expected": "Strong" },
+        { "text": "Writes automated tests", "importance": "Required", "expected": "Strong" },
+        { "text": "Knows Docker and containers", "importance": "Nice", "expected": "None" },
+        { "text": "Works in an agile team with Scrum", "importance": "Nice", "expected": "Strong" }
+      ]
+    },
+    {
+      "id": "backend-dotnet-nl", "company": "Brugge Software", "title": "Backend stagiair", "persona": "alex-web", "language": "Nl",
+      "requirements": [
+        { "text": "Kennis van C# en .NET", "importance": "Required", "expected": "None" },
+        { "text": "Ervaring met het bouwen van een API", "importance": "Required", "expected": "Strong" },
+        { "text": "Schrijft unit tests", "importance": "Required", "expected": "Strong" },
+        { "text": "Kan werken met een relationele database", "importance": "Nice", "expected": "None" },
+        { "text": "Goede kennis van het Nederlands", "importance": "Required", "expected": "Strong" }
+      ]
+    },
+    {
+      "id": "qa-en", "company": "TestLab", "title": "QA intern", "persona": "alex-web", "language": "En",
+      "requirements": [
+        { "text": "Experience writing unit tests", "importance": "Required", "expected": "Strong" },
+        { "text": "Familiar with JavaScript", "importance": "Required", "expected": "Strong" },
+        { "text": "Knows Selenium or Cypress for end-to-end testing", "importance": "Required", "expected": "None" },
+        { "text": "Can read and report bugs clearly in English", "importance": "Nice", "expected": "Partial" }
+      ]
+    },
+    {
+      "id": "data-analyst-en", "company": "Shopmetrics", "title": "Data analyst intern", "persona": "sam-data", "language": "En",
+      "requirements": [
+        { "text": "Python and pandas for data analysis", "importance": "Required", "expected": "Strong" },
+        { "text": "Knowledge of SQL", "importance": "Required", "expected": "Strong" },
+        { "text": "Can build dashboards and charts", "importance": "Required", "expected": "Strong" },
+        { "text": "Experience with Power BI or Tableau", "importance": "Nice", "expected": "None" },
+        { "text": "Cleans and prepares messy data", "importance": "Required", "expected": "Strong" }
+      ]
+    },
+    {
+      "id": "data-engineer-fr", "company": "Liege Data", "title": "Stagiaire data engineer", "persona": "sam-data", "language": "Fr",
+      "requirements": [
+        { "text": "Maitrise de Python", "importance": "Required", "expected": "Strong" },
+        { "text": "Experience avec Apache Spark ou Airflow", "importance": "Required", "expected": "None" },
+        { "text": "Notions de machine learning", "importance": "Nice", "expected": "Partial" },
+        { "text": "Francais courant", "importance": "Required", "expected": "Strong" },
+        { "text": "Connaissance du cloud (AWS ou Azure)", "importance": "Nice", "expected": "None" }
+      ]
+    },
+    {
+      "id": "bi-nl", "company": "Gent Insights", "title": "BI stagiair", "persona": "sam-data", "language": "Nl",
+      "requirements": [
+        { "text": "Ervaring met Excel en SQL", "importance": "Required", "expected": "Strong" },
+        { "text": "Kan data visualiseren in een dashboard", "importance": "Required", "expected": "Strong" },
+        { "text": "Goede kennis van het Nederlands", "importance": "Required", "expected": "Partial" },
+        { "text": "Kennis van statistiek", "importance": "Nice", "expected": "None" }
+      ]
+    },
+    {
+      "id": "security-en", "company": "Shieldworks", "title": "Security intern", "persona": "robin-sec", "language": "En",
+      "requirements": [
+        { "text": "Knowledge of networking and TCP", "importance": "Required", "expected": "Strong" },
+        { "text": "Comfortable with Linux and the command line", "importance": "Required", "expected": "Strong" },
+        { "text": "Interest in capture-the-flag and penetration testing", "importance": "Nice", "expected": "Strong" },
+        { "text": "Scripting in Python or Bash", "importance": "Required", "expected": "Strong" },
+        { "text": "Knows SIEM tools such as Splunk", "importance": "Nice", "expected": "None" }
+      ]
+    },
+    {
+      "id": "sysadmin-nl", "company": "Kortrijk IT Services", "title": "Systeembeheer stagiair", "persona": "robin-sec", "language": "Nl",
+      "requirements": [
+        { "text": "Ervaring met Linux servers", "importance": "Required", "expected": "Strong" },
+        { "text": "Kennis van virtualisatie", "importance": "Required", "expected": "Strong" },
+        { "text": "Kennis van Windows Server en Active Directory", "importance": "Required", "expected": "None" },
+        { "text": "Kan scripts schrijven om taken te automatiseren", "importance": "Nice", "expected": "Strong" }
+      ]
+    },
+    {
+      "id": "software-weak-fit-en", "company": "Enterprise Java Co", "title": "Java developer intern", "persona": "robin-sec", "language": "En",
+      "requirements": [
+        { "text": "Experience with Java and Spring Boot", "importance": "Required", "expected": "None" },
+        { "text": "Knowledge of design patterns", "importance": "Required", "expected": "None" },
+        { "text": "Experience with Git and code review", "importance": "Required", "expected": "None" },
+        { "text": "Can write Python scripts", "importance": "Nice", "expected": "Strong" },
+        { "text": "Good English", "importance": "Required", "expected": "Partial" }
+      ]
+    },
+    {
+      "id": "devops-en", "company": "Cloudgate", "title": "DevOps intern", "persona": "alex-web", "language": "En",
+      "requirements": [
+        { "text": "Experience with Docker and Kubernetes", "importance": "Required", "expected": "None" },
+        { "text": "Knowledge of CI/CD pipelines", "importance": "Required", "expected": "None" },
+        { "text": "Basic Node.js knowledge", "importance": "Nice", "expected": "Strong" },
+        { "text": "Familiar with Linux", "importance": "Required", "expected": "None" },
+        { "text": "Writes clear documentation", "importance": "Nice", "expected": "None" }
+      ]
+    }
+  ]
+}

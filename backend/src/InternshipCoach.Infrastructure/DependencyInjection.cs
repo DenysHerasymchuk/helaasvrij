@@ -1,6 +1,7 @@
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Infrastructure.Llm;
+using InternshipCoach.Infrastructure.Llm.Replay;
 using InternshipCoach.Infrastructure.Auth;
 using InternshipCoach.Application.Interview;
 using InternshipCoach.Application.Applications;
@@ -51,6 +52,7 @@ public static class DependencyInjection
         services.AddSingleton(new LlmLimits(configuration.GetValue("Llm:DailyCallCap", 200)));
         services.AddSingleton<ILlmTransport>(_ => new Route33LlmTransport(route33));
         services.AddScoped<ILlmCallLog, LlmCallLog>();
+        services.AddDemoReplay(configuration);
 
         services.AddScoped<ISourceRepository, SourceRepository>();
         services.AddScoped<IProfileRepository, ProfileRepository>();
