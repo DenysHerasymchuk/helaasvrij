@@ -21,6 +21,21 @@ public class SendChatHandlerTests
 
     private static object Call(string name, object? args = null) => new { name, args = args ?? new { } };
 
+    [Theory]
+    [InlineData("How to make kebab")]
+    [InlineData("how do I make a kebab?")]
+    public async Task Kebab_question_gets_the_fixed_recipe_without_an_ai_call(string question)
+    {
+        var f = new ChatFixture();
+
+        var result = await f.Handler.HandleAsync(Ask(question), CancellationToken.None);
+
+        Assert.Equal(SendChatStatus.Ok, result.Status);
+        Assert.StartsWith("# Kebab time!", result.Reply);
+        Assert.Contains("## 👩‍🍳 Steps", result.Reply);
+        Assert.Empty(f.Transport.Requests);
+    }
+
     [Fact]
     public async Task Reply_with_allowed_navigation_returns_chip_target()
     {

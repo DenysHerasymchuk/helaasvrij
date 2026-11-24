@@ -26,7 +26,7 @@ const MAX_LENGTH = 2000;
 
 /** Must match the server whitelist (ChatRoutes); the server is the authority, this only supplies the chip label. */
 const PAGE_NAMES: Record<string, string> = {
-    "/dashboard": "Dashboard",
+    "/dashboard": "Home",
     "/postings": "Postings",
     "/gaps": "Gap plan",
     "/documents": "Documents",

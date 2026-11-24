@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { FileTrigger } from "react-aria-components";
+import { useLocation } from "react-router";
 import { FaGithub } from "react-icons/fa";
 import { Check, File05, Globe01, RefreshCw01, Trash01, Type01 } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
@@ -132,6 +133,12 @@ export function ProfilePage() {
     }, [reloadAll]);
 
     useEffect(load, [load]);
+
+    // Links like /profile#step-3 land on that step once it has rendered.
+    const { hash } = useLocation();
+    useEffect(() => {
+        if (profile && hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" });
+    }, [profile, hash]);
 
     return (
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
