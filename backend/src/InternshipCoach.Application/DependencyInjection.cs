@@ -77,6 +77,8 @@ public static class DependencyInjection
         services.AddScoped<ExtractProfileHandler>();
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<SetItemConfirmedHandler>();
+        services.AddScoped<SetItemLevelHandler>();
+        services.AddScoped<GetBasicsHandler>();
         services.AddScoped<ConfirmAllItemsHandler>();
         services.AddScoped<DeleteItemHandler>();
         services.AddScoped<UpdateBasicsHandler>();

@@ -25,6 +25,8 @@ public sealed class PostingConfiguration : IEntityTypeConfiguration<Posting>
         builder.Property(posting => posting.RawText).HasColumnName("raw_text").IsRequired();
         builder.Property(posting => posting.Deadline).HasColumnName("deadline");
         builder.Property(posting => posting.InterviewAt).HasColumnName("interview_at");
+        builder.Property(posting => posting.StageStart).HasColumnName("stage_start");
+        builder.Property(posting => posting.StageEnd).HasColumnName("stage_end");
         builder.Property(posting => posting.IsDemo).HasColumnName("is_demo");
         builder.Property(posting => posting.CreatedAt)
             .HasColumnName("created_at")

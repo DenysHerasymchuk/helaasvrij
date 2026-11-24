@@ -23,7 +23,7 @@ public sealed class PostingImporter(PostingExtractor extractor, IPostingReposito
         var company = FirstText(known?.Company, extracted.Company);
         var title = FirstText(known?.Title, extracted.Title);
         var city = FirstText(known?.City, extracted.City);
-        var deadline = known?.Deadline ?? PostingExtractor.ParseDeadline(extracted.Deadline);
+        var deadline = known?.Deadline ?? PostingExtractor.ParseDate(extracted.Deadline);
 
         var requirements = extracted.Requirements
             .Select(r => (r.Text, PostingExtractor.ParseImportance(r.Importance)));
@@ -33,6 +33,12 @@ public sealed class PostingImporter(PostingExtractor extractor, IPostingReposito
         {
             posting = Posting.Create(userId, company, title, city, language, url, text, deadline, requirements,
                 isDemo: false, new CreatedAt(clock.UtcNow));
+            var stageStart = PostingExtractor.ParseDate(extracted.StageStart);
+            var stageEnd = PostingExtractor.ParseDate(extracted.StageEnd);
+            if (stageStart is null || stageEnd is null || stageEnd >= stageStart)
+            {
+                posting.SetStagePeriod(stageStart, stageEnd);
+            }
         }
         catch (DomainException ex)
         {

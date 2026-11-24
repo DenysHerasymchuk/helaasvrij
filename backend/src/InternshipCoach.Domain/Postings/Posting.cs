@@ -27,6 +27,10 @@ public sealed class Posting : IUserOwned
     public string RawText { get; private set; } = null!;
     public DateOnly? Deadline { get; private set; }
     public DateTimeOffset? InterviewAt { get; private set; }
+
+    /// <summary>When the internship itself runs, if the posting says so.</summary>
+    public DateOnly? StageStart { get; private set; }
+    public DateOnly? StageEnd { get; private set; }
     public bool IsDemo { get; private set; }
     public CreatedAt CreatedAt { get; private set; } = null!;
 
@@ -93,6 +97,34 @@ public sealed class Posting : IUserOwned
     {
         Deadline = deadline;
         InterviewAt = interviewAt?.ToUniversalTime();
+    }
+
+    /// <summary>Stores the internship period. An end before the start is a <see cref="DomainException"/>.</summary>
+    public void SetStagePeriod(DateOnly? start, DateOnly? end)
+    {
+        if (start is not null && end is not null && end < start)
+        {
+            throw new DomainException("The stage end date must be on or after the start date.");
+        }
+
+        StageStart = start;
+        StageEnd = end;
+    }
+
+    /// <summary>
+    /// Compares the posting's internship dates with the student's school stage period. Every known posting date
+    /// must fall inside the student's period (an open side accepts anything). Unknown when either side has no dates.
+    /// </summary>
+    public StageFit CheckStage(DateOnly? studentStart, DateOnly? studentEnd)
+    {
+        DateOnly?[] dates = [StageStart, StageEnd];
+        if ((studentStart is null && studentEnd is null) || dates.All(d => d is null))
+        {
+            return StageFit.Unknown;
+        }
+
+        var outside = dates.Any(d => d is { } date && (date < studentStart || date > studentEnd));
+        return outside ? StageFit.Conflict : StageFit.Fits;
     }
 
     /// <summary>

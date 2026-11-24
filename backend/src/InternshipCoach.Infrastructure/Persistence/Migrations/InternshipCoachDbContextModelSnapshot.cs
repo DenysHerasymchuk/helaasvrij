@@ -434,6 +434,14 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("raw_text");
 
+                    b.Property<DateOnly?>("StageEnd")
+                        .HasColumnType("date")
+                        .HasColumnName("stage_end");
+
+                    b.Property<DateOnly?>("StageStart")
+                        .HasColumnType("date")
+                        .HasColumnName("stage_start");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)

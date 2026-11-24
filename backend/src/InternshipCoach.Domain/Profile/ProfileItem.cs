@@ -93,4 +93,21 @@ public sealed class ProfileItem : IUserOwned
     }
 
     public void SetConfirmed(bool confirmed) => Confirmed = confirmed;
+
+    /// <summary>Sets or clears (null) the CEFR level the student chose. Only languages have a level.</summary>
+    public void SetLevel(string? level)
+    {
+        if (Kind != ProfileItemKind.Language)
+        {
+            throw new DomainException("Only languages have a CEFR level.");
+        }
+
+        var normalised = NormaliseLevel(Kind, level);
+        if (normalised is null && !string.IsNullOrWhiteSpace(level))
+        {
+            throw new DomainException("Choose a CEFR level from A1 to C2.");
+        }
+
+        Level = normalised;
+    }
 }

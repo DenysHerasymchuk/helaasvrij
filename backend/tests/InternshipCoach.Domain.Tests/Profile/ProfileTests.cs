@@ -62,4 +62,19 @@ public class ProfileTests
         var ok = ProfileBasics.Create(user, "  Howest ", new DateOnly(2027, 2, 1), new DateOnly(2027, 5, 31));
         Assert.Equal("Howest", ok.School);
     }
+
+    [Fact]
+    public void SetLevel_changes_or_clears_a_language_level_and_refuses_anything_else()
+    {
+        var doc = Guid.NewGuid();
+        var dutch = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Language, "Dutch", null, doc, "Dutch", Now);
+        var skill = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Java", null, doc, "Java", Now);
+
+        dutch.SetLevel("b2");
+        Assert.Equal("B2", dutch.Level);
+        dutch.SetLevel(null);
+        Assert.Null(dutch.Level);
+        Assert.Throws<DomainException>(() => dutch.SetLevel("fluent"));
+        Assert.Throws<DomainException>(() => skill.SetLevel("B2"));
+    }
 }
