@@ -69,7 +69,7 @@ const errorText = (error: unknown) =>
 function why(question: Question, company: string) {
   if (question.source === "gap")
     return question.gap
-      ? `Asked because the posting wants "${question.gap}" and your profile does not show it yet.`
+      ? `Asked because the posting wants "${question.gap}" and your profile does not fully show it yet.`
       : "Asked because of a gap in your profile.";
   if (question.source === "repo")
     return `Asked about ${question.project?.replace(/^new:/, "")}, from your own work.`;
