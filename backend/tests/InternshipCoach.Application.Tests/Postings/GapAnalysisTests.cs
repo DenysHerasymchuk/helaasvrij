@@ -37,7 +37,7 @@ public class GapAnalysisTests
 
         var transport = new FakeLlmTransport(replies);
         var llm = new LlmClient(transport, new FakeLlmCallLog(), Clock, new LlmLimits());
-        var handler = new AnalysePostingHandler(postings, new GapEvidenceLoader(profile), new GapAnalyser(llm, new FakeCurrentUser(UserId)), Clock);
+        var handler = new AnalysePostingHandler(postings, new GapEvidenceLoader(profile), new GapAnalyser(llm, new FakeCurrentUser(UserId)), Clock, new DemoSafetyOptions());
         return new Setup(handler, transport, postings, posting, profile);
     }
 
@@ -56,7 +56,7 @@ public class GapAnalysisTests
     {
         var s = Build(true, FirstReply, """{"actions":[{"req":1,"action":"Add a k8s manifest to weather-app","project":"weather-app"}]}""");
 
-        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!;
+        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
         var reqs = posting.Requirements.OrderBy(r => r.Position).ToList();
 
         Assert.Equal(Coverage.Strong, reqs[0].Coverage);
@@ -80,7 +80,7 @@ public class GapAnalysisTests
     {
         var s = Build(true, FirstReply, """{"actions":[{"req":1,"action":"Deploy ghost-project","project":"ghost-project"}]}""");
 
-        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!;
+        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
         var kube = posting.Requirements.Single(r => r.Text == "Kubernetes");
 
         Assert.Null(kube.Action);
@@ -94,7 +94,7 @@ public class GapAnalysisTests
         var reply = """{"rows":[{"req":1,"coverage":"none","action":"Learn Kubernetes","project":"weather-app"}]}""";
         var s = Build(true, reply, """{"actions":[{"req":1,"action":"Learn Kubernetes","project":"weather-app"}]}""");
 
-        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!;
+        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
         Assert.All(posting.Requirements.Where(r => r.Coverage == Coverage.None), r => Assert.Null(r.Action));
     }
 
@@ -102,7 +102,7 @@ public class GapAnalysisTests
     public async Task Stores_a_snapshot_and_spreads_due_dates_on_the_open_gaps()
     {
         var s = Build(true, FirstReply, """{"actions":[{"req":1,"action":"Add a k8s manifest to weather-app","project":"weather-app"}]}""");
-        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!;
+        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
 
         Assert.Equal("analyse", Assert.Single(posting.Snapshots).Reason);
         var strong = posting.Requirements.Single(r => r.Coverage == Coverage.Strong);
@@ -139,7 +139,7 @@ public class GapAnalysisTests
     {
         var s = Build(true, FirstReply, """{"actions":[{"req":1,"action":"Add a k8s manifest to weather-app","project":"weather-app"}]}""",
             """{"rows":[{"req":1,"coverage":"partial","quote":"shipped it with Docker","action":"Add a k8s manifest to weather-app","project":"weather-app"}]}""");
-        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!;
+        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
         var kube = posting.Requirements.Single(r => r.Text == "Kubernetes");
         var due = kube.DueDate;
 

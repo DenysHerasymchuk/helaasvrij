@@ -24,6 +24,7 @@ using InternshipCoach.Application.Postings;
 using InternshipCoach.Application.Postings.Add;
 using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Postings.Browse;
+using InternshipCoach.Application.Postings.Generic;
 using InternshipCoach.Application.Chat.Send;
 using InternshipCoach.Application.Documents.DeleteDocument;
 using InternshipCoach.Application.Documents.ExtractCvText;
@@ -68,6 +69,8 @@ public static class DependencyInjection
         services.AddScoped<GapEvidenceLoader>();
         services.AddScoped<GapAnalyser>();
         services.AddScoped<AnalysePostingHandler>();
+        services.AddSingleton(new DemoSafetyOptions());
+        services.AddScoped<GenericAnswerHandler>();
         services.AddScoped<RecheckRequirementHandler>();
         services.AddScoped<ResolveEvidenceSourcesHandler>();
         services.AddSingleton<RescanThrottle>();
