@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Plus, SearchLg } from "@untitledui/icons";
+import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
+import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Input } from "@/components/base/input/input";
 import { ApiError, api } from "@/core/api";
 import { AddPostingModal } from "./add-posting-modal";
-import { type PostingSummary, formatDate } from "./types";
+import { type PostingSummary, formatDate, formatStagePeriod } from "./types";
 
 
 export function PostingsPage() {
@@ -14,8 +16,11 @@ export function PostingsPage() {
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState("");
     const [debounced, setDebounced] = useState("");
-        const [adding, setAdding] = useState(false);
-    const filtered = debounced !== "";
+    const [adding, setAdding] = useState(false);
+    const [fitsOnly, setFitsOnly] = useState(false);
+    const filtered = debounced !== "" || fitsOnly;
+    // Postings without dates stay visible: only a known clash with the stage period hides one.
+    const shown = items && fitsOnly ? items.filter((p) => p.stageFit !== "conflict") : items;
 
     useEffect(() => {
         const timer = setTimeout(() => setDebounced(query.trim()), 250);
@@ -54,6 +59,12 @@ export function PostingsPage() {
                 <div className="sm:max-w-sm sm:flex-1">
                     <Input aria-label="Search postings" icon={SearchLg} placeholder="Search company, title or city" value={query} onChange={setQuery} />
                 </div>
+                <Checkbox
+                    className="sm:self-center"
+                    label="Hide postings outside my stage period"
+                    isSelected={fitsOnly}
+                    onChange={setFitsOnly}
+                />
             </div>
 
             <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
@@ -66,15 +77,15 @@ export function PostingsPage() {
                             Try again
                         </Button>
                     </div>
-                ) : items === null ? (
+                ) : shown === null ? (
                     <p role="status" className="p-6 text-md text-tertiary">
                         Loading postings...
                     </p>
-                ) : items.length === 0 ? (
+                ) : shown.length === 0 ? (
                     <div className="flex flex-col items-start gap-3 p-6">
                         <p className="text-md font-semibold text-primary">{filtered ? "No postings match." : "No postings yet."}</p>
                         <p className="text-md text-tertiary">
-                            {filtered ? "Try another search." : "Paste a posting or add a link to see what it asks for."}
+                            {filtered ? "Try another search or show postings outside your stage period." : "Paste a posting or add a link to see what it asks for."}
                         </p>
                         {!filtered && (
                             <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
@@ -84,7 +95,7 @@ export function PostingsPage() {
                     </div>
                 ) : (
                     <ul className="flex flex-col divide-y divide-secondary">
-                        {items.map((p) => (
+                        {shown.map((p) => (
                             <li key={p.id}>
                                 <button
                                     type="button"
@@ -99,6 +110,19 @@ export function PostingsPage() {
                                         </p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                                        {p.stageFit === "conflict" && (
+                                            <Badge type="pill-color" size="sm" color="warning">
+                                                Outside your stage period
+                                            </Badge>
+                                        )}
+                                        {p.stageFit === "fits" && (
+                                            <Badge type="pill-color" size="sm" color="success">
+                                                Fits your stage period
+                                            </Badge>
+                                        )}
+                                        {formatStagePeriod(p.stageStart, p.stageEnd) && (
+                                            <span className="text-sm text-tertiary">Stage {formatStagePeriod(p.stageStart, p.stageEnd)}</span>
+                                        )}
                                         <span className="text-sm text-tertiary">{p.deadline ? `Deadline ${formatDate(p.deadline)}` : "No deadline"}</span>
                                         <span className="w-28 text-sm text-quaternary md:text-right">Not analysed</span>
                                     </div>
