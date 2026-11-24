@@ -71,4 +71,14 @@ public class DocumentTests
         Assert.Throws<DomainException>(() => document.Edit("New", "", Now.Value));
         Assert.Equal("My CV", document.Title);
     }
+
+    [Fact]
+    public void Recruiter_message_is_limited_to_300_characters_on_create_and_edit()
+    {
+        var ok = Document.Create(Guid.NewGuid(), DocumentKind.RecruiterMessage, "en", "Hi", new string('a', 300), Now);
+
+        Assert.Throws<DomainException>(() => ok.Edit("Hi", new string('a', 301), Now.Value));
+        Assert.Throws<DomainException>(() => Document.Create(Guid.NewGuid(), DocumentKind.RecruiterMessage, "en", "Hi", new string('a', 301), Now));
+        Document.Create(Guid.NewGuid(), DocumentKind.CoverLetter, "en", "Hi", new string('a', 301), Now);
+    }
 }

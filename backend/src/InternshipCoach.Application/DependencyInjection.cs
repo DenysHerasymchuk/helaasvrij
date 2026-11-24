@@ -28,6 +28,7 @@ using InternshipCoach.Application.Chat.Send;
 using InternshipCoach.Application.Documents.DeleteDocument;
 using InternshipCoach.Application.Documents.GetDocument;
 using InternshipCoach.Application.Documents.ListDocuments;
+using InternshipCoach.Application.Documents.Draft;
 using InternshipCoach.Application.Documents.TailorCv;
 using InternshipCoach.Application.Documents.UpdateDocument;
 using InternshipCoach.Application.Interview;
@@ -78,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<DeleteItemHandler>();
         services.AddScoped<UpdateBasicsHandler>();
         services.AddScoped<TailorCvHandler>();
+        services.AddScoped<DraftDocumentHandler>();
         services.AddScoped<ListDocumentsHandler>();
         services.AddScoped<GetDocumentHandler>();
         services.AddScoped<UpdateDocumentHandler>();
