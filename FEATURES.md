@@ -47,6 +47,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 32 | Add posting by URL | Fetch the page, read JobPosting JSON-LD when present, fall back to paste. Never LinkedIn, Student.be or JobTeaser. | todo |
 | 33 | Settings page (basic) | Default language, sign out. | todo |
 | 34 | AI chat assistant | Round button bottom-right on every signed-in page, opens a chat through route33 (`anthropic/claude-sonnet-5-5`). Answers questions about the app and suggests a page with a "Go to" chip (whitelisted routes only). Later: navigates and acts on the user's data. See `BUILD.md` prompt 10. | todo |
+| 35 | CV tailoring (paste) | Paste CV text + a posting on `/documents`; Claude (Smart model only) rewrites the CV for that posting in its language (or NL/FR/EN on request). Every bullet and skill carries a verbatim CV quote checked with `QuoteCheck`; lines with a failed quote or a number not in the CV are dropped and counted. Saved as a `Document` (edit, copy, delete, print to PDF). Stand-in for row 24 until profile and postings exist. | done (not run live against route33) |
 
 ## Next (pitch slide, not built)
 
