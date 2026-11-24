@@ -36,12 +36,55 @@ public sealed class SendChatHandler(ICurrentUser currentUser, ILlmClient llm, Ch
         {"type":"object","properties":{"reply":{"type":"string","minLength":1},"navigateTo":{"type":["string","null"]}},"required":["reply"]}
         """;
 
+    internal const string KebabReply = """
+        # Kebab time! 🥙🔥
+
+        **Serves 4 · 30 min prep + 2 h marinating · 20 min cooking**
+
+        ## 🛒 Ingredients
+        **Meat 🍖**
+        - 600 g chicken thighs or lamb shoulder, in thin strips
+        - 150 g Greek yoghurt
+        - 2 tbsp olive oil, juice of 1 lemon 🍋
+        - 3 garlic cloves, crushed 🧄
+        - 2 tsp paprika, 2 tsp cumin, 1 tsp coriander, 1 tsp oregano, ½ tsp cinnamon, salt and pepper
+
+        **Garlic sauce 🤍**
+        - 200 g Greek yoghurt, 1 garlic clove, 1 tbsp lemon juice, chopped fresh mint, pinch of salt
+
+        **To serve 🥗**
+        - 4 pita or durum wraps
+        - Lettuce, tomato, cucumber, red onion, pickled red cabbage
+        - Chilli sauce 🌶️ and fries 🍟 (optional, but it is Belgium)
+
+        ## 👩‍🍳 Steps
+        1. **Marinate:** mix the yoghurt, oil, lemon, garlic and all spices. Coat the meat and leave it in the fridge for at least 2 hours (overnight is best). ⏰
+        2. **Sauce:** stir all the garlic sauce ingredients together and chill. 🥣
+        3. **Prep the veg:** slice the onion thin, chop tomato and cucumber, shred the lettuce. 🔪
+        4. **Cook:** heat a pan or grill until very hot. Cook the meat in batches, 4–5 min per side, until charred at the edges and cooked through (chicken: 75 °C inside). 🔥
+        5. **Rest and slice:** rest 5 min, then slice into thin strips like a real döner. 🥩
+        6. **Warm the bread:** 30 s per side in a dry pan. 🫓
+        7. **Build:** sauce on the bread, then meat, veg, cabbage, more sauce, chilli to taste. Roll it tight in foil. 🌯
+
+        ## 💡 Tips
+        - Stack the marinated meat on a skewer and roast it at 220 °C for 45 min for a home döner spit.
+        - Rest is the secret: juicy meat, no soggy wrap.
+
+        Smakelijk! 😋 Now back to work: your gap plan is waiting. 💪
+        """;
+
     public async Task<SendChatResult> HandleAsync(SendChatCommand command, CancellationToken ct)
     {
         var turns = Normalize(command.Messages);
         if (turns.Count == 0 || turns[^1].Role != ChatRole.User)
         {
             return new SendChatResult(SendChatStatus.Invalid, Error: "Send a message first.");
+        }
+
+        // Easter egg for the demo: a fixed reply, no AI call.
+        if (System.Text.RegularExpressions.Regex.IsMatch(turns[^1].Content, @"\bhow\s+(do\s+i\s+|to\s+)?make\s+(a\s+)?kebab\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            return new SendChatResult(SendChatStatus.Ok, KebabReply, ToolTrace: []);
         }
 
         var system = BuildSystemPrompt(ChatRoutes.Normalize(command.Route));
