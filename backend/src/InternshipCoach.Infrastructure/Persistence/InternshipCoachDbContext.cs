@@ -2,6 +2,7 @@ using System.Reflection;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Llm;
+using InternshipCoach.Domain.Sources;
 using InternshipCoach.Domain.Postings;
 using InternshipCoach.Domain.Users;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
@@ -35,6 +36,9 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<LlmCall> LlmCalls => Set<LlmCall>();
 
+    public DbSet<Source> Sources => Set<Source>();
+
+    public DbSet<SourceDocument> SourceDocuments => Set<SourceDocument>();
     public DbSet<Posting> Postings => Set<Posting>();
 
     public DbSet<Requirement> Requirements => Set<Requirement>();
