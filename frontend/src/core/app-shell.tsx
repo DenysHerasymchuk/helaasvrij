@@ -7,6 +7,7 @@ import type { NavItemType } from "@/components/application/app-navigation/config
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { type CurrentUser, initialsOf, useAuth } from "@/core/auth";
+import { generateAvatarUrl } from "@/core/avatar";
 import { useTheme } from "@/core/theme";
 
 const mainItems: NavItemType[] = [
@@ -46,7 +47,7 @@ function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: Curr
                 <div className="mx-4 flex items-center gap-3 border-t border-secondary px-2 pt-5">
                     <AvatarLabelGroup
                         size="md"
-                        src={user.avatarUrl}
+                        src={generateAvatarUrl(user.displayName, 80)}
                         initials={initialsOf(user.displayName)}
                         title={user.displayName}
                         subtitle={user.gitHubLogin ? `@${user.gitHubLogin}` : user.email}

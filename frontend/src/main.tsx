@@ -6,11 +6,11 @@ import { AuthProvider } from '@/core/auth'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
+import { PostingsPage } from '@/features/postings/postings-page'
 import { ComingSoonPage } from '@/features/placeholder/coming-soon-page'
 import './index.css'
 
 const placeholders = [
-  ['postings', 'Postings'],
   ['gaps', 'Gap plan'],
   ['documents', 'Documents'],
   ['interview', 'Interview prep'],
@@ -27,6 +27,7 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/postings', element: <PostingsPage /> },
       ...placeholders.map(([path, title]) => ({ path: `/${path}`, element: <ComingSoonPage title={title} /> })),
     ],
   },

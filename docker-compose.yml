@@ -19,12 +19,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - jobs-data:/home/app
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       COACH_ConnectionStrings__InternshipCoach: Host=db;Port=5432;Database=coach;Username=coach;Password=${POSTGRES_PASSWORD}
       COACH_Cors__AllowedOrigins__0: http://localhost:5173
       COACH_Hosting__HttpsTerminatedAtProxy: "true"
       COACH_GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
+      COACH_Adzuna__AppId: ${ADZUNA_APP_ID:-}
+      COACH_Adzuna__AppKey: ${ADZUNA_APP_KEY:-}
       COACH_GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
     ports:
       - "5080:8080"
@@ -37,4 +41,5 @@ services:
       - "5173:80"
 
 volumes:
+  jobs-data:
   db-data:
