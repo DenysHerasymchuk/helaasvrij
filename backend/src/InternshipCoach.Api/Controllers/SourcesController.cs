@@ -79,5 +79,5 @@ public sealed class SourcesController : ControllerBase
     }
 
     private static SourceResponse ToResponse(SourceSummary source) =>
-        new(source.Id, source.Kind.ToString(), source.Label, source.Status.ToString(), source.LastSyncedAt, source.Error, source.DocumentCount);
+        new(source.Id, source.Kind.ToString(), source.Label, source.Status.ToString(), source.LastSyncedAt, source.Error, source.DocumentCount, source.RepoCount);
 }

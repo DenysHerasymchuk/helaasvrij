@@ -26,7 +26,8 @@ public sealed class GetJourneyHandler(
     public async Task<JourneyResult> HandleAsync(CancellationToken ct)
     {
         var hasSources = (await sources.ListAsync(ct)).Any(s => s.Status == SourceStatus.Ready);
-        var confirmed = (await profile.ListItemsAsync(ct)).Count(i => i.Confirmed);
+        var items = await profile.ListItemsAsync(ct);
+        var confirmed = items.Count(i => i.Confirmed);
         var basics = await profile.FindBasicsAsync(ct);
         var hasStagePeriod = basics?.StageStart is not null && basics.StageEnd is not null;
 
@@ -53,7 +54,7 @@ public sealed class GetJourneyHandler(
         var (step, next) = (hasSources, confirmed > 0, hasStagePeriod) switch
         {
             (false, _, _) => (1, new JourneyAction("Add your GitHub or CV", "/profile")),
-            (_, false, _) => (1, new JourneyAction("Confirm your profile items", "/profile")),
+            (_, false, _) => (1, new JourneyAction(items.Count == 0 ? "Read your sources" : "Confirm your profile items", "/profile")),
             (_, _, false) => (1, new JourneyAction("Set your stage period", "/profile")),
             _ when allPostings.Count == 0 => (2, new JourneyAction("Find a posting", "/postings")),
             _ when best is null => (2, new JourneyAction($"Analyse {allPostings[0].Company}", $"/postings/{allPostings[0].Id}")),

@@ -11,6 +11,8 @@ export interface Source {
     lastSyncedAt: string | null;
     error: string | null;
     documentCount: number;
+    /** GitHub only: how many repositories were read. */
+    repoCount?: number;
 }
 
 export const listSources = () => api.get<Source[]>("/api/sources");

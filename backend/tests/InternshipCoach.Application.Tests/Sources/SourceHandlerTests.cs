@@ -33,6 +33,7 @@ public class SourceHandlerTests
         Assert.Equal("octocat", client.LastUsername);
         Assert.Equal(SourceStatus.Ready, result.Status);
         Assert.Equal(3, result.DocumentCount);
+        Assert.Equal(2, result.RepoCount);
         var paths = repo.Items.Single().Documents.Select(d => d.Path).ToList();
         Assert.Contains("weather-app/README.md", paths);
         Assert.Contains("weather-app/summary", paths);

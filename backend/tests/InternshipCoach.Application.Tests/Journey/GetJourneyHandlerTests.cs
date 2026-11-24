@@ -92,6 +92,16 @@ public class GetJourneyHandlerTests
     }
 
     [Fact]
+    public async Task Source_without_items_asks_to_read_the_sources()
+    {
+        AddReadySource();
+
+        var result = await _handler.HandleAsync(default);
+
+        Assert.Equal(new JourneyAction("Read your sources", "/profile"), result.NextAction);
+    }
+
+    [Fact]
     public async Task Source_without_confirmed_items_asks_to_confirm()
     {
         AddReadySource();
