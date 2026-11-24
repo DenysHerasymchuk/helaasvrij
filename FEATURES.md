@@ -18,7 +18,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 8 | Profile extraction | LLM turns sources into skills, projects, experience, languages. Each item stores its source (repo, file, CV line). Items without a source are dropped. | todo |
 | 9 | Verbatim-quote check | Code checks that every evidence quote is an exact substring of its source text. Drop or retry on failure. Count failures (target 0). In tests, GLM spliced quotes in 3 of 12 runs; this check caught every one. | done (`QuoteCheck`; failure counting is wired in by profile extraction) |
 | 10 | Confirm/remove profile items | Student confirms or removes each extracted item. Drafts use only confirmed items. | todo |
-| 11 | Paste a posting | Paste text (or one of the demo postings). Detect language (NL/FR/EN). | todo |
+| 11 | Paste a posting | Paste text (or one of the demo postings). Detect language (NL/FR/EN). | done (`POST /api/postings/paste`, Cheap model via `UntrustedInput.Wrap`; 4 demo postings seeded for the dev user) |
 | 12 | Gap matrix | Per requirement: importance (required/nice), coverage (strong/partial/none), evidence quote + source, action, action project. | todo |
 | 13 | Action must name a project | Code rejects any action whose project is not one of the student's repos, then regenerates once. | todo |
 | 14 | Score in code | sum(weight x coverage) / sum(weight); required 2, nice 1; strong 1, partial 0.5, none 0. | todo |
@@ -35,7 +35,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 20 | Accounts: email + password and GitHub OAuth sign-in | Cookie session (HttpOnly, SameSite=Lax), users table, `/api/auth/*`, rate-limited. No email verification or password reset yet. Optional: P0 works without it. | done |
 | 21 | Per-user data isolation | `UserId` on every owned table, EF Core global query filter. Needed once accounts exist. `IUserOwned`, `ICurrentUser`, filter + save guard in `InternshipCoachDbContext`; no owned tables yet. | done |
 | 22 | Sidebar layout + dashboard | Profile strength, top postings, top gap actions, score trend. Design done with mock data (`features/demo/demo-user.ts`); connect to `GET /api/dashboard`. | done (mock) |
-| 23 | Postings list + detail | Filters (language, score, new); detail shows the gap matrix and score. | todo |
+| 23 | Postings list + detail | Filters (language, score, new); detail shows the gap matrix and score. | partly done (list with search and language filter, detail with requirements, dates, delete; score filter and gap matrix come with the gap matrix feature) |
 | 24 | CV draft | Confirmed items only, in the posting's language, print to PDF. | todo |
 | 25 | Cover letter draft | Uses closed gaps as evidence. | todo |
 | 26 | Recruiter message | Max 300 characters, copy only, never auto-sent. | todo |
@@ -44,7 +44,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 29 | Side-by-side with ChatGPT | Same posting, plain ChatGPT answer vs our evidence-backed matrix. | todo |
 | 30 | Profile page | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback), extracted items with source links and confirm/remove, school and stage period. | todo |
 | 31 | Belgian layer | Output in the posting's language (NL/FR/EN), CEFR language levels on profile and requirements, stage period checked against the posting's dates. | todo |
-| 32 | Add posting by URL | Fetch the page, read JobPosting JSON-LD when present, fall back to paste. Never LinkedIn, Student.be or JobTeaser. | todo |
+| 32 | Add posting by URL | Fetch the page, read JobPosting JSON-LD when present, fall back to paste. Never LinkedIn, Student.be or JobTeaser. | done (`SafePageFetcher`: SSRF guard at connect time and on redirects, 10 s timeout, 1 MB cap, one User-Agent) |
 | 33 | Settings page (basic) | Default language, sign out. | todo |
 | 34 | AI chat assistant | Round button bottom-right on every signed-in page, opens a chat through route33 (`anthropic/claude-sonnet-5-5`). Answers questions about the app and suggests a page with a "Go to" chip (whitelisted routes only). Later: navigates and acts on the user's data. See `BUILD.md` prompt 10. | todo |
 
