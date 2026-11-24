@@ -15,9 +15,12 @@ public sealed class LlmCallLog(InternshipCoachDbContext db) : ILlmCallLog
         await db.SaveChangesAsync(ct);
     }
 
-    public Task<int> CountSinceAsync(Guid userId, DateTimeOffset since, CancellationToken ct)
+    public async Task<int> CountSinceAsync(Guid userId, DateTimeOffset since, CancellationToken ct)
     {
         var sinceUtc = since.ToUniversalTime();
-        return db.LlmCalls.CountAsync(call => call.UserId == userId && call.CreatedAt.Value >= sinceUtc, ct);
+        // CreatedAt is a converted value object, so Postgres cannot translate `.Value`; filter the dates in memory.
+        // shortcut: loads all of a user's call dates, fine at hackathon scale; move to a raw DateTimeOffset column if logs grow.
+        var dates = await db.LlmCalls.Where(call => call.UserId == userId).Select(call => call.CreatedAt).ToListAsync(ct);
+        return dates.Count(createdAt => createdAt.Value >= sinceUtc);
     }
 }
