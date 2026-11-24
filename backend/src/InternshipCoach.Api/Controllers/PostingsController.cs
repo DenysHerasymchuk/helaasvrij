@@ -79,8 +79,9 @@ public sealed class PostingsController : ControllerBase
 
     [HttpPost("from-job")]
     [Consumes("application/json")]
-    public Task<IActionResult> FromJob(JobPostingRequest request, [FromServices] AddPostingFromJobHandler handler, CancellationToken ct) =>
-        Add(() => handler.HandleAsync(new AddPostingFromJobCommand(request.JobId), ct));
+    public Task<IActionResult> FromJob(
+        JobPostingRequest request, [FromServices] AddPostingFromJobHandler handler, [FromServices] GetBasicsHandler basics, CancellationToken ct) =>
+        Add(() => handler.HandleAsync(new AddPostingFromJobCommand(request.JobId), ct), basics, ct);
 
     // PUT is accepted next to PATCH because the shared api client has no PATCH helper.
     [HttpPatch("{id:guid}")]
