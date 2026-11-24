@@ -6,6 +6,7 @@ import { AuthProvider } from '@/core/auth'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
+import { ProfilePage } from '@/features/profile/profile-page'
 import { SettingsPage } from '@/features/settings/settings-page'
 import { PostingDetailPage } from '@/features/postings/posting-detail-page'
 import { PostingsPage } from '@/features/postings/postings-page'
@@ -17,7 +18,6 @@ const placeholders = [
   ['documents', 'Documents'],
   ['interview', 'Interview prep'],
   ['applications', 'Applications'],
-  ['profile', 'Profile'],
 ] as const
 
 const router = createBrowserRouter([
@@ -28,6 +28,7 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/profile', element: <ProfilePage /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '/postings', element: <PostingsPage /> },
       { path: '/postings/:id', element: <PostingDetailPage /> },
