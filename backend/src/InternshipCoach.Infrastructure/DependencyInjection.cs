@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IAccountDeleter, AccountDeleter>();
         services.AddScoped<IPostingRepository, PostingRepository>();
         services.AddSingleton<IPageFetcher, SafePageFetcher>();
+        services.AddScoped<IDocumentRepository, DocumentRepository>();
 
         var route33 = configuration.GetSection(Route33Options.SectionName).Get<Route33Options>() ?? new Route33Options();
         if (string.IsNullOrWhiteSpace(route33.BaseUrl))

@@ -1,3 +1,4 @@
+using InternshipCoach.Domain.Documents;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Llm;
@@ -28,6 +29,7 @@ public class AccountDeleterTests
         db.Postings.Add(Posting.Create(user.Id, "Acme", "Intern", null, PostingLanguage.Nl, null, "text", null,
             [("Knows Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow)));
         db.Sources.Add(Source.Create(user.Id, SourceKind.GitHub, "gh"));
+        db.Documents.Add(Document.Create(user.Id, DocumentKind.Cv, "en", "CV", "# CV", new CreatedAt(DateTimeOffset.UtcNow)));
         await db.SaveChangesAsync();
         return user;
     }
