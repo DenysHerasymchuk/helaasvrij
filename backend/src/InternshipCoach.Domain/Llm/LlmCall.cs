@@ -3,8 +3,7 @@ using InternshipCoach.Domain.Common;
 namespace InternshipCoach.Domain.Llm;
 
 // One row per attempt sent to the LLM gateway. Stores counts and timing only, never prompt or response text.
-// TODO(after foundation merges): implement IUserOwned so the global query filter applies.
-public sealed class LlmCall
+public sealed class LlmCall : IUserOwned
 {
     public const int FeatureMaxLength = 100;
     public const int ModelMaxLength = 200;
