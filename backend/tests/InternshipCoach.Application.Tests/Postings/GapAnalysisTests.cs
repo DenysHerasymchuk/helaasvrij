@@ -72,7 +72,7 @@ public class GapAnalysisTests
         Assert.Equal("weather-app", reqs[2].ActionProject);
         Assert.Equal(2, s.Transport.Requests.Count);
         Assert.All(reqs, r => Assert.NotNull(r.AnalysedAt));
-        Assert.Equal(50, posting.Score()); // (2*1 + 0 + 0) / (2+2+1) = 40%? see below
+        Assert.Equal(40, posting.Score()); // (2*1) / (2+2+1)
     }
 
     [Fact]

@@ -40,7 +40,6 @@ public class ScoreTests
     [Fact]
     public void Score_rounds_half_up_to_a_whole_percent()
     {
-        // 1 of 3 weights... nice partial (0.5) of 3 nice = 0.5/3 = 16.67 -> 17; one partial of 8 = 6.25 -> 6; 1 half of 4 nice... 
         var posting = Make(("a", Importance.Nice), ("b", Importance.Nice), ("c", Importance.Nice));
         Cover(posting.Requirements[0], Coverage.Partial);
         Assert.Equal(17, posting.Score());
