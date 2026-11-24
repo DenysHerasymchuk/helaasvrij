@@ -1,12 +1,12 @@
 import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Settings01, User01 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
-import { Outlet, useHref, useLocation, useNavigate } from "react-router";
+import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
 import { NavList } from "@/components/application/app-navigation/base-components/nav-list";
 import type { NavItemType } from "@/components/application/app-navigation/config";
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
-import { demoUser } from "@/features/demo/demo-user";
+import { type CurrentUser, initialsOf, useAuth } from "@/core/auth";
 
 const mainItems: NavItemType[] = [
     { label: "Dashboard", href: "/dashboard", icon: HomeLine },
@@ -20,7 +20,7 @@ const mainItems: NavItemType[] = [
 
 const footerItems: NavItemType[] = [{ label: "Settings", href: "/settings", icon: Settings01 }];
 
-function Sidebar({ activeUrl }: { activeUrl: string }) {
+function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: CurrentUser; onSignOut: () => void }) {
     return (
         <nav aria-label="Main" className="flex h-full w-full flex-col justify-between overflow-auto bg-primary pt-6 lg:pt-8">
             <div>
@@ -30,28 +30,58 @@ function Sidebar({ activeUrl }: { activeUrl: string }) {
             <div className="flex flex-col gap-4 pb-6">
                 <NavList activeUrl={activeUrl} items={footerItems} className="pt-0" />
                 <div className="mx-4 flex items-center gap-3 border-t border-secondary px-2 pt-5">
-                    <AvatarLabelGroup size="md" initials={demoUser.initials} title={demoUser.name} subtitle={`@${demoUser.github}`} />
-                    {/* shortcut: no session yet, sign out just returns to the login page */}
-                    <Button size="sm" color="tertiary" aria-label="Sign out" iconLeading={LogOut01} href="/login" />
+                    <AvatarLabelGroup
+                        size="md"
+                        src={user.avatarUrl}
+                        initials={initialsOf(user.displayName)}
+                        title={user.displayName}
+                        subtitle={user.gitHubLogin ? `@${user.gitHubLogin}` : user.email}
+                    />
+                    <Button size="sm" color="tertiary" aria-label="Sign out" iconLeading={LogOut01} onPress={onSignOut} />
                 </div>
             </div>
         </nav>
     );
 }
 
+/** Guards every route inside the shell: wait for the session check, then send anonymous users to /login. */
 export function AppShell() {
+    const { user, status } = useAuth();
+    const location = useLocation();
+
+    if (status === "loading") {
+        return (
+            <div className="flex min-h-dvh items-center justify-center bg-secondary">
+                <p role="status" className="text-md text-tertiary">
+                    Loading...
+                </p>
+            </div>
+        );
+    }
+
+    if (!user) {
+        // Remember where the user was going; the login page sends them back after sign-in.
+        return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+    }
+
+    return <Shell user={user} />;
+}
+
+function Shell({ user }: { user: CurrentUser }) {
     const navigate = useNavigate();
     const { pathname } = useLocation();
+    const { logout } = useAuth();
+    const onSignOut = () => void logout().then(() => navigate("/login"));
 
     return (
         // Lets Untitled UI (react-aria) links navigate client-side through React Router.
         <RouterProvider navigate={navigate} useHref={useHref}>
             <div className="flex min-h-dvh flex-col bg-secondary lg:flex-row">
                 <MobileNavigationHeader>
-                    <Sidebar activeUrl={pathname} />
+                    <Sidebar activeUrl={pathname} user={user} onSignOut={onSignOut} />
                 </MobileNavigationHeader>
                 <aside className="hidden w-72 shrink-0 border-r border-secondary lg:sticky lg:top-0 lg:block lg:h-dvh">
-                    <Sidebar activeUrl={pathname} />
+                    <Sidebar activeUrl={pathname} user={user} onSignOut={onSignOut} />
                 </aside>
                 <main className="min-w-0 flex-1">
                     <Outlet />

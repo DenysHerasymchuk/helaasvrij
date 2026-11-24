@@ -4,6 +4,7 @@ import { ChartTooltipContent } from "@/components/application/charts/charts-base
 import { Badge, BadgeWithDot } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { cx } from "@/utils/cx";
+import { useAuth } from "@/core/auth";
 import { type Coverage, type Posting, demoUser, impact, postings, score, trend } from "@/features/demo/demo-user";
 
 const dateFmt = new Intl.DateTimeFormat("en-BE", { day: "numeric", month: "short" });
@@ -49,13 +50,15 @@ function CoverageStrip({ posting }: { posting: Posting }) {
 }
 
 export function DashboardPage() {
+    const { user } = useAuth();
+    const firstName = user?.displayName.split(/\s+/)[0] ?? "";
     const top = actions[0];
 
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <header className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-display-xs font-semibold text-primary">Goeiemorgen, Lotte</h1>
+                    <h1 className="text-display-xs font-semibold text-primary">Goeiemorgen, {firstName}</h1>
                     <p className="text-md text-tertiary">
                         {demoUser.school}. Stage from {fmt(demoUser.stage.start)} to {fmt(demoUser.stage.end)} 2027.
                     </p>
