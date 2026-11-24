@@ -2,6 +2,7 @@ using InternshipCoach.Application.Auth.Register;
 using DotNetEnv;
 using InternshipCoach.Api.Auth;
 using InternshipCoach.Application;
+using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Infrastructure;
 using InternshipCoach.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,8 @@ builder.Configuration.AddEnvironmentVariables("COACH_");
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddCoachForwardedHeaders();
 builder.Services.AddCoachAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddCoachRateLimiting(builder.Configuration);
@@ -46,6 +49,7 @@ if (args.Contains("--migrate"))
 }
 
 app.UseForwardedHeaders();
+app.UseMiddleware<UnauthorizedExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
