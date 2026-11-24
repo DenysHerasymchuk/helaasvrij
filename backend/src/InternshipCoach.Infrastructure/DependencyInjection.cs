@@ -1,5 +1,8 @@
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Application.Abstractions.Llm;
+using InternshipCoach.Application.Documents.ExportDocx;
+using InternshipCoach.Application.Documents.ExtractCvText;
+using InternshipCoach.Infrastructure.Documents;
 using InternshipCoach.Infrastructure.Llm;
 using InternshipCoach.Infrastructure.Llm.Replay;
 using InternshipCoach.Infrastructure.Auth;
@@ -59,6 +62,8 @@ public static class DependencyInjection
         services.AddSingleton(configuration.GetSection(GitHubIngestOptions.SectionName).Get<GitHubIngestOptions>() ?? new GitHubIngestOptions());
         services.AddSingleton<IGitHubClient>(provider => new GitHubClient(provider.GetRequiredService<GitHubIngestOptions>()));
         services.AddSingleton<IPdfTextExtractor, PdfPigTextExtractor>();
+        services.AddSingleton<ICvTextExtractor, CvTextExtractor>();
+        services.AddSingleton<IDocxRenderer, DocxRenderer>();
         services.AddSingleton<IWebPageFetcher, WebPageFetcher>();
 
         services.AddDataProtection()
