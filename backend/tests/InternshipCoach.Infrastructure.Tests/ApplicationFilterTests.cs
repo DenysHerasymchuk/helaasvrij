@@ -43,6 +43,6 @@ public class ApplicationFilterTests
         Assert.Equal("Acme", cards[0].Company);
         Assert.Null(await repo.FindAsync(theirs.Id, CancellationToken.None));
         Assert.Null(await repo.GetCardAsync(theirs.Id, CancellationToken.None));
-        Assert.False(await repo.ExistsForPostingAsync(theirs.PostingId, CancellationToken.None));
+        Assert.Null(await repo.FindIdForPostingAsync(theirs.PostingId, CancellationToken.None));
     }
 }

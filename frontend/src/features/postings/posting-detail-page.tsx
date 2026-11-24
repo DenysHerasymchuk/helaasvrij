@@ -4,6 +4,7 @@ import { ArrowLeft, LinkExternal01, Trash01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { ApiError, api } from "@/core/api";
+import { BoardStatus, useBoard } from "@/features/applications/board-status";
 import { BelgianDateInput, DateField, Field } from "./fields";
 import { GapMatrix, GapPanel } from "./gap-analysis";
 import { GenericAnswerPanel } from "./generic-answer";
@@ -29,6 +30,7 @@ export function PostingDetailPage() {
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [compare, setCompare] = useState(false);
+    const board = useBoard();
 
     const load = useCallback(async () => {
         setError(null);
@@ -148,6 +150,9 @@ export function PostingDetailPage() {
                         Open original posting <LinkExternal01 className="size-4" aria-hidden="true" />
                     </a>
                 )}
+                <div className="mt-2">
+                    <BoardStatus postingId={posting.id} byPosting={board.byPosting} onAdded={board.added} />
+                </div>
                 <Checkbox
                     className="mt-2"
                     size="md"

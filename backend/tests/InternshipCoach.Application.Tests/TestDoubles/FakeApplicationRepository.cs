@@ -24,7 +24,8 @@ public sealed class FakeApplicationRepository(FakePostingRepository postings) : 
 
     public Task<JobApplication?> FindAsync(Guid id, CancellationToken ct) => Task.FromResult(Items.FirstOrDefault(a => a.Id == id));
 
-    public Task<bool> ExistsForPostingAsync(Guid postingId, CancellationToken ct) => Task.FromResult(Items.Any(a => a.PostingId == postingId));
+    public Task<Guid?> FindIdForPostingAsync(Guid postingId, CancellationToken ct) =>
+        Task.FromResult(Items.Where(a => a.PostingId == postingId).Select(a => (Guid?)a.Id).FirstOrDefault());
 
     public Task AddAsync(JobApplication application, CancellationToken ct)
     {
