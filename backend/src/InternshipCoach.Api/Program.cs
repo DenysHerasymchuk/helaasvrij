@@ -43,6 +43,10 @@ if (args.Contains("--migrate"))
     {
         await scope.ServiceProvider.GetRequiredService<RegisterHandler>()
             .HandleAsync(new RegisterCommand("Lotte Peeters", "lotte@demo.test", "Demo1234!"), CancellationToken.None);
+
+        await DemoDataSeeder.SeedPostingsAsync(
+            scope.ServiceProvider.GetRequiredService<DbContextOptions<InternshipCoachDbContext>>(),
+            scope.ServiceProvider.GetRequiredService<IClock>(), "lotte@demo.test", CancellationToken.None);
     }
 
     return;
