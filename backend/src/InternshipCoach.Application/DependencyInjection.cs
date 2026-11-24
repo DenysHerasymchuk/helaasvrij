@@ -24,6 +24,7 @@ using InternshipCoach.Application.Postings.Add;
 using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Postings.Browse;
 using InternshipCoach.Application.Chat.Send;
+using InternshipCoach.Application.Documents.CreateCv;
 using InternshipCoach.Application.Documents.DeleteDocument;
 using InternshipCoach.Application.Documents.ExtractCvText;
 using InternshipCoach.Application.Documents.GetDocument;
@@ -78,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<DeleteItemHandler>();
         services.AddScoped<UpdateBasicsHandler>();
         services.AddScoped<TailorCvHandler>();
+        services.AddScoped<CreateCvHandler>();
         services.AddScoped<ExtractCvTextHandler>();
         services.AddScoped<ListDocumentsHandler>();
         services.AddScoped<GetDocumentHandler>();

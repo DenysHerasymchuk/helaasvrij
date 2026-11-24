@@ -190,9 +190,9 @@ public sealed partial class TailorCvHandler(
     }
 
     // One line of plain text, so model output cannot open its own markdown block.
-    private static string Line(string? text) => WhitespaceRegex().Replace(text ?? string.Empty, " ").Trim().TrimStart('#').Trim();
+    internal static string Line(string? text) => WhitespaceRegex().Replace(text ?? string.Empty, " ").Trim().TrimStart('#').Trim();
 
-    private static HashSet<string> Numbers(string text) => DigitsRegex().Matches(text).Select(m => m.Value).ToHashSet();
+    internal static HashSet<string> Numbers(string text) => DigitsRegex().Matches(text).Select(m => m.Value).ToHashSet();
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex WhitespaceRegex();
