@@ -1,5 +1,5 @@
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { AlertCircle, Copy01, Download01, Edit05, Printer, Trash01 } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -44,9 +44,9 @@ const printCss = `@media print {
   #cv-sheet { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; padding: 0 !important; }
 }`;
 
-function Panel({ title, action, children, className }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {
+function Panel({ id, title, action, children, className }: { id?: string; title: string; action?: ReactNode; children: ReactNode; className?: string }) {
     return (
-        <section className={cx("rounded-xl bg-primary shadow-xs ring-1 ring-secondary", className)}>
+        <section id={id} className={cx("scroll-mt-6 rounded-xl bg-primary shadow-xs ring-1 ring-secondary", className)}>
             <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-5 py-4">
                 <h2 className="text-md font-semibold text-primary">{title}</h2>
                 {action}
@@ -125,6 +125,11 @@ function formatDate(iso: string) {
 }
 
 export function DocumentsPage() {
+    // Deep links from a posting: ?postingId=&mode=tailor|create or ?postingId=&kind=coverLetter|recruiterMessage.
+    const [params] = useSearchParams();
+    const linkedPosting = params.get("postingId") ?? "";
+    const linkedKind = params.get("kind");
+    const linkedMode = params.get("mode");
     const [cvSource, setCvSource] = useState<"paste" | "upload">("paste");
     const [cvText, setCvText] = useState("");
     const [cvFile, setCvFile] = useState<File | null>(null);
@@ -133,7 +138,7 @@ export function DocumentsPage() {
 
     const [postingSource, setPostingSource] = useState<"saved" | "paste">("paste");
     const [postingText, setPostingText] = useState("");
-    const [postingId, setPostingId] = useState("");
+    const [postingId, setPostingId] = useState(linkedPosting);
     const [postings, setPostings] = useState<PostingSummary[] | null>(null);
     const [postingsError, setPostingsError] = useState(false);
     const [downloading, setDownloading] = useState(false);
@@ -156,8 +161,8 @@ export function DocumentsPage() {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
-    const [draftPostingId, setDraftPostingId] = useState("");
-    const [draftKind, setDraftKind] = useState<DraftKind>("coverLetter");
+    const [draftPostingId, setDraftPostingId] = useState(linkedPosting);
+    const [draftKind, setDraftKind] = useState<DraftKind>(linkedKind === "recruiterMessage" ? "recruiterMessage" : "coverLetter");
     const [draftLanguage, setDraftLanguage] = useState<"" | Language>("");
     const [drafting, setDrafting] = useState(false);
     const [draftError, setDraftError] = useState<string | null>(null);
@@ -184,6 +189,21 @@ export function DocumentsPage() {
             .catch(() => setPostingsError(true));
     };
     useEffect(loadPostings, []);
+
+    // Scroll once the postings are in, so the panel sits where it will stay.
+    const postingsLoaded = postings !== null;
+    useEffect(() => {
+        if (!postingsLoaded) return;
+        const target =
+            linkedKind === "coverLetter" || linkedKind === "recruiterMessage"
+                ? "draft-panel"
+                : linkedMode === "create"
+                  ? "create-panel"
+                  : linkedMode === "tailor" || linkedPosting
+                    ? "tailor-panel"
+                    : null;
+        if (target) document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [postingsLoaded, linkedKind, linkedMode, linkedPosting]);
 
     const loadProfile = () => {
         setConfirmedCount(null);
@@ -363,7 +383,7 @@ export function DocumentsPage() {
 
             <div className="grid items-start gap-6 lg:grid-cols-2">
                 <div className="flex flex-col gap-6">
-                    <Panel title="Create my CV from my profile">
+                    <Panel id="create-panel" title="Create my CV from my profile">
                         {confirmedCount === null ? (
                             <p role="status" className="p-5 text-sm text-tertiary">Loading your profile...</p>
                         ) : confirmedCount === -1 ? (
@@ -416,7 +436,7 @@ export function DocumentsPage() {
                         )}
                     </Panel>
 
-                    <Panel title="Tailor my CV to a posting">
+                    <Panel id="tailor-panel" title="Tailor my CV to a posting">
                         <form onSubmit={onTailor} className="flex flex-col gap-5 p-5">
                             <fieldset className="flex flex-col gap-3">
                                 <legend className="mb-3 text-sm font-medium text-secondary">Your CV</legend>
@@ -584,7 +604,7 @@ export function DocumentsPage() {
                         </form>
                     </Panel>
 
-                <Panel title="Cover letter or recruiter message">
+                <Panel id="draft-panel" title="Cover letter or recruiter message">
                     <form onSubmit={onDraft} className="flex flex-col gap-5 p-5">
                         {postingsError ? (
                             <div className="flex flex-col items-start gap-3">

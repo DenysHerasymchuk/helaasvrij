@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
@@ -42,7 +42,8 @@ export function GapsPage() {
     const [busyId, setBusyId] = useState<string | null>(null);
     const [notice, setNotice] = useState<Notice | null>(null);
     const [status, setStatus] = useState<"open" | "done" | "all">("open");
-    const [postingId, setPostingId] = useState("all");
+    const [params] = useSearchParams();
+    const [postingId, setPostingId] = useState(params.get("postingId") ?? "all");
     const [groupBy, setGroupBy] = useState<"posting" | "repo">("posting");
 
     const load = useCallback(async () => {
