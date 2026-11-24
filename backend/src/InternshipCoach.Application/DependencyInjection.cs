@@ -3,6 +3,7 @@ using InternshipCoach.Application.Auth.GitHubSignIn;
 using InternshipCoach.Application.Llm;
 using InternshipCoach.Application.Applications;
 using InternshipCoach.Application.Dashboard;
+using InternshipCoach.Application.Journey;
 using InternshipCoach.Application.Auth.Login;
 using InternshipCoach.Application.Auth.Me;
 using InternshipCoach.Application.Auth.Register;
@@ -102,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<UpdateApplicationHandler>();
         services.AddScoped<GetApplicationStatsHandler>();
         services.AddScoped<GetDashboardHandler>();
+        services.AddScoped<GetJourneyHandler>();
         return services;
     }
 }

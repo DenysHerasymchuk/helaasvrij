@@ -1,13 +1,18 @@
 import { File06, FileCheck02, MessageChatCircle, Plus } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { useAuth } from "@/core/auth";
+import { JourneyBar } from "@/features/journey/journey-bar";
 import { ApplicationsBarChart } from "./applications-chart";
 import { BestMatchesCard } from "./best-matches-card";
 import { ComingUpCard } from "./coming-up-card";
 import { NextStepsCard } from "./next-steps-card";
 import { HeaderLink, Panel } from "./panel";
 import { SourcesCard } from "./sources-card";
-import { useDashboard } from "./use-dashboard";
+import { type DashboardData, useDashboard } from "./use-dashboard";
+
+// Step 1 with nothing yet: no synced source, no posting, no application. Show one pointer instead of empty cards.
+const nothingYet = (data: DashboardData) =>
+    data.sources.every((s) => !s.synced) && data.postings.length === 0 && data.applicationsByMonth.every((m) => m.applied === 0);
 
 export function DashboardPage() {
     const { user } = useAuth();
@@ -18,6 +23,7 @@ export function DashboardPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <div className="flex flex-col gap-4">
                 <h1 className="text-display-xs font-semibold text-primary">Goeiemorgen, {firstName}</h1>
+                <JourneyBar />
                 <nav aria-label="Quick actions" className="flex flex-wrap gap-3">
                     <Button size="md" href="/postings" iconLeading={Plus}>
                         Add posting
@@ -45,6 +51,20 @@ export function DashboardPage() {
                 <p role="status" className="text-sm text-tertiary">
                     Loading your dashboard...
                 </p>
+            ) : nothingYet(data) ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                    <SourcesCard sources={data.sources} />
+                    <section className="dash-card flex flex-col items-start justify-center gap-3 rounded-xl bg-primary p-6 shadow-xs ring-1 ring-secondary">
+                        <h2 className="text-md font-semibold text-primary">Start with your profile</h2>
+                        <p className="text-sm text-tertiary">
+                            Add your GitHub or a CV. We pull your skills and projects from it, with a link to where each one came from. Then you can
+                            match it against real postings.
+                        </p>
+                        <Button size="md" href="/profile">
+                            Add your GitHub or CV
+                        </Button>
+                    </section>
+                </div>
             ) : (
                 <>
                     <Panel
