@@ -7,13 +7,14 @@ import {
     Modal as AriaModal,
     ModalOverlay as AriaModalOverlay,
 } from "react-aria-components";
+import { Logo } from "@/core/logo";
 import { cx } from "@/utils/cx";
 
 export const MobileNavigationHeader = ({ children }: PropsWithChildren) => {
     return (
         <AriaDialogTrigger>
             <header className="flex h-14 items-center justify-between border-b border-secondary bg-primary p-3 pl-4 lg:hidden">
-                <p className="text-md font-semibold text-brand-secondary">Internship Coach</p>
+                <Logo className="h-6 w-auto" />
 
                 <AriaButton
                     aria-label="Expand navigation menu"

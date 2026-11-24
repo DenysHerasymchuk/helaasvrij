@@ -2,7 +2,7 @@
 
 Hack The Future (Belgium) project, built in a 6-hour timebox with AI coding agents. Final product name is not decided yet (shortlist: StagiAIr, DeSync, Gatenkaas, Geen Zever, Brugske).
 
-Branding for now: the name "Internship Coach" is the logo (plain text wordmark) and the favicon/icon is just the name; no custom logo or icon yet. Repository: `internship-coach` (private, GitHub).
+Branding for now: the name is "helaasvrij" (lowercase; tagline "The internship coach that tells you what's missing."). Logo: a Fraunces serif "h" (mark) or "helaasvrij" (wordmark) in Ink with a hand-drawn Gap-red strike-through; `frontend/src/core/logo.tsx` in the app, SVGs in `frontend/public/brand/`, favicon is the struck "h" on a Paper rounded square. Colours: Paper #F6F1E7, Ink #1B1B1B, Stamp #1F7A4D, Highlight #FFE45C, Gap #D93A2B, Muted #8A8578. Repository: `internship-coach` (private, GitHub).
 
 ## The idea
 
