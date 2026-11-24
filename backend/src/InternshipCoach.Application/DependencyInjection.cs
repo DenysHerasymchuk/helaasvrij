@@ -22,6 +22,11 @@ using InternshipCoach.Application.Postings.Add;
 using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Postings.Browse;
 using InternshipCoach.Application.Chat.Send;
+using InternshipCoach.Application.Documents.DeleteDocument;
+using InternshipCoach.Application.Documents.GetDocument;
+using InternshipCoach.Application.Documents.ListDocuments;
+using InternshipCoach.Application.Documents.TailorCv;
+using InternshipCoach.Application.Documents.UpdateDocument;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace InternshipCoach.Application;
@@ -64,6 +69,11 @@ public static class DependencyInjection
         services.AddScoped<ConfirmAllItemsHandler>();
         services.AddScoped<DeleteItemHandler>();
         services.AddScoped<UpdateBasicsHandler>();
+        services.AddScoped<TailorCvHandler>();
+        services.AddScoped<ListDocumentsHandler>();
+        services.AddScoped<GetDocumentHandler>();
+        services.AddScoped<UpdateDocumentHandler>();
+        services.AddScoped<DeleteDocumentHandler>();
         return services;
     }
 }
