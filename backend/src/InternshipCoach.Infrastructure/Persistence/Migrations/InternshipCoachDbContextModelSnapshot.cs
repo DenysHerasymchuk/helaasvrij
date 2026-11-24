@@ -266,6 +266,10 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("question_id");
 
+                    b.Property<int?>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");

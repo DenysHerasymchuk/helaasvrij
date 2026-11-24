@@ -19,6 +19,14 @@ public sealed class FakeInterviewRepository(Guid userId) : IInterviewRepository
         return Task.FromResult(questions);
     }
 
+    public Task<IReadOnlyList<InterviewQuestion>> ReplaceQuestionsAsync(Guid postingId, IReadOnlyList<InterviewQuestion> questions, CancellationToken ct)
+    {
+        var old = Questions.Where(q => q.PostingId == postingId && q.UserId == userId).Select(q => q.Id).ToHashSet();
+        Questions.RemoveAll(q => old.Contains(q.Id));
+        Answers.RemoveAll(a => old.Contains(a.QuestionId));
+        return AddQuestionsAsync(questions, ct);
+    }
+
     public Task<IReadOnlyList<CompanyQuestion>> ListCompanyQuestionsAsync(string companyKey, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<CompanyQuestion>>(Company.Where(c => c.CompanyKey == companyKey).ToList());
 

@@ -10,6 +10,9 @@ public interface IInterviewRepository
 
     Task<IReadOnlyList<InterviewQuestion>> AddQuestionsAsync(IReadOnlyList<InterviewQuestion> questions, CancellationToken ct);
 
+    /// <summary>Deletes the user's questions for the posting and the answers to them, then stores the new ones. Company-question answers stay.</summary>
+    Task<IReadOnlyList<InterviewQuestion>> ReplaceQuestionsAsync(Guid postingId, IReadOnlyList<InterviewQuestion> questions, CancellationToken ct);
+
     Task<IReadOnlyList<CompanyQuestion>> ListCompanyQuestionsAsync(string companyKey, CancellationToken ct);
 
     Task<CompanyQuestion?> FindCompanyQuestionAsync(Guid id, CancellationToken ct);

@@ -9,14 +9,16 @@ namespace InternshipCoach.Infrastructure.Persistence;
 // The global user filter on ProfileItem, ProfileBasics and Source scopes every query to the signed-in user.
 public sealed class ProfileRepository(InternshipCoachDbContext db) : IProfileRepository
 {
+    // Sorted in memory: Npgsql cannot translate OrderBy on a record built by a constructor (crashed every analysis).
     public async Task<IReadOnlyList<ProfileDocument>> ListReadyDocumentsAsync(CancellationToken ct) =>
-        await db.SourceDocuments
+        (await db.SourceDocuments
             .Join(db.Sources.Where(source => source.Status == SourceStatus.Ready), document => document.SourceId, source => source.Id,
                 (document, source) => new ProfileDocument(document.Id, source.Id, source.Kind, source.Label, document.Path, document.Text))
+            .ToListAsync(ct))
             .OrderBy(document => document.SourceKind)
             .ThenBy(document => document.SourceLabel)
-            .ThenBy(document => document.Path)
-            .ToListAsync(ct);
+            .ThenBy(document => document.Path, StringComparer.Ordinal)
+            .ToList();
 
     public async Task<IReadOnlyDictionary<Guid, DocumentRef>> GetDocumentRefsAsync(IReadOnlyCollection<Guid> documentIds, CancellationToken ct)
     {
