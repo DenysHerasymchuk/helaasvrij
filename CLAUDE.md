@@ -68,14 +68,37 @@ The landing page `/` has the pitch and "Sign in with GitHub".
 - **Load the `frontend-design` skill before building or reshaping any page or layout**, and follow it for visual direction, typography, spacing and hierarchy. The result must not look like a default template.
 - Keep one consistent design system: shared colour and spacing tokens in the Tailwind config, light and dark mode, responsive down to phone width, accessible (labels, focus states, contrast).
 
-## Suggested layout
+## Layout
+
+Backend follows Clean Architecture + DDD, modelled on `mcloots/2627_SWE_ITF`. Dependencies point inward only (enforced by `InternshipCoach.Architecture.Tests`):
 
 ```
-/frontend      React + Vite + Tailwind app
-/backend       ASP.NET Core API, EF Core DbContext, migrations
-docker-compose.yml
-.env.example   names of required secrets, no values
+backend/
+  InternshipCoach.slnx, Dockerfile
+  src/
+    InternshipCoach.Domain/          entities + self-validating value objects, factory methods, no dependencies
+    InternshipCoach.Application/     use cases per feature folder (Command + Handler), abstractions (IClock, repositories)
+    InternshipCoach.Infrastructure/  EF Core DbContext (schema "coach"), configurations, migrations, repositories, SystemClock
+    InternshipCoach.Contracts/       API request/response records only
+    InternshipCoach.Api/             thin controllers, Program.cs (env prefix COACH_, Swagger in dev, --migrate)
+  tests/                             Domain.Tests, Application.Tests (fakes in TestDoubles/), Architecture.Tests
+frontend/                            React + Vite + TS + Tailwind + React Router, `@/` = src
+  src/features/<feature>/            pages per feature (auth: login, register)
+  Dockerfile, nginx.conf             nginx serves the build and proxies /api to the api service
+docker-compose.yml                   db (postgres:17), api (:5080), web (:5173)
+.env.example                         POSTGRES_PASSWORD; copy to .env
 ```
+
+New feature in the backend: Domain entity/value objects, then Application `Feature/Action/{Command,Handler}`, register the handler in `AddApplication`, repository interface in Application + implementation in Infrastructure, request/response in Contracts, controller in Api.
+
+## Commands
+
+- Backend: `dotnet build backend/InternshipCoach.slnx`, `dotnet test backend/InternshipCoach.slnx`
+- Migration: `dotnet ef migrations add <Name> -p backend/src/InternshipCoach.Infrastructure -s backend/src/InternshipCoach.Api -o Persistence/Migrations`
+- Frontend: `cd frontend && npm run dev` (proxies /api to localhost:5080), `npm run build`
+- Everything: `cp .env.example .env`, set the password, `docker compose up --build`
+- Navigation: `graphify extract . --code-only` then `graphify query "<question>"` (output in git-ignored `graphify-out/`)
+- Branches: `main` and `develop`; work on `develop`.
 
 ## Core flow (build this first)
 

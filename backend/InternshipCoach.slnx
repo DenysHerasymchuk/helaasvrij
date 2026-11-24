@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/InternshipCoach.Api/InternshipCoach.Api.csproj" />
+    <Project Path="src/InternshipCoach.Application/InternshipCoach.Application.csproj" />
+    <Project Path="src/InternshipCoach.Contracts/InternshipCoach.Contracts.csproj" />
+    <Project Path="src/InternshipCoach.Domain/InternshipCoach.Domain.csproj" />
+    <Project Path="src/InternshipCoach.Infrastructure/InternshipCoach.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InternshipCoach.Application.Tests/InternshipCoach.Application.Tests.csproj" />
+    <Project Path="tests/InternshipCoach.Architecture.Tests/InternshipCoach.Architecture.Tests.csproj" />
+    <Project Path="tests/InternshipCoach.Domain.Tests/InternshipCoach.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

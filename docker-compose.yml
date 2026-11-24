@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: coach
+      POSTGRES_USER: coach
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coach -d coach"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      COACH_ConnectionStrings__InternshipCoach: Host=db;Port=5432;Database=coach;Username=coach;Password=${POSTGRES_PASSWORD}
+      COACH_Cors__AllowedOrigins__0: http://localhost:5173
+      COACH_Hosting__HttpsTerminatedAtProxy: "true"
+    ports:
+      - "5080:8080"
+
+  web:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  db-data:
