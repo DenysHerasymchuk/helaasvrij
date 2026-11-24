@@ -9,7 +9,7 @@ const field = "w-full rounded-lg bg-primary px-3 py-2 text-md text-primary shado
 const dateFmt = new Intl.DateTimeFormat("en-BE", { day: "numeric", month: "short" });
 
 export function JobsPage() {
-    const [what, setWhat] = useState("stage developer");
+    const [what, setWhat] = useState("");
     const [where, setWhere] = useState("");
     const [jobs, setJobs] = useState<Job[] | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -63,7 +63,7 @@ export function JobsPage() {
             </div>
 
             <form onSubmit={search} className="flex flex-col gap-3 sm:flex-row">
-                <input aria-label="Role" className={field} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Role, e.g. stage developer" />
+                <input aria-label="Role" className={field} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Role or keyword, e.g. marketing, IT, .NET" />
                 <input aria-label="City" className={field} value={where} onChange={(e) => setWhere(e.target.value)} placeholder="City, e.g. Gent" />
                 <Button type="submit" isLoading={loading} isDisabled={loading} className="shrink-0">
                     Search

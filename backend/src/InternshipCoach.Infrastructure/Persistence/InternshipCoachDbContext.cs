@@ -1,5 +1,6 @@
 using System.Reflection;
 using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Domain.Applications;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Documents;
 using InternshipCoach.Domain.Interview;
@@ -61,6 +62,7 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
 
     // Shared and anonymous (not IUserOwned): no query filter, never deleted with an account.
     public DbSet<CompanyQuestion> CompanyQuestions => Set<CompanyQuestion>();
+    public DbSet<JobApplication> Applications => Set<JobApplication>();
 
     public DbSet<ScoreSnapshot> ScoreSnapshots => Set<ScoreSnapshot>();
 
