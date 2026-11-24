@@ -16,7 +16,7 @@ Pitch: "Drop in your links, see exactly what each Belgian internship wants from 
 
 - **The gap plan is the product; the CV is a by-product.** Generic CV generation is a commodity (ChatGPT, Teal, Kickresume). The value is gap analysis that cites the student's own evidence.
 - **Every claim has a source.** Every extracted skill, project or experience stores where it came from (repo, file, CV line, site). Claims without a source are dropped. The CV and drafts use only items the student confirmed. Never invent or inflate.
-- **Actions must be specific.** Every gap action names one of the student's own projects ("Add a Dockerfile to `weather-app`"). Reject and regenerate any action that does not.
+- **Actions must be specific.** Every gap action names one of the student's own projects ("Add a Dockerfile to `weather-app`"). Reject and regenerate any action that does not. A student without GitHub repos gets a small new project instead ("Start `expense-tracker-api`: ..."), with a kebab-case name and the requirement's skill in the action.
 - **The match score is computed in code, not by the LLM.** The LLM labels each requirement; code computes the number so the same input always gives the same score.
 - **Private by default.** Each student sees only their own data.
 - **Belgian context.** Postings and outputs in NL, FR or EN (output in the posting's language), CEFR language levels, school stage periods.

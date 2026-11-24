@@ -18,10 +18,12 @@ public class GapAnalysisTests
     private sealed record Setup(
         AnalysePostingHandler Handler, FakeLlmTransport Transport, FakePostingRepository Postings, Posting Posting, FakeProfileRepository Profile);
 
-    private static Setup Build(bool confirm, params string[] replies)
+    private static Setup Build(bool confirm, params string[] replies) => BuildAt(confirm, "weather-app/README.md", replies);
+
+    private static Setup BuildAt(bool confirm, string docPath, params string[] replies)
     {
         var source = Source.Create(UserId, SourceKind.GitHub, "octocat");
-        var doc = source.AddDocument("weather-app/README.md", Readme);
+        var doc = source.AddDocument(docPath, Readme);
         source.MarkReady(Clock.UtcNow);
 
         var profile = new FakeProfileRepository([source]);
@@ -96,6 +98,49 @@ public class GapAnalysisTests
 
         var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
         Assert.All(posting.Requirements.Where(r => r.Coverage == Coverage.None), r => Assert.Null(r.Action));
+    }
+
+    // No repo: "cv.txt" has no "repo/" prefix, so the student has only CV evidence.
+    [Fact]
+    public async Task Without_repos_keeps_a_concrete_new_project_and_regenerates_vague_ones_once()
+    {
+        var first = """
+            {"rows":[
+              {"req":1,"coverage":"strong","quote":"shipped it with Docker"},
+              {"req":2,"coverage":"none","action":"Start `k8s-weather-deploy`: deploy a small API to Kubernetes with a Helm chart","project":"k8s-weather-deploy"},
+              {"req":3,"coverage":"none","action":"Start `my-project`: gain more experience","project":"my-project"}
+            ]}
+            """;
+        var retry = """{"actions":[{"req":1,"action":"Start `Testing_App`: write xUnit tests","project":"Testing_App"}]}""";
+        var s = BuildAt(true, "cv.txt", first, retry);
+
+        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
+        var reqs = posting.Requirements.OrderBy(r => r.Position).ToList();
+
+        Assert.Equal("new:k8s-weather-deploy", reqs[1].ActionProject);
+        Assert.StartsWith("Start `k8s-weather-deploy`", reqs[1].Action);
+        Assert.Null(reqs[2].Action); // vague first try, not kebab-case on the retry
+        Assert.Equal(2, s.Transport.Requests.Count);
+        Assert.DoesNotContain("<untrusted_data name=\"repos\">", s.Transport.Requests[1].Turns[0].Content);
+        Assert.Equal(40, posting.Score()); // score logic unchanged
+    }
+
+    [Fact]
+    public async Task Without_repos_a_regenerated_project_idea_is_kept()
+    {
+        var first = """{"rows":[{"req":1,"coverage":"strong","quote":"shipped it with Docker"},{"req":2,"coverage":"none"},{"req":3,"coverage":"none"}]}""";
+        var retry = """
+            {"actions":[
+              {"req":1,"action":"Start `helm-starter`: package a demo app","project":"helm-starter"},
+              {"req":2,"action":"Start `expense-tracker-api`: build a REST API with ASP.NET Core and add xUnit tests","project":"expense-tracker-api"}
+            ]}
+            """;
+        var s = BuildAt(true, "cv.txt", first, retry);
+
+        var posting = (await s.Handler.HandleAsync(s.Posting.Id, default))!.Posting;
+
+        Assert.Null(posting.Requirements.Single(r => r.Text == "Kubernetes").Action); // does not mention Kubernetes
+        Assert.Equal("new:expense-tracker-api", posting.Requirements.Single(r => r.Text == "Testing with xUnit").ActionProject);
     }
 
     [Fact]
