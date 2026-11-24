@@ -1,4 +1,4 @@
-import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Settings01, User01 } from "@untitledui/icons";
+import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Moon01, Settings01, Sun, User01 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -7,6 +7,7 @@ import type { NavItemType } from "@/components/application/app-navigation/config
 import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { type CurrentUser, initialsOf, useAuth } from "@/core/auth";
+import { useTheme } from "@/core/theme";
 
 const mainItems: NavItemType[] = [
     { label: "Dashboard", href: "/dashboard", icon: HomeLine },
@@ -20,6 +21,16 @@ const mainItems: NavItemType[] = [
 
 const footerItems: NavItemType[] = [{ label: "Settings", href: "/settings", icon: Settings01 }];
 
+function ThemeToggle() {
+    const { theme, toggle } = useTheme();
+    const dark = theme === "dark";
+    return (
+        <Button size="sm" color="tertiary" iconLeading={dark ? Sun : Moon01} onPress={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}>
+            {dark ? "Light mode" : "Dark mode"}
+        </Button>
+    );
+}
+
 function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: CurrentUser; onSignOut: () => void }) {
     return (
         <nav aria-label="Main" className="flex h-full w-full flex-col justify-between overflow-auto bg-primary pt-6 lg:pt-8">
@@ -29,6 +40,9 @@ function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: Curr
             </div>
             <div className="flex flex-col gap-4 pb-6">
                 <NavList activeUrl={activeUrl} items={footerItems} className="pt-0" />
+                <div className="px-4">
+                    <ThemeToggle />
+                </div>
                 <div className="mx-4 flex items-center gap-3 border-t border-secondary px-2 pt-5">
                     <AvatarLabelGroup
                         size="md"

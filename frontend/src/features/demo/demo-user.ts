@@ -37,17 +37,11 @@ export function score(requirements: Requirement[]): number {
 export const impact = (r: Requirement) => weight[r.importance] * (1 - value[r.coverage]);
 
 export const demoUser = {
-    name: "Lotte Peeters",
-    initials: "LP",
-    github: "lotte-dev",
-    school: "Thomas More, Applied Computer Science",
-    stage: { start: "2027-02-01", end: "2027-05-31" },
     sources: [
         { kind: "GitHub", label: "lotte-dev, 3 repos", synced: "2026-11-24" },
         { kind: "CV", label: "cv-lotte.pdf", synced: "2026-11-22" },
         { kind: "Site", label: "Not added yet", synced: null },
     ],
-    profile: { confirmed: 9, total: 12 },
 };
 
 export const postings: Posting[] = [
@@ -109,11 +103,12 @@ export const postings: Posting[] = [
     },
 ];
 
-/** Score of the Brightlane posting after each re-scan. */
-export const trend = [
-    { date: "Nov 10", score: 48 },
-    { date: "Nov 14", score: 55 },
-    { date: "Nov 18", score: 62 },
-    { date: "Nov 21", score: 66 },
-    { date: "Nov 24", score: score(postings[0].requirements) },
+/** Applications sent and what came back, per month. */
+export const applicationsByMonth = [
+    { month: "Jun", applied: 2, interview: 0, offer: 0 },
+    { month: "Jul", applied: 3, interview: 1, offer: 0 },
+    { month: "Aug", applied: 4, interview: 1, offer: 0 },
+    { month: "Sep", applied: 6, interview: 2, offer: 0 },
+    { month: "Oct", applied: 8, interview: 3, offer: 1 },
+    { month: "Nov", applied: 7, interview: 2, offer: 1 },
 ];

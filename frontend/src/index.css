@@ -1,1 +1,19 @@
 @import "./styles/globals.css";
+
+/* Chart ramps, validated with the dataviz palette checker (ordinal, one hue) for each mode.
+   In dark mode the most important step is the brightest, so the ramp order flips. */
+:root {
+    --chart-coverage-strong: #15803d;
+    --chart-coverage-partial: #22c55e;
+    --chart-applied: #fb7185;
+    --chart-interview: #e11d48;
+    --chart-offer: #9f1239;
+}
+
+.dark-mode {
+    --chart-coverage-strong: #22c55e;
+    --chart-coverage-partial: #15803d;
+    --chart-applied: #9f1239;
+    --chart-interview: #e11d48;
+    --chart-offer: #fb7185;
+}
