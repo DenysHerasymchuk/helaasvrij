@@ -15,7 +15,7 @@ export function LoginPage() {
     const [params] = useSearchParams();
     const [error, setError] = useState<string | null>(params.get("error") === "github" ? "GitHub sign-in did not work. Try again or use your email." : null);
     const [submitting, setSubmitting] = useState(false);
-    const from = safePath((location.state as { from?: string } | null)?.from);
+    const from = safePath((location.state as { from?: string } | null)?.from ?? params.get("from"));
 
     // Already signed in (or just did): go where the user was heading.
     if (status === "authenticated") return <Navigate to={from} replace />;
