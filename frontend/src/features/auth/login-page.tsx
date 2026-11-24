@@ -1,4 +1,5 @@
 import { FaGithub } from "react-icons/fa6";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Form } from "@/components/base/form/form";
@@ -7,6 +8,8 @@ import { AuthCard } from "./auth-card";
 
 // Adapted from the Untitled UI "login-card-combined" template.
 export function LoginPage() {
+    const navigate = useNavigate();
+
     return (
         <AuthCard
             title="Welcome back"
@@ -21,8 +24,11 @@ export function LoginPage() {
             }
         >
             <Form
-                // shortcut: no auth API yet, form does nothing; wire to POST /api/auth/login when it exists.
-                onSubmit={(e) => e.preventDefault()}
+                // shortcut: no auth API yet, any submit opens the demo dashboard; wire to POST /api/auth/login when it exists.
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    navigate("/dashboard");
+                }}
                 className="flex flex-col gap-6"
             >
                 <div className="flex flex-col gap-5">
