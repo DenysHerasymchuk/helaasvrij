@@ -10,13 +10,13 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | --- | --- | --- | --- |
 | 1 | Scaffold: backend, frontend, compose, `/api/health` | .NET Clean Architecture, Vite + React, Postgres, nginx proxy | done |
 | 2 | Login and register pages | Untitled UI templates, placeholders for now | done |
-| 3 | route33 LLM client | Anthropic C# SDK, custom base URL, Bearer auth. Test one call first (untested from .NET). `max_tokens` >= 4000. Retry once on empty text or invalid JSON. No forced `tool_choice` (route33 rejects it). Schema goes in the prompt. | todo |
-| 4 | Token and cost log per run | Log input/output tokens and model per LLM call, never the prompt content. EUR 50 cap, route33 prices unknown. | todo |
+| 3 | route33 LLM client | Anthropic C# SDK, custom base URL, Bearer auth. Test one call first (untested from .NET). `max_tokens` >= 4000. Retry once on empty text or invalid JSON. No forced `tool_choice` (route33 rejects it). Schema goes in the prompt. | done (real smoke test skipped until R33_API_KEY is set) |
+| 4 | Token and cost log per run | Log input/output tokens and model per LLM call, never the prompt content. EUR 50 cap, route33 prices unknown. | done (table `LlmCalls`; per-user daily cap, default 200) |
 | 5 | Start without sign-up | Enter a GitHub username and paste CV text, then get a result. No account wall before the first result. | todo |
 | 6 | GitHub ingest | REST API with a server token (unauthenticated limit is 60/h). Repos, languages, README, file tree (Dockerfile, tests, CI), commit count. | todo |
 | 7 | CV ingest | Paste text first; PDF upload (CV or LinkedIn "Save to PDF") after. | todo |
 | 8 | Profile extraction | LLM turns sources into skills, projects, experience, languages. Each item stores its source (repo, file, CV line). Items without a source are dropped. | todo |
-| 9 | Verbatim-quote check | Code checks that every evidence quote is an exact substring of its source text. Drop or retry on failure. Count failures (target 0). In tests, GLM spliced quotes in 3 of 12 runs; this check caught every one. | todo |
+| 9 | Verbatim-quote check | Code checks that every evidence quote is an exact substring of its source text. Drop or retry on failure. Count failures (target 0). In tests, GLM spliced quotes in 3 of 12 runs; this check caught every one. | done (`QuoteCheck`; failure counting is wired in by profile extraction) |
 | 10 | Confirm/remove profile items | Student confirms or removes each extracted item. Drafts use only confirmed items. | todo |
 | 11 | Paste a posting | Paste text (or one of the demo postings). Detect language (NL/FR/EN). | todo |
 | 12 | Gap matrix | Per requirement: importance (required/nice), coverage (strong/partial/none), evidence quote + source, action, action project. | todo |
@@ -26,7 +26,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 16 | "No clear fit" state | Honest message when the score is low or the requirements barely overlap. | todo |
 | 17 | Dated gap plan | Gaps as a checklist sorted by impact (weight x missing coverage), each with a target date. | todo |
 | 18 | Re-scan | Tick a gap, re-ingest that repo, re-check that requirement, update the score (demo: 62% to 81%). | todo |
-| 19 | Prompt-injection safety | Postings, CVs and READMEs are data only. The model gets no tools. Strict schema validation with one retry. | todo |
+| 19 | Prompt-injection safety | Postings, CVs and READMEs are data only. The model gets no tools. Strict schema validation with one retry. | done in the client (delimiters, no tools, schema validation, one retry); each feature must use `UntrustedInput.Wrap` |
 
 ## P1: after the core works (freeze scope at 15:00)
 
