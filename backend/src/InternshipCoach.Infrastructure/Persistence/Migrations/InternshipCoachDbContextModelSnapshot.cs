@@ -72,6 +72,110 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("llm_calls", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Postings.Posting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("city");
+
+                    b.Property<string>("Company")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("company");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly?>("Deadline")
+                        .HasColumnType("date")
+                        .HasColumnName("deadline");
+
+                    b.Property<DateTimeOffset?>("InterviewAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("interview_at");
+
+                    b.Property<bool>("IsDemo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_demo");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("language");
+
+                    b.Property<string>("RawText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("raw_text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("url");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("postings", "coach");
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Postings.Requirement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Importance")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("importance");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<Guid>("PostingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posting_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostingId");
+
+                    b.ToTable("requirements", "coach");
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Sources.Source", b =>
                 {
                     b.Property<Guid>("Id")
@@ -220,6 +324,15 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("DataProtectionKeys", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Postings.Requirement", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
+                        .WithMany("Requirements")
+                        .HasForeignKey("PostingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Sources.SourceDocument", b =>
                 {
                     b.HasOne("InternshipCoach.Domain.Sources.Source", null)
@@ -227,6 +340,11 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasForeignKey("SourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Postings.Posting", b =>
+                {
+                    b.Navigation("Requirements");
                 });
 
             modelBuilder.Entity("InternshipCoach.Domain.Sources.Source", b =>

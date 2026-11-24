@@ -7,6 +7,7 @@ using InternshipCoach.Application.Sources.GitHub;
 using InternshipCoach.Infrastructure.Persistence;
 using InternshipCoach.Infrastructure.Sources;
 using InternshipCoach.Infrastructure.Time;
+using InternshipCoach.Infrastructure.Web;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,8 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPostingRepository, PostingRepository>();
+        services.AddSingleton<IPageFetcher, SafePageFetcher>();
 
         var route33 = configuration.GetSection(Route33Options.SectionName).Get<Route33Options>() ?? new Route33Options();
         if (string.IsNullOrWhiteSpace(route33.BaseUrl))
