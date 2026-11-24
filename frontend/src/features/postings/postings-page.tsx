@@ -4,6 +4,7 @@ import { Plus, SearchLg } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { ApiError, api } from "@/core/api";
+import { BoardStatus, useBoard } from "@/features/applications/board-status";
 import { AddPostingModal } from "./add-posting-modal";
 import { type PostingSummary, formatDate } from "./types";
 
@@ -14,7 +15,8 @@ export function PostingsPage() {
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState("");
     const [debounced, setDebounced] = useState("");
-        const [adding, setAdding] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const board = useBoard();
     const filtered = debounced !== "";
 
     useEffect(() => {
@@ -85,11 +87,11 @@ export function PostingsPage() {
                 ) : (
                     <ul className="flex flex-col divide-y divide-secondary">
                         {items.map((p) => (
-                            <li key={p.id}>
+                            <li key={p.id} className="flex flex-col md:flex-row md:items-center">
                                 <button
                                     type="button"
                                     onClick={() => navigate(`/postings/${p.id}`)}
-                                    className="flex w-full cursor-pointer flex-col gap-2 px-5 py-4 text-left outline-focus-ring transition hover:bg-primary_hover focus-visible:outline-2 md:flex-row md:items-center md:gap-6"
+                                    className="flex min-w-0 flex-1 cursor-pointer flex-col gap-2 px-5 py-4 text-left outline-focus-ring transition hover:bg-primary_hover focus-visible:outline-2 md:flex-row md:items-center md:gap-6"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-md font-semibold text-primary">{p.title}</p>
@@ -103,6 +105,9 @@ export function PostingsPage() {
                                         <span className="w-28 text-sm text-quaternary md:text-right">Not analysed</span>
                                     </div>
                                 </button>
+                                <div className="px-5 pb-4 md:w-64 md:shrink-0 md:py-4 md:pl-0">
+                                    <BoardStatus postingId={p.id} byPosting={board.byPosting} onAdded={board.added} />
+                                </div>
                             </li>
                         ))}
                     </ul>

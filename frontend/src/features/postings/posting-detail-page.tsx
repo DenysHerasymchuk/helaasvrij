@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, LinkExternal01, Trash01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
+import { BoardStatus, useBoard } from "@/features/applications/board-status";
 import { DateField, Field } from "./fields";
 import { GapMatrix, GapPanel } from "./gap-analysis";
 import { type PostingDetail, formatDate, formatDateTime, toLocalInput } from "./types";
@@ -23,6 +24,7 @@ export function PostingDetailPage() {
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const board = useBoard();
 
     const load = useCallback(async () => {
         setError(null);
@@ -129,6 +131,9 @@ export function PostingDetailPage() {
                         Open original posting <LinkExternal01 className="size-4" aria-hidden="true" />
                     </a>
                 )}
+                <div className="mt-2">
+                    <BoardStatus postingId={posting.id} byPosting={board.byPosting} onAdded={board.added} />
+                </div>
             </header>
 
             <div className="grid gap-6 lg:grid-cols-3">
