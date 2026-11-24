@@ -35,7 +35,6 @@ public sealed class ApplicationsController : ControllerBase
     {
         ApplicationOutcome.NotFound => NotFound(),
         ApplicationOutcome.Invalid => Problem(statusCode: StatusCodes.Status400BadRequest, title: result.Error),
-        ApplicationOutcome.Conflict => Problem(statusCode: StatusCodes.Status409Conflict, title: result.Error),
         _ => created ? StatusCode(StatusCodes.Status201Created, ToResponse(result.Card!)) : Ok(ToResponse(result.Card!))
     };
 

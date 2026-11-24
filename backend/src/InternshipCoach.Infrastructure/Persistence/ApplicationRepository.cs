@@ -28,8 +28,9 @@ public sealed class ApplicationRepository(InternshipCoachDbContext db) : IApplic
     public Task<JobApplication?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         db.Applications.FirstOrDefaultAsync(application => application.Id == id, cancellationToken);
 
-    public Task<bool> ExistsForPostingAsync(Guid postingId, CancellationToken cancellationToken) =>
-        db.Applications.AnyAsync(application => application.PostingId == postingId, cancellationToken);
+    public Task<Guid?> FindIdForPostingAsync(Guid postingId, CancellationToken cancellationToken) =>
+        db.Applications.Where(application => application.PostingId == postingId)
+            .Select(application => (Guid?)application.Id).FirstOrDefaultAsync(cancellationToken);
 
     public async Task AddAsync(JobApplication application, CancellationToken cancellationToken)
     {

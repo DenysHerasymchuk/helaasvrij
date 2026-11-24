@@ -13,8 +13,7 @@ public enum ApplicationOutcome
 {
     Ok,
     NotFound,
-    Invalid,
-    Conflict
+    Invalid
 }
 
 public sealed record ApplicationResult(ApplicationOutcome Outcome, ApplicationCard? Card = null, string? Error = null);
@@ -32,9 +31,10 @@ public sealed class CreateApplicationHandler(
             return new ApplicationResult(ApplicationOutcome.NotFound);
         }
 
-        if (await applications.ExistsForPostingAsync(command.PostingId, ct))
+        // Idempotent: adding a posting that is already on the board returns its existing card.
+        if (await applications.FindIdForPostingAsync(command.PostingId, ct) is { } existing)
         {
-            return new ApplicationResult(ApplicationOutcome.Conflict, Error: "You already track this posting.");
+            return new ApplicationResult(ApplicationOutcome.Ok, await applications.GetCardAsync(existing, ct));
         }
 
         var application = JobApplication.Create(currentUser.UserId, command.PostingId, new CreatedAt(clock.UtcNow));

@@ -153,7 +153,7 @@ public class PostingHandlerTests
     [Fact]
     public async Task From_job_saves_the_snapshot_facts_not_what_the_model_read()
     {
-        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer())
+        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer(), _repo)
             .HandleAsync(new AddPostingFromJobCommand("4931028811"), default);
 
         Assert.Equal(PostingStatus.Created, outcome.Status);
@@ -171,11 +171,29 @@ public class PostingHandlerTests
     [Fact]
     public async Task From_job_with_an_unknown_id_is_not_found_and_never_calls_the_model()
     {
-        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer())
+        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer(), _repo)
             .HandleAsync(new AddPostingFromJobCommand("nope"), default);
 
         Assert.Equal(PostingStatus.NotFound, outcome.Status);
         Assert.Empty(_transport.Requests);
         Assert.Empty(_repo.Items);
+    }
+
+    [Fact]
+    public async Task From_job_saved_twice_returns_the_existing_posting_without_calling_the_model()
+    {
+        var first = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer(), _repo)
+            .HandleAsync(new AddPostingFromJobCommand("4931028811"), default);
+        var calls = _transport.Requests.Count;
+
+        // Same ad, other tracking query.
+        var again = await new AddPostingFromJobHandler(
+                new FakeJobSnapshot(AdzunaJob with { Url = "https://www.adzuna.be/land/ad/4931028811?se=other" }), Importer(), _repo)
+            .HandleAsync(new AddPostingFromJobCommand("4931028811"), default);
+
+        Assert.Equal(PostingStatus.Existing, again.Status);
+        Assert.Equal(first.Posting!.Id, again.Posting!.Id);
+        Assert.Single(_repo.Items);
+        Assert.Equal(calls, _transport.Requests.Count);
     }
 }

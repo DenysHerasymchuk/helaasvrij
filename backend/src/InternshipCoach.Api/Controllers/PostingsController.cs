@@ -113,6 +113,7 @@ public sealed class PostingsController : ControllerBase
         return outcome.Status switch
         {
             PostingStatus.Created => Created($"/api/postings/{outcome.Posting!.Id}", ToDetail(outcome.Posting, null)),
+            PostingStatus.Existing => Ok(ToDetail(outcome.Posting!, null)),
             PostingStatus.Invalid => Problem(statusCode: StatusCodes.Status400BadRequest, title: outcome.Message),
             PostingStatus.NotFound => Problem(statusCode: StatusCodes.Status404NotFound, title: outcome.Message),
             _ => Problem(statusCode: StatusCodes.Status422UnprocessableEntity, title: outcome.Message)
