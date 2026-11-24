@@ -1,5 +1,6 @@
 using System.Reflection;
 using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Domain.Applications;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Documents;
 using InternshipCoach.Domain.Llm;
@@ -53,6 +54,8 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<Requirement> Requirements => Set<Requirement>();
     public DbSet<Document> Documents => Set<Document>();
+
+    public DbSet<JobApplication> Applications => Set<JobApplication>();
 
     // Cookie-encryption keys live in the database so sessions survive an api container restart.
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();

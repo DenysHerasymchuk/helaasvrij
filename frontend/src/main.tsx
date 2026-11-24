@@ -12,13 +12,13 @@ import { PostingDetailPage } from '@/features/postings/posting-detail-page'
 import { JobsPage } from '@/features/jobs/jobs-page'
 import { PostingsPage } from '@/features/postings/postings-page'
 import { DocumentsPage } from '@/features/documents/documents-page'
+import { ApplicationsPage } from '@/features/applications/applications-page'
 import { ComingSoonPage } from '@/features/placeholder/coming-soon-page'
 import './index.css'
 
 const placeholders = [
   ['gaps', 'Gap plan'],
   ['interview', 'Interview prep'],
-  ['applications', 'Applications'],
 ] as const
 
 const router = createBrowserRouter([
@@ -35,6 +35,7 @@ const router = createBrowserRouter([
       { path: '/postings/:id', element: <PostingDetailPage /> },
       { path: '/jobs', element: <JobsPage /> },
       { path: '/documents', element: <DocumentsPage /> },
+      { path: '/applications', element: <ApplicationsPage /> },
       ...placeholders.map(([path, title]) => ({ path: `/${path}`, element: <ComingSoonPage title={title} /> })),
     ],
   },

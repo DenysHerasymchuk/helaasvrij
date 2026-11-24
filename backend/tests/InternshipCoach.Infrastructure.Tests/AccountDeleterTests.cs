@@ -1,3 +1,4 @@
+using InternshipCoach.Domain.Applications;
 using InternshipCoach.Domain.Documents;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
@@ -27,8 +28,10 @@ public class AccountDeleterTests
         db.LlmCalls.Add(LlmCall.Create(user.Id, "f", "m", 1, 1, 1, true, new CreatedAt(DateTimeOffset.UtcNow)));
         db.LlmCalls.Add(LlmCall.Create(user.Id, "f", "m", 1, 1, 1, true, new CreatedAt(DateTimeOffset.UtcNow)));
         db.UserSettings.Add(UserSettings.Create(user.Id, "nl", 60, true));
-        db.Postings.Add(Posting.Create(user.Id, "Acme", "Intern", null, PostingLanguage.Nl, null, "text", null,
-            [("Knows Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow)));
+        var posting = Posting.Create(user.Id, "Acme", "Intern", null, PostingLanguage.Nl, null, "text", null,
+            [("Knows Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow));
+        db.Postings.Add(posting);
+        db.Applications.Add(JobApplication.Create(user.Id, posting.Id, new CreatedAt(DateTimeOffset.UtcNow)));
         var source = Source.Create(user.Id, SourceKind.GitHub, "gh");
         var document = source.AddDocument("a/summary", "Repository: a");
         db.Sources.Add(source);
