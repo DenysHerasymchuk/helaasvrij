@@ -1,6 +1,7 @@
 using InternshipCoach.Application.Auth.Register;
 using DotNetEnv;
 using InternshipCoach.Api.Auth;
+using InternshipCoach.Api.Chat;
 using InternshipCoach.Application;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Infrastructure;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddCoachForwardedHeaders();
 builder.Services.AddCoachAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddCoachRateLimiting(builder.Configuration);
+builder.Services.AddChatRateLimiting(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();

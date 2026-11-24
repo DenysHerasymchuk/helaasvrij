@@ -46,7 +46,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 31 | Belgian layer | Output in the posting's language (NL/FR/EN), CEFR language levels on profile and requirements, stage period checked against the posting's dates. | todo |
 | 32 | Add posting by URL | Fetch the page, read JobPosting JSON-LD when present, fall back to paste. Never LinkedIn, Student.be or JobTeaser. | todo |
 | 33 | Settings page (basic) | Default language, sign out. | todo |
-| 34 | AI chat assistant | Round button bottom-right on every signed-in page, opens a chat through route33 (`anthropic/claude-sonnet-5-5`). Answers questions about the app and suggests a page with a "Go to" chip (whitelisted routes only). Later: navigates and acts on the user's data. See `BUILD.md` prompt 10. | todo |
+| 34 | AI chat assistant | Round button bottom-right on every signed-in page, opens a chat through route33 (`anthropic/claude-sonnet-5-5`). Answers questions about the app and suggests a page with a "Go to" chip (whitelisted routes only). Later: navigates and acts on the user's data. See `BUILD.md` prompt 10. | done (answers and "Go to" chip; no actions yet, no chat history) |
 
 ## Next (pitch slide, not built)
 
