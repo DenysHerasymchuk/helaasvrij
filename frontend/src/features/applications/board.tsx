@@ -14,6 +14,7 @@ import { ArrowsRight, DotsGrid, Edit03 } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError } from "@/core/api";
+import { InterviewDate } from "@/features/calendar/interview-date";
 import { TextArea } from "@/features/postings/fields";
 import { formatDate } from "@/features/postings/types";
 import { type Application, type Stage, stages } from "./types";
@@ -113,6 +114,10 @@ function ApplicationCard({ card, onMove, onSaveNotes }: { card: Application; onM
 
             {card.deadline && card.stage === "saved" && <p className="text-xs text-tertiary">Deadline {formatDate(card.deadline)}</p>}
             {card.appliedAt && card.stage !== "saved" && <p className="text-xs text-tertiary">Applied {formatDate(card.appliedAt)}</p>}
+            {card.stage === "interview" && (
+                // shortcut: "just moved" = stage changed in the last 15 s (the card remounts in its new column, so no previous-stage state).
+                <InterviewDate postingId={card.postingId} company={card.company} autoOpen={Date.now() - Date.parse(card.stageChangedAt) < 15_000} />
+            )}
 
             {editing ? (
                 <NotesEditor
