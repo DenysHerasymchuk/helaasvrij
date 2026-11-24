@@ -116,7 +116,7 @@ export function InterviewPage() {
     const [interview, setInterview] = useState<Interview | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const postingId = params.get("posting") ?? "";
+    const postingId = params.get("postingId") ?? params.get("posting") ?? "";
 
     const loadPostings = useCallback(() => {
         setPostingsError(null);
@@ -177,7 +177,7 @@ export function InterviewPage() {
                 <>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor="posting" className="text-sm font-medium text-secondary">Posting</label>
-                        <select id="posting" className={fieldClass} value={postingId} onChange={(e) => setParams(e.target.value ? { posting: e.target.value } : {})}>
+                        <select id="posting" className={fieldClass} value={postingId} onChange={(e) => setParams(e.target.value ? { postingId: e.target.value } : {})}>
                             <option value="">Choose a posting...</option>
                             {postings.map((p) => (
                                 <option key={p.id} value={p.id}>{p.title} at {p.company}</option>

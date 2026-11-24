@@ -199,4 +199,39 @@ public class PostingHandlerTests
         Assert.Single(_repo.Items);
         Assert.Equal(calls, _transport.Requests.Count);
     }
+
+    [Fact]
+    public async Task Replace_text_re_extracts_requirements_and_keeps_the_dates()
+    {
+        const string fullReply = """
+            {"company":"Other","title":"Other","language":"en",
+             "requirements":[{"text":"React","importance":"required"},{"text":"SQL","importance":"required"},{"text":"Git","importance":"nice"}]}
+            """;
+        var transport = new FakeLlmTransport(Reply, fullReply);
+        var clock = new FakeClock(new DateTimeOffset(2026, 11, 24, 10, 0, 0, TimeSpan.Zero));
+        var extractor = new PostingExtractor(new LlmClient(transport, _log, clock, new LlmLimits()));
+        var user = new FakeCurrentUser(UserId);
+        await new AddPostingFromPasteHandler(new PostingImporter(extractor, _repo, user, clock))
+            .HandleAsync(new AddPostingFromPasteCommand(LongText, null), default);
+        var id = _repo.Items[0].Id;
+        var handler = new ReplacePostingTextHandler(extractor, _repo, user);
+
+        Assert.Equal(PostingStatus.Invalid, (await handler.HandleAsync(new ReplacePostingTextCommand(id, "short"), default)).Status);
+        Assert.Equal(PostingStatus.NotFound, (await handler.HandleAsync(new ReplacePostingTextCommand(Guid.NewGuid(), LongText), default)).Status);
+        Assert.Single(transport.Requests);
+
+        var full = "Full ad text. " + new string('y', 900);
+        var outcome = await handler.HandleAsync(new ReplacePostingTextCommand(id, full), default);
+
+        Assert.Equal(PostingStatus.Updated, outcome.Status);
+        var posting = outcome.Posting!;
+        Assert.Equal(full, posting.RawText);
+        Assert.Equal(PostingLanguage.En, posting.Language);
+        Assert.Equal(["React", "SQL", "Git"], posting.Requirements.Select(r => r.Text));
+        Assert.Equal([0, 1, 2], posting.Requirements.Select(r => r.Position));
+        Assert.Equal("Acme", posting.Company);
+        Assert.Equal(new DateOnly(2026, 12, 20), posting.Deadline);
+        Assert.False(posting.IsAnalysed);
+        Assert.Equal(1, _repo.Saves);
+    }
 }

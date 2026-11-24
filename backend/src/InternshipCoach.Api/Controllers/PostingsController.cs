@@ -110,6 +110,13 @@ public sealed class PostingsController : ControllerBase
         JobPostingRequest request, [FromServices] AddPostingFromJobHandler handler, [FromServices] GetBasicsHandler basics, CancellationToken ct) =>
         Add(() => handler.HandleAsync(new AddPostingFromJobCommand(request.JobId), ct), basics, ct);
 
+    [HttpPut("{id:guid}/text")]
+    [Consumes("application/json")]
+    public Task<IActionResult> ReplaceText(
+        Guid id, ReplacePostingTextRequest request, [FromServices] ReplacePostingTextHandler handler, [FromServices] GetBasicsHandler basics,
+        CancellationToken ct) =>
+        Add(() => handler.HandleAsync(new ReplacePostingTextCommand(id, request.Text), ct), basics, ct);
+
     // PUT is accepted next to PATCH because the shared api client has no PATCH helper.
     [HttpPatch("{id:guid}")]
     [HttpPut("{id:guid}")]
@@ -159,7 +166,7 @@ public sealed class PostingsController : ControllerBase
         return outcome.Status switch
         {
             PostingStatus.Created => Created($"/api/postings/{outcome.Posting!.Id}", ToDetail(outcome.Posting, null, await basics.HandleAsync(ct))),
-            PostingStatus.Existing => Ok(ToDetail(outcome.Posting!, null, await basics.HandleAsync(ct))),
+            PostingStatus.Existing or PostingStatus.Updated => Ok(ToDetail(outcome.Posting!, null, await basics.HandleAsync(ct))),
             PostingStatus.Invalid => Problem(statusCode: StatusCodes.Status400BadRequest, title: outcome.Message),
             PostingStatus.NotFound => Problem(statusCode: StatusCodes.Status404NotFound, title: outcome.Message),
             _ => Problem(statusCode: StatusCodes.Status422UnprocessableEntity, title: outcome.Message)

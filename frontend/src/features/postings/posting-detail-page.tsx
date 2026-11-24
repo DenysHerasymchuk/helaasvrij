@@ -8,6 +8,8 @@ import { BoardStatus, useBoard } from "@/features/applications/board-status";
 import { BelgianDateInput, DateField, Field } from "./fields";
 import { GapMatrix, GapPanel } from "./gap-analysis";
 import { GenericAnswerPanel } from "./generic-answer";
+import { NextSteps } from "./next-steps";
+import { SHORT_POSTING_CHARS, ShortTextHint } from "./short-text-hint";
 import { type PostingDetail, formatDate, formatDateTime, formatStagePeriod, toLocalInput } from "./types";
 
 
@@ -124,6 +126,8 @@ export function PostingDetailPage() {
     const href = safeHref(posting.url);
     const required = posting.requirements.filter((r) => r.importance === "required");
     const nice = posting.requirements.filter((r) => r.importance === "nice");
+    const analysed = posting.analysis.analysed;
+    const boardStatus = <BoardStatus postingId={posting.id} byPosting={board.byPosting} onAdded={board.added} />;
 
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
@@ -150,9 +154,7 @@ export function PostingDetailPage() {
                         Open original posting <LinkExternal01 className="size-4" aria-hidden="true" />
                     </a>
                 )}
-                <div className="mt-2">
-                    <BoardStatus postingId={posting.id} byPosting={board.byPosting} onAdded={board.added} />
-                </div>
+                {!analysed && <div className="mt-2">{boardStatus}</div>}
                 <Checkbox
                     className="mt-2"
                     size="md"
@@ -162,6 +164,15 @@ export function PostingDetailPage() {
                     hint="See what a general chatbot says about this posting next to your evidence-backed gap matrix."
                 />
             </header>
+
+            {posting.rawText.length < SHORT_POSTING_CHARS && <ShortTextHint posting={posting} onUpdated={setPosting} />}
+
+            {/* One clear next move: analyse first, then the hub of follow-up steps for this posting. */}
+            {analysed ? (
+                <NextSteps postingId={posting.id} openGaps={posting.requirements.filter((r) => r.coverage !== "strong" && !r.done).length} board={boardStatus} />
+            ) : (
+                <GapPanel posting={posting} onUpdated={setPosting} />
+            )}
 
             {compare && (
                 <div className="grid items-start gap-6 lg:grid-cols-2">
@@ -214,7 +225,7 @@ export function PostingDetailPage() {
                 </div>
 
                 <div className="flex flex-col gap-6">
-                    <GapPanel posting={posting} onUpdated={setPosting} />
+                    {analysed && <GapPanel posting={posting} onUpdated={setPosting} />}
 
                     <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
                         <h2 className="border-b border-secondary px-5 py-4 text-md font-semibold text-primary">Dates</h2>

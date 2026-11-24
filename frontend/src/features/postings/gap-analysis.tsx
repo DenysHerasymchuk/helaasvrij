@@ -85,7 +85,7 @@ export function GapPanel({ posting, onUpdated }: { posting: PostingDetail; onUpd
                 )}
                 <div>
                     <Button size="md" onPress={run} isLoading={busy}>
-                        {analysis.analysed ? "Re-analyse" : "Analyse"}
+                        {analysis.analysed ? "Re-analyse" : "Analyse this posting"}
                     </Button>
                 </div>
             </div>

@@ -105,6 +105,27 @@ public sealed class Posting : IUserOwned
         InterviewAt = interviewAt?.ToUniversalTime();
     }
 
+    /// <summary>
+    /// Replaces the posting text with a fuller version and its requirements with the ones read from it.
+    /// The old gap analysis belongs to the old requirements, so it goes with them.
+    /// </summary>
+    public void ReplaceText(string rawText, PostingLanguage language, IEnumerable<(string Text, Importance Importance)> requirements)
+    {
+        if (string.IsNullOrWhiteSpace(rawText))
+        {
+            throw new DomainException("Posting text is required.");
+        }
+
+        RawText = Truncate(rawText.Trim(), RawTextMaxLength);
+        Language = language;
+        _requirements.Clear();
+        var position = 0;
+        foreach (var (text, importance) in requirements.Where(r => !string.IsNullOrWhiteSpace(r.Text)).Take(MaxRequirements))
+        {
+            _requirements.Add(Requirement.Create(UserId, Id, position++, text, importance));
+        }
+    }
+
     public void SetGenericAnswer(string text, DateTimeOffset capturedAt)
     {
         if (string.IsNullOrWhiteSpace(text))
