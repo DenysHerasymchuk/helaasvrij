@@ -27,6 +27,8 @@ using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Postings.Browse;
 using InternshipCoach.Application.Postings.Generic;
 using InternshipCoach.Application.Chat.Send;
+using InternshipCoach.Application.Chat.Confirm;
+using InternshipCoach.Application.Chat.Tools;
 using InternshipCoach.Application.Documents.CreateCv;
 using InternshipCoach.Application.Documents.DeleteDocument;
 using InternshipCoach.Application.Documents.ExtractCvText;
@@ -52,6 +54,8 @@ public static class DependencyInjection
         services.AddScoped<UpdateSettingsHandler>();
         services.AddScoped<DeleteAccountHandler>();
         services.AddScoped<SendChatHandler>();
+        services.AddScoped<ChatToolbox>();
+        services.AddScoped<ConfirmChatActionHandler>();
         services.AddScoped<ILlmClient, LlmClient>();
         services.AddScoped<SyncGitHubHandler>();
         services.AddScoped<UploadCvHandler>();
