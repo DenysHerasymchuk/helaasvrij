@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Llm;
@@ -22,6 +23,8 @@ public sealed record ActionReply(List<ActionRow> Actions);
 /// Labels requirements against the student's confirmed evidence. The model only labels coverage and proposes
 /// actions; code then drops evidence that is not one of the given quotes (and downgrades to None), rejects
 /// actions that do not name one of the student's repos, regenerates those once, and otherwise leaves them empty.
+/// A student without repos gets a small new-project idea instead (kebab-case name stored as "new:name", the action
+/// mentions that name and the requirement's skill), with the same regenerate-once rule.
 /// Reusable for a single requirement: pass a list of one and freshly loaded evidence (re-scan).
 /// </summary>
 public sealed class GapAnalyser(ILlmClient llm, ICurrentUser currentUser)
@@ -33,6 +36,34 @@ public sealed class GapAnalyser(ILlmClient llm, ICurrentUser currentUser)
 
     private const int MaxTokens = 6000;
 
+    /// <summary>Stored before the project name of a new-project action, so re-scan and UI know there is no repo yet.</summary>
+    public const string NewProjectPrefix = "new:";
+
+    public static bool IsNewProject(string? project) => project?.StartsWith(NewProjectPrefix, StringComparison.Ordinal) == true;
+
+    private const int NewProjectMaxLength = 40;
+
+    private static readonly Regex KebabCase = new("^[a-z0-9]+(?:-[a-z0-9]+)+$", RegexOptions.CultureInvariant);
+
+    // Words that say nothing about the skill itself, so an action that only repeats them stays vague (EN, NL, FR).
+    private static readonly HashSet<string> Filler = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "experience", "knowledge", "with", "and", "or", "of", "the", "in", "a", "an", "to", "for", "on", "skills", "skill", "good",
+        "strong", "basic", "solid", "understanding", "working", "ability", "familiar", "familiarity", "plus", "is", "are", "be",
+        "years", "year", "van", "met", "en", "de", "het", "een", "kennis", "ervaring", "op", "goede", "la", "le", "les", "des",
+        "du", "et", "avec", "connaissance", "connaissances", "expérience", "bonne", "maîtrise",
+    };
+
+    private const string RepoActionRule =
+        "For partial and none, action is one concrete step that closes the gap and project is the exact repository name it is done in; " +
+        "the action text must contain that repository name. ";
+
+    private const string NewProjectActionRule =
+        "The student has no GitHub repositories yet. For partial and none, action is one small new project that closes the gap: " +
+        "project is a short kebab-case project name (for example expense-tracker-api) and the action text is " +
+        "\"Start `<project>`: <one specific step>\" that names the requirement's skill " +
+        "(for example: Start `expense-tracker-api`: build a REST API with ASP.NET Core and add xUnit tests). ";
+
     private const string LabelSystem =
         "You compare the requirements of an internship posting with the evidence a student has confirmed. " +
         "Requirements are numbered in <untrusted_data name=\"requirements\">. The evidence is a numbered list of verbatim quotes " +
@@ -42,8 +73,7 @@ public sealed class GapAnalyser(ILlmClient llm, ICurrentUser currentUser)
         "or none (no quote shows it). " +
         "quote must be copied character for character from one evidence quote, with no changes or joining; use null when coverage is none. " +
         "Never cite anything that is not in the evidence list. " +
-        "For partial and none, action is one concrete step that closes the gap and project is the exact repository name it is done in; " +
-        "the action text must contain that repository name. For strong, action and project are null. " +
+        "{0}For strong, action and project are null. " +
         "Write actions in the language given in the first line of the user message.";
 
     private const string LabelSchema = """
@@ -75,6 +105,13 @@ public sealed class GapAnalyser(ILlmClient llm, ICurrentUser currentUser)
         "and the student's GitHub repository names are in <untrusted_data name=\"repos\">. " +
         "For every gap return an action: one concrete step that closes it, done in one of those repositories. " +
         "project is the exact repository name and the action text must contain that repository name. " +
+        "Write actions in the language given in the first line of the user message.";
+
+    private const string NewProjectActionSystem =
+        "A student has gaps against an internship posting. The gaps are numbered in <untrusted_data name=\"gaps\">. " +
+        "The student has no GitHub repositories yet. For every gap return a small new project that closes it: " +
+        "project is a short kebab-case project name (for example expense-tracker-api) and the action text is " +
+        "\"Start `<project>`: <one specific step>\" that names the gap's skill. " +
         "Write actions in the language given in the first line of the user message.";
 
     private const string ActionSchema = """
@@ -119,7 +156,9 @@ public sealed class GapAnalyser(ILlmClient llm, ICurrentUser currentUser)
             .Append(UntrustedInput.Wrap("repos", string.Join('\n', evidence.Repos)))
             .ToString();
 
-        var reply = (await llm.CompleteJsonAsync<GapReply>(context, LlmModel.Smart, LabelSystem, user, LabelSchema, MaxTokens, ct)).Value;
+        var hasRepos = evidence.Repos.Count > 0;
+        var labelSystem = string.Format(LabelSystem, hasRepos ? RepoActionRule : NewProjectActionRule);
+        var reply = (await llm.CompleteJsonAsync<GapReply>(context, LlmModel.Smart, labelSystem, user, LabelSchema, MaxTokens, ct)).Value;
 
         var verdicts = new List<Draft>();
         for (var i = 0; i < batch.Count; i++)
@@ -128,27 +167,26 @@ public sealed class GapAnalyser(ILlmClient llm, ICurrentUser currentUser)
             verdicts.Add(Judge(batch[i], row, evidence));
         }
 
-        // Gaps whose action is missing or does not name a real repo get one regeneration, then stay empty.
-        if (evidence.Repos.Count > 0)
+        // Gaps whose action is missing or fails the check get one regeneration, then stay empty.
+        var open = verdicts.Where(v => v.Coverage != Coverage.Strong && v.Action is null).ToList();
+        if (open.Count > 0)
         {
-            var open = verdicts.Where(v => v.Coverage != Coverage.Strong && v.Action is null).ToList();
-            if (open.Count > 0)
+            var gaps = string.Join('\n', open.Select((v, i) => $"{i + 1}. {v.Requirement.Text} (coverage now: {v.Coverage.ToString().ToLowerInvariant()})"));
+            var retryUser = new StringBuilder(languageLine).Append("\n\n").Append(UntrustedInput.Wrap("gaps", gaps));
+            if (hasRepos)
             {
-                var gaps = string.Join('\n', open.Select((v, i) => $"{i + 1}. {v.Requirement.Text} (coverage now: {v.Coverage.ToString().ToLowerInvariant()})"));
-                var retryUser = new StringBuilder(languageLine).Append("\n\n")
-                    .Append(UntrustedInput.Wrap("gaps", gaps)).Append("\n\n")
-                    .Append(UntrustedInput.Wrap("repos", string.Join('\n', evidence.Repos)))
-                    .ToString();
+                retryUser.Append("\n\n").Append(UntrustedInput.Wrap("repos", string.Join('\n', evidence.Repos)));
+            }
 
-                var retry = (await llm.CompleteJsonAsync<ActionReply>(context, LlmModel.Smart, ActionSystem, retryUser, ActionSchema, MaxTokens, ct)).Value;
-                for (var i = 0; i < open.Count; i++)
+            var retry = (await llm.CompleteJsonAsync<ActionReply>(
+                context, LlmModel.Smart, hasRepos ? ActionSystem : NewProjectActionSystem, retryUser.ToString(), ActionSchema, MaxTokens, ct)).Value;
+            for (var i = 0; i < open.Count; i++)
+            {
+                var row = retry.Actions?.FirstOrDefault(a => a.Req == i + 1);
+                if (row is not null && TryAcceptAction(row.Action, row.Project, open[i].Requirement, evidence.Repos, out var action, out var project))
                 {
-                    var row = retry.Actions?.FirstOrDefault(a => a.Req == i + 1);
-                    if (row is not null && TryNameRepo(row.Action, row.Project, evidence.Repos, out var action, out var project))
-                    {
-                        open[i].Action = action;
-                        open[i].Project = project;
-                    }
+                    open[i].Action = action;
+                    open[i].Project = project;
                 }
             }
         }
@@ -179,13 +217,48 @@ public sealed class GapAnalyser(ILlmClient llm, ICurrentUser currentUser)
             }
         }
 
-        if (draft.Coverage != Coverage.Strong && TryNameRepo(row.Action, row.Project, evidence.Repos, out var action, out var project))
+        if (draft.Coverage != Coverage.Strong && TryAcceptAction(row.Action, row.Project, requirement, evidence.Repos, out var action, out var project))
         {
             draft.Action = action;
             draft.Project = project;
         }
 
         return draft;
+    }
+
+    /// <summary>With repos: the repo rule. Without: a kebab-case new project the action names, plus the requirement's skill.</summary>
+    private static bool TryAcceptAction(
+        string? action, string? project, Requirement requirement, IReadOnlyList<string> repos, out string actionText, out string stored) =>
+        repos.Count > 0
+            ? TryNameRepo(action, project, repos, out actionText, out stored)
+            : TryNewProject(action, project, requirement.Text, out actionText, out stored);
+
+    private static bool TryNewProject(string? action, string? project, string requirement, out string actionText, out string stored)
+    {
+        actionText = string.Empty;
+        stored = string.Empty;
+        var name = project?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(action) || name.Length > NewProjectMaxLength || !KebabCase.IsMatch(name)
+            || !action.Contains(name, StringComparison.Ordinal)
+            || !MentionsSkill(action.Replace(name, " ", StringComparison.Ordinal), requirement))
+        {
+            return false;
+        }
+
+        actionText = action.Trim();
+        stored = NewProjectPrefix + name;
+        return true;
+    }
+
+    /// <summary>The action must contain a non-filler word of the requirement as a whole word ("Docker", "C#", "xUnit").</summary>
+    private static bool MentionsSkill(string action, string requirement)
+    {
+        var words = Regex.Split(requirement, @"[^\p{L}\p{N}#+.]+")
+            .Select(w => w.Trim('.'))
+            .Where(w => w.Length >= 2 && !Filler.Contains(w))
+            .ToList();
+        return words.Count == 0 || words.Any(w =>
+            Regex.IsMatch(action, $@"(?<![\p{{L}}\p{{N}}]){Regex.Escape(w)}(?![\p{{L}}\p{{N}}#+])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
     }
 
     /// <summary>The project must be one of the student's repos and the action text must mention it.</summary>

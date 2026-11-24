@@ -52,6 +52,11 @@ export function GapPanel({ posting, onUpdated }: { posting: PostingDetail; onUpd
                             Score = sum of (weight × coverage) ÷ sum of weights. Required counts 2, nice to have counts 1. Strong counts 1, partial 0.5, none 0.
                             Code computes it from the labels below, so the same data always gives the same number.
                         </p>
+                        {analysis.fromDemoCache && (
+                            <p role="status" className="rounded-lg bg-secondary px-4 py-3 text-sm text-secondary">
+                                The AI service was slow or unavailable, so this shows the last saved analysis of this demo posting.
+                            </p>
+                        )}
                         {analysis.noClearFit && (
                             <div role="status" className="rounded-lg bg-secondary px-4 py-3 text-sm text-secondary">
                                 <p className="font-semibold text-primary">No clear fit yet</p>
@@ -80,7 +85,7 @@ export function GapPanel({ posting, onUpdated }: { posting: PostingDetail; onUpd
                 )}
                 <div>
                     <Button size="md" onPress={run} isLoading={busy}>
-                        {analysis.analysed ? "Re-analyse" : "Analyse"}
+                        {analysis.analysed ? "Re-analyse" : "Analyse this posting"}
                     </Button>
                 </div>
             </div>
@@ -133,8 +138,9 @@ function GapRow({ requirement: r }: { requirement: PostingRequirement }) {
             )}
             {r.action && (
                 <p className="text-sm text-primary">
-                    <span className="font-semibold">Next step</span> in <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{r.actionProject}</code>: {r.action}
+                    <span className="font-semibold">Next step</span> in <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{r.actionProject?.replace(/^new:/, "")}</code>: {r.action}
                     {r.dueDate && <span className="text-tertiary"> · by {formatDate(r.dueDate)}</span>}
+                    {r.actionProject?.startsWith("new:") && <span className="block text-tertiary">Add the repo to GitHub and sync your profile to raise your score.</span>}
                 </p>
             )}
             {!r.action && r.coverage !== "strong" && <p className="text-sm text-tertiary">No action suggested. Connect your GitHub so actions can name one of your projects.</p>}

@@ -16,7 +16,8 @@ public interface IApplicationRepository
     /// <summary>Tracked entity, or null when it does not exist or belongs to someone else.</summary>
     Task<JobApplication?> FindAsync(Guid id, CancellationToken cancellationToken);
 
-    Task<bool> ExistsForPostingAsync(Guid postingId, CancellationToken cancellationToken);
+    /// <summary>Id of the application for this posting, or null when it is not on the board.</summary>
+    Task<Guid?> FindIdForPostingAsync(Guid postingId, CancellationToken cancellationToken);
 
     Task AddAsync(JobApplication application, CancellationToken cancellationToken);
 

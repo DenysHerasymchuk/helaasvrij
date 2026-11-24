@@ -10,6 +10,7 @@ public sealed class Posting : IUserOwned
     public const int UrlMaxLength = 2000;
     public const int RawTextMaxLength = 20000;
     public const int MaxRequirements = 30;
+    public const int GenericAnswerMaxLength = 8000;
 
     /// <summary>Below this percentage, or with too few required items covered, the posting is "no clear fit".</summary>
     public const int NoClearFitBelowScore = 40;
@@ -27,7 +28,16 @@ public sealed class Posting : IUserOwned
     public string RawText { get; private set; } = null!;
     public DateOnly? Deadline { get; private set; }
     public DateTimeOffset? InterviewAt { get; private set; }
+
+    /// <summary>When the internship itself runs, if the posting says so.</summary>
+    public DateOnly? StageStart { get; private set; }
+    public DateOnly? StageEnd { get; private set; }
     public bool IsDemo { get; private set; }
+
+    /// <summary>A generic chatbot answer for this posting (posting text only, no profile data), shown next to the gap matrix.</summary>
+    public string? GenericAnswer { get; private set; }
+
+    public DateTimeOffset? GenericAnswerAt { get; private set; }
     public CreatedAt CreatedAt { get; private set; } = null!;
 
     public IReadOnlyList<Requirement> Requirements => _requirements;
@@ -93,6 +103,66 @@ public sealed class Posting : IUserOwned
     {
         Deadline = deadline;
         InterviewAt = interviewAt?.ToUniversalTime();
+    }
+
+    /// <summary>
+    /// Replaces the posting text with a fuller version and its requirements with the ones read from it.
+    /// The old gap analysis belongs to the old requirements, so it goes with them.
+    /// </summary>
+    public void ReplaceText(string rawText, PostingLanguage language, IEnumerable<(string Text, Importance Importance)> requirements)
+    {
+        if (string.IsNullOrWhiteSpace(rawText))
+        {
+            throw new DomainException("Posting text is required.");
+        }
+
+        RawText = Truncate(rawText.Trim(), RawTextMaxLength);
+        Language = language;
+        _requirements.Clear();
+        var position = 0;
+        foreach (var (text, importance) in requirements.Where(r => !string.IsNullOrWhiteSpace(r.Text)).Take(MaxRequirements))
+        {
+            _requirements.Add(Requirement.Create(UserId, Id, position++, text, importance));
+        }
+    }
+
+    public void SetGenericAnswer(string text, DateTimeOffset capturedAt)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new DomainException("Generic answer text is required.");
+        }
+
+        GenericAnswer = Truncate(text.Trim(), GenericAnswerMaxLength);
+        GenericAnswerAt = capturedAt.ToUniversalTime();
+    }
+
+    /// <summary>Stores the internship period. An end before the start is a <see cref="DomainException"/>.</summary>
+    public void SetStagePeriod(DateOnly? start, DateOnly? end)
+    {
+        if (start is not null && end is not null && end < start)
+        {
+            throw new DomainException("The stage end date must be on or after the start date.");
+        }
+
+        StageStart = start;
+        StageEnd = end;
+    }
+
+    /// <summary>
+    /// Compares the posting's internship dates with the student's school stage period. Every known posting date
+    /// must fall inside the student's period (an open side accepts anything). Unknown when either side has no dates.
+    /// </summary>
+    public StageFit CheckStage(DateOnly? studentStart, DateOnly? studentEnd)
+    {
+        DateOnly?[] dates = [StageStart, StageEnd];
+        if ((studentStart is null && studentEnd is null) || dates.All(d => d is null))
+        {
+            return StageFit.Unknown;
+        }
+
+        var outside = dates.Any(d => d is { } date && (date < studentStart || date > studentEnd));
+        return outside ? StageFit.Conflict : StageFit.Fits;
     }
 
     /// <summary>

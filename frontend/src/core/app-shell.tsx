@@ -1,4 +1,4 @@
-import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Moon01, Settings01, Sun, User01 } from "@untitledui/icons";
+import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Moon01, SearchLg, Settings01, Sun, Terminal, User01 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -8,20 +8,36 @@ import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { type CurrentUser, initialsOf, useAuth } from "@/core/auth";
 import { generateAvatarUrl } from "@/core/avatar";
+import { Logo } from "@/core/logo";
 import { useTheme } from "@/core/theme";
 import { ChatWidget } from "@/features/chat/chat-widget";
 
-const mainItems: NavItemType[] = [
-    { label: "Dashboard", href: "/dashboard", icon: HomeLine },
-    { label: "Postings", href: "/postings", icon: Briefcase01 },
-    { label: "Gap plan", href: "/gaps", icon: CheckDone01 },
-    { label: "Documents", href: "/documents", icon: File06 },
-    { label: "Interview prep", href: "/interview", icon: MessageChatCircle },
-    { label: "Applications", href: "/applications", icon: Columns03 },
-    { label: "Profile", href: "/profile", icon: User01 },
+// Sidebar follows the journey: build profile, find a posting, close gaps, apply and track.
+const sections: { title?: string; items: NavItemType[] }[] = [
+    { items: [{ label: "Dashboard", href: "/dashboard", icon: HomeLine }] },
+    { title: "1. Your profile", items: [{ label: "Profile", href: "/profile", icon: User01 }] },
+    {
+        title: "2. Find a posting",
+        items: [
+            { label: "Find internships", href: "/postings", icon: SearchLg },
+            { label: "My postings", href: "/postings/saved", icon: Briefcase01 },
+        ],
+    },
+    { title: "3. Close your gaps", items: [{ label: "Gap plan", href: "/gaps", icon: CheckDone01 }] },
+    {
+        title: "4. Apply and track",
+        items: [
+            { label: "Documents", href: "/documents", icon: File06 },
+            { label: "Interview prep", href: "/interview", icon: MessageChatCircle },
+            { label: "Applications", href: "/applications", icon: Columns03 },
+        ],
+    },
 ];
 
-const footerItems: NavItemType[] = [{ label: "Settings", href: "/settings", icon: Settings01 }];
+const footerItems: NavItemType[] = [
+    { label: "Settings", href: "/settings", icon: Settings01 },
+    { label: "Connect Claude", href: "/connect-claude", icon: Terminal },
+];
 
 function ThemeToggle() {
     const { theme, toggle } = useTheme();
@@ -33,12 +49,21 @@ function ThemeToggle() {
     );
 }
 
+// Detail pages highlight their parent item: /postings/job/x -> Find internships, /postings/<id> -> My postings.
+const navMatch = (path: string) =>
+    path.startsWith("/postings/job/") ? "/postings" : /^\/postings\/(?!saved$)[^/]+$/.test(path) ? "/postings/saved" : path;
+
 function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: CurrentUser; onSignOut: () => void }) {
     return (
         <nav aria-label="Main" className="flex h-full w-full flex-col justify-between overflow-auto bg-primary pt-6 lg:pt-8">
             <div>
-                <p className="px-6 text-lg font-semibold text-brand-secondary">Internship Coach</p>
-                <NavList activeUrl={activeUrl} items={mainItems} />
+                <Logo className="mx-6 block h-7 w-auto" />
+                {sections.map((section, i) => (
+                    <div key={section.title ?? i}>
+                        {section.title && <p className="px-7 pt-5 text-xs font-semibold text-quaternary">{section.title}</p>}
+                        <NavList activeUrl={navMatch(activeUrl)} items={section.items} className={section.title ? "pt-1" : undefined} />
+                    </div>
+                ))}
             </div>
             <div className="flex flex-col gap-4 pb-6">
                 <NavList activeUrl={activeUrl} items={footerItems} className="pt-0" />

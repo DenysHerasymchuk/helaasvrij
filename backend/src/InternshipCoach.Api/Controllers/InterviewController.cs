@@ -13,11 +13,22 @@ namespace InternshipCoach.Api.Controllers;
 public sealed class InterviewController : ControllerBase
 {
     [HttpGet("{postingId:guid}/questions")]
-    public async Task<IActionResult> Questions(Guid postingId, [FromServices] GetInterviewHandler handler, CancellationToken ct)
+    public Task<IActionResult> Questions(Guid postingId, [FromServices] GetInterviewHandler handler, CancellationToken ct) =>
+        Load(postingId, handler, regenerate: false, ct);
+
+    /// <summary>Replaces the posting's own questions (and the answers to them) with a new set. Costs one or two model calls.</summary>
+    [HttpPost("{postingId:guid}/questions/regenerate")]
+    [Consumes("application/json")]
+    public Task<IActionResult> Regenerate(Guid postingId, [FromServices] GetInterviewHandler handler, CancellationToken ct) =>
+        Load(postingId, handler, regenerate: true, ct);
+
+    private async Task<IActionResult> Load(Guid postingId, GetInterviewHandler handler, bool regenerate, CancellationToken ct)
     {
         try
         {
-            return await handler.HandleAsync(postingId, ct) is { } view ? Ok(ToResponse(view)) : NotFound();
+            return await handler.HandleAsync(postingId, ct, regenerate) is { } view
+                ? Ok(ToResponse(view))
+                : Problem(statusCode: StatusCodes.Status404NotFound, title: "This posting was not found. It may have been deleted.");
         }
         catch (InterviewInputException ex)
         {
@@ -45,7 +56,9 @@ public sealed class InterviewController : ControllerBase
                 return Problem(statusCode: StatusCodes.Status400BadRequest, title: result.Error);
             }
 
-            return result.Answer is null ? NotFound() : Ok(ToResponse(result.Answer));
+            return result.Answer is null
+                ? Problem(statusCode: StatusCodes.Status404NotFound, title: "This question is gone. Reload the page.")
+                : Ok(ToResponse(result.Answer));
         }
         catch (InterviewInputException ex)
         {
@@ -70,16 +83,17 @@ public sealed class InterviewController : ControllerBase
     }
 
     private static AnswerResponse ToResponse(InterviewAnswer a) =>
-        new(a.Id, a.Answer, a.WhatWasGood, a.WhatToAdd, a.ExampleSentence, a.CreatedAt.Value);
+        new(a.Id, a.Answer, a.Score, a.WhatWasGood, a.WhatToAdd, a.ExampleSentence, a.CreatedAt.Value);
 
     private static InterviewResponse ToResponse(InterviewView view)
     {
         IReadOnlyList<AnswerResponse> AnswersFor(Guid id) => view.Answers.Where(a => a.QuestionId == id).Select(ToResponse).ToList();
+        string? GapFor(Guid? id) => view.Posting.Requirements.FirstOrDefault(r => r.Id == id)?.Text;
 
         var questions = view.Questions.OrderBy(q => q.Position)
-            .Select(q => new QuestionResponse(q.Id, q.Source == QuestionSource.Gap ? "gap" : "repo", q.Text, q.Project, AnswersFor(q.Id)))
-            .Concat(view.CompanyQuestions.Select(q => new QuestionResponse(q.Id, "company", q.Text, null, AnswersFor(q.Id))))
+            .Select(q => new QuestionResponse(q.Id, q.Source == QuestionSource.Gap ? "gap" : "repo", q.Text, q.Project, GapFor(q.RequirementId), AnswersFor(q.Id)))
+            .Concat(view.CompanyQuestions.Select(q => new QuestionResponse(q.Id, "company", q.Text, null, null, AnswersFor(q.Id))))
             .ToList();
-        return new InterviewResponse(view.Posting.Id, view.Posting.Company, view.Posting.Title, view.Posting.Language.ToString().ToLowerInvariant(), questions);
+        return new InterviewResponse(view.Posting.Id, view.Posting.Company, view.Posting.Title, view.Posting.Language.ToString().ToLowerInvariant(), view.Posting.IsAnalysed, questions);
     }
 }

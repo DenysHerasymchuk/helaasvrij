@@ -13,6 +13,7 @@ public class PostingHandlerTests
 {
     private const string Reply = """
         {"company":"Acme","title":"Stagiair","city":"Gent","language":"nl","deadline":"2026-12-20",
+         "stageStart":"2027-02-08","stageEnd":"2027-05-14",
          "requirements":[{"text":"C#","importance":"required"},{"text":"Docker","importance":"nice"}]}
         """;
 
@@ -44,6 +45,8 @@ public class PostingHandlerTests
         Assert.Equal(UserId, posting.UserId);
         Assert.Equal(PostingLanguage.Nl, posting.Language);
         Assert.Equal(new DateOnly(2026, 12, 20), posting.Deadline);
+        Assert.Equal(new DateOnly(2027, 2, 8), posting.StageStart);
+        Assert.Equal(new DateOnly(2027, 5, 14), posting.StageEnd);
         Assert.Equal([Importance.Required, Importance.Nice], posting.Requirements.Select(r => r.Importance));
     }
 
@@ -120,11 +123,11 @@ public class PostingHandlerTests
         var id = _repo.Items[0].Id;
 
         var updated = await new UpdatePostingDatesHandler(_repo)
-            .HandleAsync(new UpdatePostingDatesCommand(id, new DateOnly(2027, 1, 5), null), default);
+            .HandleAsync(new UpdatePostingDatesCommand(id, new DateOnly(2027, 1, 5), null, null, null), default);
         Assert.Equal(new DateOnly(2027, 1, 5), updated!.Deadline);
         Assert.Equal(1, _repo.Saves);
 
-        Assert.Null(await new UpdatePostingDatesHandler(_repo).HandleAsync(new UpdatePostingDatesCommand(Guid.NewGuid(), null, null), default));
+        Assert.Null(await new UpdatePostingDatesHandler(_repo).HandleAsync(new UpdatePostingDatesCommand(Guid.NewGuid(), null, null, null, null), default));
         Assert.False(await new DeletePostingHandler(_repo).HandleAsync(Guid.NewGuid(), default));
         Assert.True(await new DeletePostingHandler(_repo).HandleAsync(id, default));
         Assert.Empty(_repo.Items);
@@ -153,7 +156,7 @@ public class PostingHandlerTests
     [Fact]
     public async Task From_job_saves_the_snapshot_facts_not_what_the_model_read()
     {
-        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer())
+        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer(), _repo)
             .HandleAsync(new AddPostingFromJobCommand("4931028811"), default);
 
         Assert.Equal(PostingStatus.Created, outcome.Status);
@@ -171,11 +174,64 @@ public class PostingHandlerTests
     [Fact]
     public async Task From_job_with_an_unknown_id_is_not_found_and_never_calls_the_model()
     {
-        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer())
+        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer(), _repo)
             .HandleAsync(new AddPostingFromJobCommand("nope"), default);
 
         Assert.Equal(PostingStatus.NotFound, outcome.Status);
         Assert.Empty(_transport.Requests);
         Assert.Empty(_repo.Items);
+    }
+
+    [Fact]
+    public async Task From_job_saved_twice_returns_the_existing_posting_without_calling_the_model()
+    {
+        var first = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer(), _repo)
+            .HandleAsync(new AddPostingFromJobCommand("4931028811"), default);
+        var calls = _transport.Requests.Count;
+
+        // Same ad, other tracking query.
+        var again = await new AddPostingFromJobHandler(
+                new FakeJobSnapshot(AdzunaJob with { Url = "https://www.adzuna.be/land/ad/4931028811?se=other" }), Importer(), _repo)
+            .HandleAsync(new AddPostingFromJobCommand("4931028811"), default);
+
+        Assert.Equal(PostingStatus.Existing, again.Status);
+        Assert.Equal(first.Posting!.Id, again.Posting!.Id);
+        Assert.Single(_repo.Items);
+        Assert.Equal(calls, _transport.Requests.Count);
+    }
+
+    [Fact]
+    public async Task Replace_text_re_extracts_requirements_and_keeps_the_dates()
+    {
+        const string fullReply = """
+            {"company":"Other","title":"Other","language":"en",
+             "requirements":[{"text":"React","importance":"required"},{"text":"SQL","importance":"required"},{"text":"Git","importance":"nice"}]}
+            """;
+        var transport = new FakeLlmTransport(Reply, fullReply);
+        var clock = new FakeClock(new DateTimeOffset(2026, 11, 24, 10, 0, 0, TimeSpan.Zero));
+        var extractor = new PostingExtractor(new LlmClient(transport, _log, clock, new LlmLimits()));
+        var user = new FakeCurrentUser(UserId);
+        await new AddPostingFromPasteHandler(new PostingImporter(extractor, _repo, user, clock))
+            .HandleAsync(new AddPostingFromPasteCommand(LongText, null), default);
+        var id = _repo.Items[0].Id;
+        var handler = new ReplacePostingTextHandler(extractor, _repo, user);
+
+        Assert.Equal(PostingStatus.Invalid, (await handler.HandleAsync(new ReplacePostingTextCommand(id, "short"), default)).Status);
+        Assert.Equal(PostingStatus.NotFound, (await handler.HandleAsync(new ReplacePostingTextCommand(Guid.NewGuid(), LongText), default)).Status);
+        Assert.Single(transport.Requests);
+
+        var full = "Full ad text. " + new string('y', 900);
+        var outcome = await handler.HandleAsync(new ReplacePostingTextCommand(id, full), default);
+
+        Assert.Equal(PostingStatus.Updated, outcome.Status);
+        var posting = outcome.Posting!;
+        Assert.Equal(full, posting.RawText);
+        Assert.Equal(PostingLanguage.En, posting.Language);
+        Assert.Equal(["React", "SQL", "Git"], posting.Requirements.Select(r => r.Text));
+        Assert.Equal([0, 1, 2], posting.Requirements.Select(r => r.Position));
+        Assert.Equal("Acme", posting.Company);
+        Assert.Equal(new DateOnly(2026, 12, 20), posting.Deadline);
+        Assert.False(posting.IsAnalysed);
+        Assert.Equal(1, _repo.Saves);
     }
 }

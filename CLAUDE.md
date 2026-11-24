@@ -2,7 +2,7 @@
 
 Hack The Future (Belgium) project, built in a 6-hour timebox with AI coding agents. Final product name is not decided yet (shortlist: StagiAIr, DeSync, Gatenkaas, Geen Zever, Brugske).
 
-Branding for now: the name "Internship Coach" is the logo (plain text wordmark) and the favicon/icon is just the name; no custom logo or icon yet. Repository: `internship-coach` (private, GitHub).
+Branding for now: the name is "helaasvrij" (lowercase; tagline "The internship coach that tells you what's missing."). Logo: a Fraunces serif "h" (mark) or "helaasvrij" (wordmark) in Ink with a hand-drawn Gap-red strike-through; `frontend/src/core/logo.tsx` in the app, SVGs in `frontend/public/brand/`, favicon is the struck "h" on a Paper rounded square. Colours: Paper #F6F1E7, Ink #1B1B1B, Stamp #1F7A4D, Highlight #FFE45C, Gap #D93A2B, Muted #8A8578. Repository: `internship-coach` (private, GitHub).
 
 ## The idea
 
@@ -16,7 +16,7 @@ Pitch: "Drop in your links, see exactly what each Belgian internship wants from 
 
 - **The gap plan is the product; the CV is a by-product.** Generic CV generation is a commodity (ChatGPT, Teal, Kickresume). The value is gap analysis that cites the student's own evidence.
 - **Every claim has a source.** Every extracted skill, project or experience stores where it came from (repo, file, CV line, site). Claims without a source are dropped. The CV and drafts use only items the student confirmed. Never invent or inflate.
-- **Actions must be specific.** Every gap action names one of the student's own projects ("Add a Dockerfile to `weather-app`"). Reject and regenerate any action that does not.
+- **Actions must be specific.** Every gap action names one of the student's own projects ("Add a Dockerfile to `weather-app`"). Reject and regenerate any action that does not. A student without GitHub repos gets a small new project instead ("Start `expense-tracker-api`: ..."), with a kebab-case name and the requirement's skill in the action.
 - **The match score is computed in code, not by the LLM.** The LLM labels each requirement; code computes the number so the same input always gives the same score.
 - **Private by default.** Each student sees only their own data.
 - **Belgian context.** Postings and outputs in NL, FR or EN (output in the posting's language), CEFR language levels, school stage periods.

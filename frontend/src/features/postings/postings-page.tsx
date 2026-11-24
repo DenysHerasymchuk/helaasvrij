@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Plus, SearchLg } from "@untitledui/icons";
+import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
+import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Input } from "@/components/base/input/input";
 import { ApiError, api } from "@/core/api";
+import { BoardStatus, useBoard } from "@/features/applications/board-status";
 import { AddPostingModal } from "./add-posting-modal";
-import { type PostingSummary, formatDate } from "./types";
+import { PostingsTabs } from "./postings-tabs";
+import { type PostingSummary, formatDate, formatStagePeriod } from "./types";
+import { PageHeader } from "@/core/ui";
 
 
 export function PostingsPage() {
@@ -14,8 +19,12 @@ export function PostingsPage() {
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState("");
     const [debounced, setDebounced] = useState("");
-        const [adding, setAdding] = useState(false);
-    const filtered = debounced !== "";
+    const [adding, setAdding] = useState(false);
+    const board = useBoard();
+    const [fitsOnly, setFitsOnly] = useState(false);
+    const filtered = debounced !== "" || fitsOnly;
+    // Postings without dates stay visible: only a known clash with the stage period hides one.
+    const shown = items && fitsOnly ? items.filter((p) => p.stageFit !== "conflict") : items;
 
     useEffect(() => {
         const timer = setTimeout(() => setDebounced(query.trim()), 250);
@@ -39,13 +48,17 @@ export function PostingsPage() {
     }, [load]);
 
     return (
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader title="Postings" description="Your saved list: track each posting and apply on your own." />
+
+            <PostingsTabs />
+
+            <div className="flex flex-col items-start gap-3 rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary sm:flex-row sm:items-center sm:justify-between sm:p-5">
                 <div>
-                    <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
-                    <p className="mt-1 text-md text-tertiary">Internships you want to apply for.</p>
+                    <p className="text-md font-semibold text-primary">Found one elsewhere? Add it here.</p>
+                    <p className="text-sm text-tertiary">Paste the posting text or a link.</p>
                 </div>
-                <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
+                <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)} className="shrink-0">
                     Add posting
                 </Button>
             </div>
@@ -54,6 +67,12 @@ export function PostingsPage() {
                 <div className="sm:max-w-sm sm:flex-1">
                     <Input aria-label="Search postings" icon={SearchLg} placeholder="Search company, title or city" value={query} onChange={setQuery} />
                 </div>
+                <Checkbox
+                    className="sm:self-center"
+                    label="Hide postings outside my stage period"
+                    isSelected={fitsOnly}
+                    onChange={setFitsOnly}
+                />
             </div>
 
             <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
@@ -66,30 +85,30 @@ export function PostingsPage() {
                             Try again
                         </Button>
                     </div>
-                ) : items === null ? (
+                ) : shown === null ? (
                     <p role="status" className="p-6 text-md text-tertiary">
                         Loading postings...
                     </p>
-                ) : items.length === 0 ? (
+                ) : shown.length === 0 ? (
                     <div className="flex flex-col items-start gap-3 p-6">
                         <p className="text-md font-semibold text-primary">{filtered ? "No postings match." : "No postings yet."}</p>
                         <p className="text-md text-tertiary">
-                            {filtered ? "Try another search." : "Paste a posting or add a link to see what it asks for."}
+                            {filtered ? "Try another search or show postings outside your stage period." : "Save a posting from Find internships or add your own."}
                         </p>
                         {!filtered && (
-                            <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
-                                Add posting
-                            </Button>
+                            <Link to="/postings" className="text-md font-semibold text-brand-secondary outline-focus-ring hover:underline focus-visible:rounded-sm focus-visible:outline-2">
+                                Find internships
+                            </Link>
                         )}
                     </div>
                 ) : (
                     <ul className="flex flex-col divide-y divide-secondary">
-                        {items.map((p) => (
-                            <li key={p.id}>
+                        {shown.map((p) => (
+                            <li key={p.id} className="flex flex-col md:flex-row md:items-center">
                                 <button
                                     type="button"
                                     onClick={() => navigate(`/postings/${p.id}`)}
-                                    className="flex w-full cursor-pointer flex-col gap-2 px-5 py-4 text-left outline-focus-ring transition hover:bg-primary_hover focus-visible:outline-2 md:flex-row md:items-center md:gap-6"
+                                    className="flex min-w-0 flex-1 cursor-pointer flex-col gap-2 px-5 py-4 text-left outline-focus-ring transition hover:bg-primary_hover focus-visible:outline-2 md:flex-row md:items-center md:gap-6"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-md font-semibold text-primary">{p.title}</p>
@@ -99,10 +118,26 @@ export function PostingsPage() {
                                         </p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                                        {p.stageFit === "conflict" && (
+                                            <Badge type="pill-color" size="sm" color="warning">
+                                                Outside your stage period
+                                            </Badge>
+                                        )}
+                                        {p.stageFit === "fits" && (
+                                            <Badge type="pill-color" size="sm" color="success">
+                                                Fits your stage period
+                                            </Badge>
+                                        )}
+                                        {formatStagePeriod(p.stageStart, p.stageEnd) && (
+                                            <span className="text-sm text-tertiary">Stage {formatStagePeriod(p.stageStart, p.stageEnd)}</span>
+                                        )}
                                         <span className="text-sm text-tertiary">{p.deadline ? `Deadline ${formatDate(p.deadline)}` : "No deadline"}</span>
                                         <span className="w-28 text-sm text-quaternary md:text-right">Not analysed</span>
                                     </div>
                                 </button>
+                                <div className="px-5 pb-4 md:w-64 md:shrink-0 md:py-4 md:pl-0">
+                                    <BoardStatus postingId={p.id} byPosting={board.byPosting} onAdded={board.added} />
+                                </div>
                             </li>
                         ))}
                     </ul>

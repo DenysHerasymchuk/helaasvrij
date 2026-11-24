@@ -13,6 +13,8 @@ public sealed record ExtractResponse(int Created, int Merged, int Dropped, int D
 
 public sealed record SetConfirmedRequest(bool Confirmed);
 
+public sealed record SetLevelRequest(string? Level);
+
 public sealed record UpdateBasicsRequest(string? School, DateOnly? StageStart, DateOnly? StageEnd);
 
 public sealed record ConfirmAllResponse(int Confirmed);

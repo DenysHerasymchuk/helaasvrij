@@ -4,6 +4,9 @@ namespace InternshipCoach.Contracts.Documents;
 /// <param name="PostingId">One of the user's saved postings; when set, its text is used instead of <paramref name="PostingText" />.</param>
 public sealed record TailorCvRequest(string? CvText, string? PostingText, string? Language, Guid? PostingId = null);
 
+/// <param name="Language">nl, fr or en; null = the user's default language setting.</param>
+public sealed record CreateCvRequest(string? Language);
+
 /// <summary>Text pulled from an uploaded CV file, for the student to check and edit before tailoring.</summary>
 public sealed record CvTextResponse(string Text);
 
@@ -13,7 +16,7 @@ public sealed record DraftDocumentRequest(Guid PostingId, string? Kind, string? 
 
 public sealed record UpdateDocumentRequest(string? Title, string? Content);
 
-/// <param name="DroppedCount">Only set by the tailor endpoint: lines removed because their quote was not in the CV.</param>
+/// <param name="DroppedCount">Only set by the tailor and create endpoints: lines removed because they could not be matched to the CV or profile.</param>
 public sealed record DocumentResponse(
     Guid Id, string Kind, string Language, string Title, string Content, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt, int? DroppedCount);
 

@@ -17,6 +17,23 @@ public sealed class SetItemConfirmedHandler(IProfileRepository repository)
     }
 }
 
+public sealed class SetItemLevelHandler(IProfileRepository repository)
+{
+    /// <summary>Returns false when the item does not exist or belongs to someone else. Invalid levels throw DomainException.</summary>
+    public async Task<bool> HandleAsync(Guid id, string? level, CancellationToken ct)
+    {
+        var item = await repository.FindItemAsync(id, ct);
+        if (item is null)
+        {
+            return false;
+        }
+
+        item.SetLevel(level);
+        await repository.SaveAsync(ct);
+        return true;
+    }
+}
+
 public sealed class ConfirmAllItemsHandler(IProfileRepository repository)
 {
     /// <summary>Confirms every item that is not confirmed yet and returns how many changed.</summary>

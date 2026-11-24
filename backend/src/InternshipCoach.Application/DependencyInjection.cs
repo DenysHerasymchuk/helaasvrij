@@ -2,7 +2,9 @@ using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Auth.GitHubSignIn;
 using InternshipCoach.Application.Llm;
 using InternshipCoach.Application.Applications;
+using InternshipCoach.Application.Calendar;
 using InternshipCoach.Application.Dashboard;
+using InternshipCoach.Application.Journey;
 using InternshipCoach.Application.Auth.Login;
 using InternshipCoach.Application.Auth.Me;
 using InternshipCoach.Application.Auth.Register;
@@ -24,7 +26,11 @@ using InternshipCoach.Application.Postings;
 using InternshipCoach.Application.Postings.Add;
 using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Postings.Browse;
+using InternshipCoach.Application.Postings.Generic;
 using InternshipCoach.Application.Chat.Send;
+using InternshipCoach.Application.Chat.Confirm;
+using InternshipCoach.Application.Chat.Tools;
+using InternshipCoach.Application.Documents.CreateCv;
 using InternshipCoach.Application.Documents.DeleteDocument;
 using InternshipCoach.Application.Documents.ExtractCvText;
 using InternshipCoach.Application.Documents.GetDocument;
@@ -49,6 +55,8 @@ public static class DependencyInjection
         services.AddScoped<UpdateSettingsHandler>();
         services.AddScoped<DeleteAccountHandler>();
         services.AddScoped<SendChatHandler>();
+        services.AddScoped<ChatToolbox>();
+        services.AddScoped<ConfirmChatActionHandler>();
         services.AddScoped<ILlmClient, LlmClient>();
         services.AddScoped<SyncGitHubHandler>();
         services.AddScoped<UploadCvHandler>();
@@ -61,6 +69,7 @@ public static class DependencyInjection
         services.AddScoped<AddPostingFromPasteHandler>();
         services.AddScoped<AddPostingFromUrlHandler>();
         services.AddScoped<AddPostingFromJobHandler>();
+        services.AddScoped<ReplacePostingTextHandler>();
         services.AddScoped<ListPostingsHandler>();
         services.AddScoped<GetPostingHandler>();
         services.AddScoped<UpdatePostingDatesHandler>();
@@ -68,6 +77,8 @@ public static class DependencyInjection
         services.AddScoped<GapEvidenceLoader>();
         services.AddScoped<GapAnalyser>();
         services.AddScoped<AnalysePostingHandler>();
+        services.AddSingleton(new DemoSafetyOptions());
+        services.AddScoped<GenericAnswerHandler>();
         services.AddScoped<RecheckRequirementHandler>();
         services.AddScoped<ResolveEvidenceSourcesHandler>();
         services.AddSingleton<RescanThrottle>();
@@ -77,10 +88,13 @@ public static class DependencyInjection
         services.AddScoped<ExtractProfileHandler>();
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<SetItemConfirmedHandler>();
+        services.AddScoped<SetItemLevelHandler>();
+        services.AddScoped<GetBasicsHandler>();
         services.AddScoped<ConfirmAllItemsHandler>();
         services.AddScoped<DeleteItemHandler>();
         services.AddScoped<UpdateBasicsHandler>();
         services.AddScoped<TailorCvHandler>();
+        services.AddScoped<CreateCvHandler>();
         services.AddScoped<ExtractCvTextHandler>();
         services.AddScoped<DraftDocumentHandler>();
         services.AddScoped<ListDocumentsHandler>();
@@ -95,6 +109,8 @@ public static class DependencyInjection
         services.AddScoped<UpdateApplicationHandler>();
         services.AddScoped<GetApplicationStatsHandler>();
         services.AddScoped<GetDashboardHandler>();
+        services.AddScoped<GetJourneyHandler>();
+        services.AddScoped<GetCalendarHandler>();
         return services;
     }
 }

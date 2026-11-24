@@ -9,3 +9,7 @@ dist/
 
 # Demo-mode LLM recordings hold model output derived from real CV text
 demo-recordings/
+
+# Local MCP server build output
+mcp/node_modules/
+mcp/dist/

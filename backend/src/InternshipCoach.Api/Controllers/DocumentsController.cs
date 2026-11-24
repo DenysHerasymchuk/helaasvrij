@@ -1,4 +1,5 @@
 using InternshipCoach.Application.Abstractions.Llm;
+using InternshipCoach.Application.Documents.CreateCv;
 using InternshipCoach.Application.Documents.DeleteDocument;
 using InternshipCoach.Application.Documents.ExportDocx;
 using InternshipCoach.Application.Documents.ExtractCvText;
@@ -51,6 +52,29 @@ public sealed class DocumentsController : ControllerBase
         }
 
         return Ok(ToResponse(result.Document!, result.DroppedCount));
+    }
+
+    [HttpPost("cv/create")]
+    [Consumes("application/json")]
+    public async Task<IActionResult> CreateCv(CreateCvRequest request, [FromServices] CreateCvHandler handler, CancellationToken ct)
+    {
+        CreateCvResult result;
+        try
+        {
+            result = await handler.HandleAsync(new CreateCvCommand(request.Language), ct);
+        }
+        catch (LlmDailyCapExceededException ex)
+        {
+            return Problem(statusCode: StatusCodes.Status429TooManyRequests, title: ex.Message);
+        }
+        catch (LlmException)
+        {
+            return Problem(statusCode: StatusCodes.Status502BadGateway, title: "The AI service did not answer. Try again.");
+        }
+
+        return result.Succeeded
+            ? Ok(ToResponse(result.Document!, result.DroppedCount))
+            : Problem(statusCode: StatusCodes.Status400BadRequest, title: result.Error);
     }
 
     // Multipart (not JSON) because it carries a file. SameSite=Lax keeps cross-site form posts from carrying the cookie.

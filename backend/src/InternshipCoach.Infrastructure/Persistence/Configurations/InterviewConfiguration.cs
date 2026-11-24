@@ -44,6 +44,7 @@ public sealed class InterviewAnswerConfiguration : IEntityTypeConfiguration<Inte
         builder.Property(answer => answer.WhatWasGood).HasColumnName("what_was_good").HasMaxLength(InterviewAnswer.FeedbackMaxLength).IsRequired();
         builder.Property(answer => answer.WhatToAdd).HasColumnName("what_to_add").HasMaxLength(InterviewAnswer.FeedbackMaxLength).IsRequired();
         builder.Property(answer => answer.ExampleSentence).HasColumnName("example_sentence").HasMaxLength(InterviewAnswer.FeedbackMaxLength).IsRequired();
+        builder.Property(answer => answer.Score).HasColumnName("score");
         builder.Property(answer => answer.CreatedAt)
             .HasColumnName("created_at")
             .HasConversion(createdAt => createdAt.Value, value => new CreatedAt(value))

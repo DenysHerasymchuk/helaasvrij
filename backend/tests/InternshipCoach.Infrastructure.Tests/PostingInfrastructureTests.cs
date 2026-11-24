@@ -46,6 +46,25 @@ public class PostingInfrastructureTests
         Assert.Empty(await db.Requirements.ToListAsync());
     }
 
+    [Fact]
+    public async Task Replacing_the_text_swaps_the_stored_requirements()
+    {
+        var options = new DbContextOptionsBuilder<InternshipCoachDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        var a = Guid.NewGuid();
+        await Add(options, a, "A-Corp");
+
+        await using (var db = new InternshipCoachDbContext(options, new FixedUser(a)))
+        {
+            var repo = new PostingRepository(db);
+            var posting = await repo.FindAsync((await repo.ListAsync(null, null, default)).Single().Id, default);
+            posting!.ReplaceText("Full text", PostingLanguage.En, [("React", Importance.Required), ("Git", Importance.Nice)]);
+            await repo.SaveAsync(default);
+        }
+
+        await using var check = new InternshipCoachDbContext(options, new FixedUser(a));
+        Assert.Equal(["Git", "React"], (await check.Requirements.ToListAsync()).Select(r => r.Text).Order());
+    }
+
     [Theory]
     [InlineData("http://127.0.0.1/x")]
     [InlineData("http://169.254.169.254/latest/meta-data")]

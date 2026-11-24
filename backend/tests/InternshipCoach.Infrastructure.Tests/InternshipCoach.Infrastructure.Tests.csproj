@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <None Include="Jobs\adzuna-search.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Llm\claude-cli-output.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
-import { ArrowLeft, LinkExternal01 } from "@untitledui/icons";
+import { useParams } from "react-router";
+import { ArrowLeft, CheckCircle, LinkExternal01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { AdzunaLink, CompanyLogo, type Job, JobFacts } from "./job-meta";
+import { pageTitleClass } from "@/core/ui";
 
 const safeHref = (url: string) => (/^https?:\/\//i.test(url) ? url : null);
 
 /** One Adzuna ad, read before saving it as your own posting. */
 export function JobDetailPage() {
     const { jobId = "" } = useParams();
-    const navigate = useNavigate();
     const [job, setJob] = useState<Job | null>(null);
     const [error, setError] = useState<{ message: string; notFound: boolean } | null>(null);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [savedId, setSavedId] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         setError(null);
@@ -35,10 +36,13 @@ export function JobDetailPage() {
         setSaving(true);
         setSaveError(null);
         try {
+            // Saving an ad saved before returns that posting, so this never makes a duplicate.
             const saved = await api.post<{ id: string }>("/api/postings/from-job", { jobId });
-            navigate(saved ? `/postings/${saved.id}` : "/postings/saved");
+            setSavedId(saved?.id ?? null);
+            if (!saved) setSaveError("Could not save this posting. Try again.");
         } catch (e) {
             setSaveError(e instanceof ApiError ? e.message : "Could not save this posting. Try again.");
+        } finally {
             setSaving(false);
         }
     }
@@ -53,7 +57,7 @@ export function JobDetailPage() {
 
     if (error) {
         return (
-            <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-8 md:px-8">
+            <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-8 md:px-8">
                 {back}
                 <p role="alert" className="text-md text-error-primary">
                     {error.message}
@@ -82,22 +86,41 @@ export function JobDetailPage() {
     const href = safeHref(job.url);
 
     return (
-        <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             {back}
 
             <header className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <CompanyLogo company={job.company} size="xl" />
                 <div className="flex min-w-0 flex-col gap-2">
-                    <h1 className="text-display-xs font-semibold text-primary">{job.title}</h1>
+                    <h1 className={pageTitleClass}>{job.title}</h1>
                     {job.company && <p className="text-lg font-medium text-secondary">{job.company}</p>}
                     <JobFacts job={job} />
                 </div>
             </header>
 
+            {savedId && (
+                <div role="status" className="flex flex-col gap-3 rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary sm:flex-row sm:items-center">
+                    <div className="flex flex-1 items-center gap-2">
+                        <CheckCircle className="size-5 shrink-0 text-fg-success-primary" aria-hidden="true" />
+                        <p className="text-md font-semibold text-primary">Saved to your postings</p>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        <Button size="sm" color="secondary" href="/postings/saved">
+                            View saved postings
+                        </Button>
+                        <Button size="sm" href={`/postings/${savedId}`}>
+                            Open posting
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Button size="md" onPress={save} isLoading={saving} isDisabled={saving}>
-                    Save posting
-                </Button>
+                {!savedId && (
+                    <Button size="md" onPress={save} isLoading={saving} isDisabled={saving}>
+                        Save posting
+                    </Button>
+                )}
                 {href && (
                     <Button size="md" color="secondary" iconTrailing={LinkExternal01} href={href} target="_blank" rel="noopener noreferrer">
                         Open original ad

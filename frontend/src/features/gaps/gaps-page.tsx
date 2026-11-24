@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
+import { JourneyBar } from "@/features/journey/journey-bar";
 import { type Coverage, formatDate } from "@/features/postings/types";
+import { fieldClass, PageHeader } from "@/core/ui";
+import { cx } from "@/utils/cx";
 
 type Gap = {
     requirementId: string;
@@ -42,7 +45,8 @@ export function GapsPage() {
     const [busyId, setBusyId] = useState<string | null>(null);
     const [notice, setNotice] = useState<Notice | null>(null);
     const [status, setStatus] = useState<"open" | "done" | "all">("open");
-    const [postingId, setPostingId] = useState("all");
+    const [params] = useSearchParams();
+    const [postingId, setPostingId] = useState(params.get("postingId") ?? "all");
     const [groupBy, setGroupBy] = useState<"posting" | "repo">("posting");
 
     const load = useCallback(async () => {
@@ -72,7 +76,7 @@ export function GapsPage() {
     const groups = useMemo(() => {
         const map = new Map<string, Gap[]>();
         for (const g of visible) {
-            const key = groupBy === "posting" ? `${g.company}: ${g.postingTitle}` : (g.project ?? "No repo");
+            const key = groupBy === "posting" ? `${g.company}: ${g.postingTitle}` : (g.project ? (g.project.startsWith("new:") ? `New project: ${g.project.slice(4)}` : g.project) : "No repo");
             map.set(key, [...(map.get(key) ?? []), g]);
         }
         return [...map.entries()];
@@ -111,14 +115,13 @@ export function GapsPage() {
         }
     }
 
-    const selectClass = "rounded-lg bg-primary px-3 py-2 text-sm text-primary shadow-xs ring-1 ring-primary ring-inset";
-
     return (
-        <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div>
-                <h1 className="text-display-xs font-semibold text-primary">Gap plan</h1>
-                <p className="mt-1 text-md text-tertiary">Every gap from your postings in one checklist, biggest impact first. Tick one after you changed the repo and it is re-scanned.</p>
-            </div>
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader
+                title="Gap plan"
+                description="Every gap from your postings in one checklist, biggest impact first. Tick one after you changed the repo and it is re-scanned."
+            />
+            <JourneyBar />
 
             {notice && (
                 <div
@@ -146,7 +149,7 @@ export function GapsPage() {
             <div className="flex flex-wrap items-center gap-3">
                 <label className="flex items-center gap-2 text-sm text-secondary">
                     Show
-                    <select className={selectClass} value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+                    <select className={cx(fieldClass, "w-auto text-sm")} value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
                         <option value="open">Open</option>
                         <option value="done">Done</option>
                         <option value="all">All</option>
@@ -154,7 +157,7 @@ export function GapsPage() {
                 </label>
                 <label className="flex items-center gap-2 text-sm text-secondary">
                     Posting
-                    <select className={selectClass} value={postingId} onChange={(e) => setPostingId(e.target.value)}>
+                    <select className={cx(fieldClass, "w-auto text-sm")} value={postingId} onChange={(e) => setPostingId(e.target.value)}>
                         <option value="all">All postings</option>
                         {postings.map(([id, company]) => (
                             <option key={id} value={id}>
@@ -165,7 +168,7 @@ export function GapsPage() {
                 </label>
                 <label className="flex items-center gap-2 text-sm text-secondary">
                     Group by
-                    <select className={selectClass} value={groupBy} onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}>
+                    <select className={cx(fieldClass, "w-auto text-sm")} value={groupBy} onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}>
                         <option value="posting">Posting</option>
                         <option value="repo">Repo</option>
                     </select>
@@ -208,7 +211,7 @@ export function GapsPage() {
                                         ) : (
                                             <input
                                                 type="checkbox"
-                                                className="size-4 cursor-pointer accent-current"
+                                                className="size-4 cursor-pointer accent-brand-600 dark:accent-brand-400"
                                                 checked={g.done}
                                                 disabled={busyId !== null}
                                                 aria-label={g.done ? `Undo: ${g.action ?? g.requirement}` : `Mark done: ${g.action ?? g.requirement}`}
@@ -223,7 +226,7 @@ export function GapsPage() {
                                             {g.project && (
                                                 <>
                                                     {" "}
-                                                    · <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{g.project}</code>
+                                                    · <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{g.project.replace(/^new:/, "")}</code>
                                                 </>
                                             )}
                                             {" "}
@@ -233,6 +236,7 @@ export function GapsPage() {
                                             </Link>
                                             {g.dueDate && ` · by ${formatDate(g.dueDate)}`}
                                         </p>
+                                        {g.project?.startsWith("new:") && <p className="text-sm text-tertiary">Add the repo to GitHub and sync your profile to raise your score.</p>}
                                         <div className="flex flex-wrap gap-2">
                                             <Badge type="pill-color" size="sm" color={g.importance === "required" ? "brand" : "gray"}>
                                                 {g.importance === "required" ? "Required" : "Nice to have"}

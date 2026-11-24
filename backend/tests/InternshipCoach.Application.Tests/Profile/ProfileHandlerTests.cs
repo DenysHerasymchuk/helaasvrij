@@ -182,4 +182,17 @@ public class ProfileHandlerTests
         Assert.True(await new DeleteItemHandler(repo).HandleAsync(a.Id, default));
         Assert.Single(repo.Items);
     }
+
+    [Fact]
+    public async Task Set_level_saves_the_cefr_level_of_a_language()
+    {
+        var repo = new FakeProfileRepository();
+        var dutch = ProfileItem.Create(UserId, ProfileItemKind.Language, "Dutch", null, Guid.NewGuid(), "Dutch", new CreatedAt(Clock.UtcNow));
+        repo.Items.Add(dutch);
+
+        Assert.True(await new SetItemLevelHandler(repo).HandleAsync(dutch.Id, "C1", default));
+        Assert.Equal("C1", dutch.Level);
+        Assert.Equal(1, repo.Saves);
+        Assert.False(await new SetItemLevelHandler(repo).HandleAsync(Guid.NewGuid(), "C1", default));
+    }
 }

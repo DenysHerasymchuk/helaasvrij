@@ -9,3 +9,9 @@ public sealed class GetProfileHandler(IProfileRepository repository)
         return new ProfileView(BasicsView.From(basics), await ProfileViewBuilder.BuildItemsAsync(repository, items, ct));
     }
 }
+
+/// <summary>Only the school and stage period, for checking postings against it.</summary>
+public sealed class GetBasicsHandler(IProfileRepository repository)
+{
+    public async Task<BasicsView> HandleAsync(CancellationToken ct) => BasicsView.From(await repository.FindBasicsAsync(ct));
+}

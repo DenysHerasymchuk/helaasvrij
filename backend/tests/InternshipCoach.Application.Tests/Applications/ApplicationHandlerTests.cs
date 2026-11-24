@@ -54,14 +54,17 @@ public class ApplicationHandlerTests
     }
 
     [Fact]
-    public async Task Create_twice_for_one_posting_conflicts()
+    public async Task Create_twice_for_one_posting_returns_the_existing_application()
     {
         var posting = AddPosting();
-        await Create().HandleAsync(new CreateApplicationCommand(posting.Id), default);
+        var first = await Create().HandleAsync(new CreateApplicationCommand(posting.Id), default);
+        await Update().HandleAsync(new UpdateApplicationCommand(first.Card!.Application.Id, "applied", null), default);
 
         var result = await Create().HandleAsync(new CreateApplicationCommand(posting.Id), default);
 
-        Assert.Equal(ApplicationOutcome.Conflict, result.Outcome);
+        Assert.Equal(ApplicationOutcome.Ok, result.Outcome);
+        Assert.Equal(first.Card.Application.Id, result.Card!.Application.Id);
+        Assert.Equal("applied", result.Card.Application.Stage.ToCode());
         Assert.Single(_applications.Items);
     }
 

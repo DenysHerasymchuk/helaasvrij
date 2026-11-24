@@ -39,6 +39,35 @@ body {
     font-kerning: normal;
 }
 
+/* Headings in Fraunces (display); body stays in the sans. Layered so utilities still win. */
+@layer base {
+    h1,
+    h2 {
+        font-family: var(--font-display);
+        font-optical-sizing: auto;
+    }
+
+    :root {
+        color-scheme: light;
+    }
+
+    /* Native selects, scrollbars and date pickers follow the theme. */
+    .dark-mode {
+        color-scheme: dark;
+    }
+
+    body {
+        background-color: var(--color-bg-secondary);
+        color: var(--color-text-primary);
+    }
+
+    /* Highlighter-pen selection, from the brand Highlight. */
+    ::selection {
+        background-color: var(--color-yellow-200);
+        color: var(--color-neutral-900);
+    }
+}
+
 /* Hide the default expand arrow on Safari.  */
 details summary::-webkit-details-marker {
     display: none;

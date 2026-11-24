@@ -8,6 +8,7 @@ import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-b
 import { ApiError, api } from "@/core/api";
 import { useAuth } from "@/core/auth";
 import { cx } from "@/utils/cx";
+import { PageHeader, ErrorState } from "@/core/ui";
 
 type Language = "nl" | "fr" | "en";
 type Settings = { defaultLanguage: Language; strongMatchThreshold: number; emailAlerts: boolean };
@@ -73,23 +74,15 @@ export function SettingsPage() {
     };
 
     return (
-        <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div>
-                <h1 className="text-display-xs font-semibold text-primary">Settings</h1>
-                <p className="mt-1 text-md text-tertiary">Defaults for your matches and drafts, and control over your data.</p>
-            </div>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader title="Settings" description="Defaults for your matches and drafts, and control over your data." />
 
             {loadError ? (
-                <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
-                    <p className="text-sm text-error-primary">{loadError}</p>
-                    <Button color="secondary" size="sm" onClick={load}>
-                        Try again
-                    </Button>
-                </div>
+                <ErrorState message={loadError} onRetry={load} />
             ) : !draft ? (
                 <div aria-busy="true" aria-label="Loading settings" className="flex flex-col gap-6">
                     {[0, 1, 2].map((key) => (
-                        <div key={key} className="h-40 animate-pulse rounded-xl bg-secondary" />
+                        <div key={key} className="h-40 animate-pulse rounded-xl bg-tertiary" />
                     ))}
                 </div>
             ) : (
@@ -117,7 +110,7 @@ export function SettingsPage() {
                                 value={draft.strongMatchThreshold}
                                 onChange={(event) => update({ strongMatchThreshold: Number(event.target.value) })}
                                 aria-label="Strong match threshold"
-                                className="h-2 flex-1 cursor-pointer accent-brand-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
+                                className="h-2 flex-1 cursor-pointer accent-brand-600 dark:accent-brand-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
                             />
                             <output className="w-14 text-right text-lg font-semibold text-primary tabular-nums">{draft.strongMatchThreshold}%</output>
                         </div>
