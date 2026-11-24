@@ -8,6 +8,7 @@ import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { Button } from "@/components/base/buttons/button";
 import { type CurrentUser, initialsOf, useAuth } from "@/core/auth";
 import { useTheme } from "@/core/theme";
+import { ChatWidget } from "@/features/chat/chat-widget";
 
 const mainItems: NavItemType[] = [
     { label: "Dashboard", href: "/dashboard", icon: HomeLine },
@@ -100,6 +101,7 @@ function Shell({ user }: { user: CurrentUser }) {
                 <main className="min-w-0 flex-1">
                     <Outlet />
                 </main>
+                <ChatWidget />
             </div>
         </RouterProvider>
     );
