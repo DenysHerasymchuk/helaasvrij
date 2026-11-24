@@ -5,7 +5,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import type { PostingSummary } from "@/features/postings/types";
-import { fieldClass, PageHeader } from "@/core/ui";
+import { fieldClass, PageHeader, ErrorState, LoadingState } from "@/core/ui";
 
 type Answer = { id: string; answer: string; good: string; add: string; example: string; createdAt: string };
 type Question = { id: string; source: "gap" | "repo" | "company"; text: string; project: string | null; answers: Answer[] };
@@ -156,12 +156,9 @@ export function InterviewPage() {
             <PageHeader title="Interview prep" description="Practice questions built from your gaps and your own repos. Pick a posting to start." />
 
             {postingsError ? (
-                <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
-                    <p className="text-sm text-error-primary">{postingsError}</p>
-                    <Button size="sm" color="secondary" onPress={loadPostings}>Try again</Button>
-                </div>
+                <ErrorState message={postingsError} onRetry={loadPostings} />
             ) : postings === null ? (
-                <p className="text-sm text-tertiary">Loading your postings...</p>
+                <LoadingState>Loading your postings...</LoadingState>
             ) : postings.length === 0 ? (
                 <div className="flex flex-col items-start gap-3 rounded-xl bg-primary p-6 shadow-xs ring-1 ring-secondary">
                     <MessageChatCircle className="size-8 text-fg-quaternary" />

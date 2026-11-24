@@ -9,7 +9,7 @@ import { NextStepsCard } from "./next-steps-card";
 import { HeaderLink, Panel } from "./panel";
 import { SourcesCard } from "./sources-card";
 import { type DashboardData, useDashboard } from "./use-dashboard";
-import { PageHeader } from "@/core/ui";
+import { PageHeader, ErrorState, LoadingState } from "@/core/ui";
 
 // Step 1 with nothing yet: no synced source, no posting, no application. Show one pointer instead of empty cards.
 const nothingYet = (data: DashboardData) =>
@@ -42,16 +42,9 @@ export function DashboardPage() {
             </div>
 
             {error ? (
-                <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
-                    <p className="text-sm text-secondary">{error}</p>
-                    <Button size="md" color="secondary" onPress={reload}>
-                        Try again
-                    </Button>
-                </div>
+                <ErrorState message={error} onRetry={reload} />
             ) : !data ? (
-                <p role="status" className="text-sm text-tertiary">
-                    Loading your dashboard...
-                </p>
+                <LoadingState>Loading your dashboard...</LoadingState>
             ) : nothingYet(data) ? (
                 <div className="grid gap-6 md:grid-cols-2">
                     <SourcesCard sources={data.sources} />

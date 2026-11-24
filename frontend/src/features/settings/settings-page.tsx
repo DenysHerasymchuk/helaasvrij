@@ -8,7 +8,7 @@ import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-b
 import { ApiError, api } from "@/core/api";
 import { useAuth } from "@/core/auth";
 import { cx } from "@/utils/cx";
-import { PageHeader } from "@/core/ui";
+import { PageHeader, ErrorState } from "@/core/ui";
 
 type Language = "nl" | "fr" | "en";
 type Settings = { defaultLanguage: Language; strongMatchThreshold: number; emailAlerts: boolean };
@@ -78,12 +78,7 @@ export function SettingsPage() {
             <PageHeader title="Settings" description="Defaults for your matches and drafts, and control over your data." />
 
             {loadError ? (
-                <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
-                    <p className="text-sm text-error-primary">{loadError}</p>
-                    <Button color="secondary" size="sm" onClick={load}>
-                        Try again
-                    </Button>
-                </div>
+                <ErrorState message={loadError} onRetry={load} />
             ) : !draft ? (
                 <div aria-busy="true" aria-label="Loading settings" className="flex flex-col gap-6">
                     {[0, 1, 2].map((key) => (
