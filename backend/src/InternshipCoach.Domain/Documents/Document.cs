@@ -15,6 +15,7 @@ public sealed class Document : IUserOwned
     public const int TitleMaxLength = 200;
     public const int ContentMaxLength = 50_000;
     public const int LanguageMaxLength = 2;
+    public const int RecruiterMessageMaxLength = 300;
     public static readonly IReadOnlyList<string> Languages = ["nl", "fr", "en"];
 
     public Guid Id { get; private set; }
@@ -77,6 +78,11 @@ public sealed class Document : IUserOwned
         if (content.Length > ContentMaxLength)
         {
             throw new DomainException($"Content can be at most {ContentMaxLength} characters.");
+        }
+
+        if (Kind == DocumentKind.RecruiterMessage && content.Trim().Length > RecruiterMessageMaxLength)
+        {
+            throw new DomainException($"A recruiter message can be at most {RecruiterMessageMaxLength} characters.");
         }
 
         Title = trimmedTitle;

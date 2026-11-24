@@ -24,6 +24,12 @@ interface DocumentResponse {
 
 type DocumentSummary = Omit<DocumentResponse, "content" | "droppedCount">;
 
+
+type DraftKind = "coverLetter" | "recruiterMessage";
+
+const kindNames: Record<string, string> = { cv: "CV", coverLetter: "Cover letter", recruiterMessage: "Recruiter message" };
+const RECRUITER_MAX = 300;
+
 const languageNames: Record<Language, string> = { nl: "Nederlands", fr: "Français", en: "English" };
 const MAX_CHARS = 20000;
 
@@ -143,6 +149,12 @@ export function DocumentsPage() {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
+    const [draftPostingId, setDraftPostingId] = useState("");
+    const [draftKind, setDraftKind] = useState<DraftKind>("coverLetter");
+    const [draftLanguage, setDraftLanguage] = useState<"" | Language>("");
+    const [drafting, setDrafting] = useState(false);
+    const [draftError, setDraftError] = useState<string | null>(null);
+
     const [list, setList] = useState<DocumentSummary[] | null>(null);
     const [listError, setListError] = useState(false);
 
@@ -194,6 +206,28 @@ export function DocumentsPage() {
             setDownloadError(error instanceof ApiError ? error.message : "Could not download. Try again.");
         } finally {
             setDownloading(false);
+        }
+    };
+
+    const onDraft = async (event: FormEvent) => {
+        event.preventDefault();
+        if (!draftPostingId) return;
+        setDrafting(true);
+        setDraftError(null);
+        try {
+            const doc = await api.post<DocumentResponse>("/api/documents/draft", {
+                postingId: draftPostingId,
+                kind: draftKind,
+                language: draftLanguage || null,
+            });
+            if (doc) {
+                show(doc);
+                loadList();
+            }
+        } catch (error) {
+            setDraftError(error instanceof ApiError ? error.message : "Something went wrong. Try again.");
+        } finally {
+            setDrafting(false);
         }
     };
 
@@ -290,10 +324,11 @@ export function DocumentsPage() {
             <style>{printCss}</style>
             <div className="flex flex-col gap-1">
                 <h1 className="text-display-xs font-semibold text-primary">Documents</h1>
-                <p className="text-md text-tertiary">Add your CV and pick a job posting. You get your CV rewritten for that posting, using only what your CV already says.</p>
+                <p className="text-md text-tertiary">Your CV, a cover letter and a recruiter message for one posting, built only from what you have confirmed on your profile. You send them yourself; nothing is sent for you.</p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
+                <div className="flex flex-col gap-6">
                 <Panel title="Tailor your CV">
                     <form onSubmit={onTailor} className="flex flex-col gap-5 p-5">
                         <fieldset className="flex flex-col gap-3">
@@ -462,8 +497,65 @@ export function DocumentsPage() {
                     </form>
                 </Panel>
 
+                <Panel title="Cover letter or recruiter message">
+                    <form onSubmit={onDraft} className="flex flex-col gap-5 p-5">
+                        {postingsError ? (
+                            <div className="flex flex-col items-start gap-3">
+                                <p className="text-sm text-error-primary">Could not load your postings.</p>
+                                <Button size="sm" color="secondary" onPress={loadPostings}>Try again</Button>
+                            </div>
+                        ) : postings === null ? (
+                            <p role="status" className="text-sm text-tertiary">Loading...</p>
+                        ) : postings.length === 0 ? (
+                            <p className="text-sm text-tertiary">Add a posting first. Drafts are written for one of your postings.</p>
+                        ) : (
+                            <>
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="draft-posting" className="text-sm font-medium text-secondary">Posting</label>
+                                    <select id="draft-posting" required value={draftPostingId} onChange={(e) => setDraftPostingId(e.target.value)} className={fieldClass}>
+                                        <option value="">Choose a posting</option>
+                                        {postings.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.company} - {p.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="draft-kind" className="text-sm font-medium text-secondary">Type</label>
+                                        <select id="draft-kind" value={draftKind} onChange={(e) => setDraftKind(e.target.value as DraftKind)} className={fieldClass}>
+                                            <option value="coverLetter">Cover letter</option>
+                                            <option value="recruiterMessage">Recruiter message (max {RECRUITER_MAX} characters)</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="draft-language" className="text-sm font-medium text-secondary">Language</label>
+                                        <select id="draft-language" value={draftLanguage} onChange={(e) => setDraftLanguage(e.target.value as "" | Language)} className={fieldClass}>
+                                            <option value="">Same as posting</option>
+                                            <option value="nl">Nederlands</option>
+                                            <option value="fr">Français</option>
+                                            <option value="en">English</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                {draftError && (
+                                    <p role="alert" className="flex items-center gap-2 text-sm text-error-primary">
+                                        <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                        {draftError}
+                                    </p>
+                                )}
+                                <div>
+                                    <Button type="submit" size="md" isLoading={drafting} isDisabled={drafting || !draftPostingId} showTextWhileLoading>
+                                        {drafting ? "Writing your draft..." : "Write draft"}
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </form>
+                </Panel>
+                </div>
+
                 <Panel
-                    title={current ? current.title : "Tailored CV"}
+                    title={current ? current.title : "Your draft"}
                     action={
                         current && !editing ? (
                             <div className="flex flex-wrap gap-2">
@@ -485,10 +577,16 @@ export function DocumentsPage() {
                 >
                     <div className="flex flex-col gap-4 p-5">
                         {!current && !tailoring && (
-                            <p className="text-sm text-tertiary">Your tailored CV shows up here. Every line in it comes from your own CV.</p>
+                            <p className="text-sm text-tertiary">Your CV, cover letter or recruiter message shows up here. Every claim in it comes from your own evidence.</p>
                         )}
                         {!current && tailoring && (
-                            <p role="status" className="text-sm text-tertiary">Rewriting your CV for this posting. This takes up to a minute.</p>
+                            <p role="status" className="text-sm text-tertiary">Writing your document. This takes up to a minute.</p>
+                        )}
+
+                        {current?.kind === "recruiterMessage" && !editing && (
+                            <p className={cx("text-sm", current.content.length > RECRUITER_MAX ? "text-error-primary" : "text-tertiary")}>
+                                {current.content.length}/{RECRUITER_MAX} characters. Copy it and send it yourself.
+                            </p>
                         )}
 
                         {downloadError && !editing && (
@@ -514,7 +612,17 @@ export function DocumentsPage() {
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label htmlFor="edit-content" className="text-sm font-medium text-secondary">Content (markdown)</label>
-                                    <textarea id="edit-content" rows={18} value={draftContent} onChange={(e) => setDraftContent(e.target.value)} className={cx(fieldClass, "font-mono text-sm")} />
+                                    <textarea
+                                        id="edit-content"
+                                        rows={current.kind === "recruiterMessage" ? 6 : 18}
+                                        maxLength={current.kind === "recruiterMessage" ? RECRUITER_MAX : undefined}
+                                        value={draftContent}
+                                        onChange={(e) => setDraftContent(e.target.value)}
+                                        className={cx(fieldClass, "font-mono text-sm")}
+                                    />
+                                    {current.kind === "recruiterMessage" && (
+                                        <p className="text-sm text-tertiary">{draftContent.length}/{RECRUITER_MAX} characters</p>
+                                    )}
                                 </div>
                                 {saveError && <p role="alert" className="text-sm text-error-primary">{saveError}</p>}
                                 <div className="flex gap-2">
@@ -537,10 +645,10 @@ export function DocumentsPage() {
                 </Panel>
             </div>
 
-            <Panel title="Your tailored CVs">
+            <Panel title="Your documents">
                 {listError ? (
                     <div className="flex flex-col items-start gap-3 p-5">
-                        <p className="text-sm text-error-primary">Could not load your CVs.</p>
+                        <p className="text-sm text-error-primary">Could not load your documents.</p>
                         <Button size="sm" color="secondary" onPress={loadList}>
                             Try again
                         </Button>
@@ -548,7 +656,7 @@ export function DocumentsPage() {
                 ) : list === null ? (
                     <p role="status" className="p-5 text-sm text-tertiary">Loading...</p>
                 ) : list.length === 0 ? (
-                    <p className="p-5 text-sm text-tertiary">No tailored CVs yet. Fill in the form above to make your first one.</p>
+                    <p className="p-5 text-sm text-tertiary">No documents yet. Use one of the forms above to make your first one.</p>
                 ) : (
                     <ul className="flex flex-col divide-y divide-secondary">
                         {list.map((doc) => (
@@ -557,6 +665,7 @@ export function DocumentsPage() {
                                     <p className="truncate text-sm font-medium text-primary">{doc.title}</p>
                                     <p className="text-sm text-tertiary">{formatDate(doc.createdAt)}</p>
                                 </div>
+                                <Badge size="sm" color="brand">{kindNames[doc.kind] ?? doc.kind}</Badge>
                                 <Badge size="sm" color="gray">{languageNames[doc.language] ?? doc.language}</Badge>
                                 <Button size="sm" color="secondary" onPress={() => onOpen(doc.id)} aria-label={`Open ${doc.title}`}>
                                     Open
