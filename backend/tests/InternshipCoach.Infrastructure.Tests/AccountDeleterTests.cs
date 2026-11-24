@@ -1,5 +1,6 @@
 using InternshipCoach.Domain.Applications;
 using InternshipCoach.Domain.Documents;
+using InternshipCoach.Domain.Interview;
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Domain.Common;
 using InternshipCoach.Domain.Llm;
@@ -40,6 +41,9 @@ public class AccountDeleterTests
         db.ProfileBasics.Add(ProfileBasics.Create(user.Id, "School", null, null));
         db.Sources.Add(Source.Create(user.Id, SourceKind.GitHub, "gh"));
         db.Documents.Add(Document.Create(user.Id, DocumentKind.Cv, "en", "CV", "# CV", new CreatedAt(DateTimeOffset.UtcNow)));
+        var question = InterviewQuestion.Create(user.Id, posting.Id, QuestionSource.Gap, "How would you add Docker to a?", "a", null, 0, new CreatedAt(DateTimeOffset.UtcNow));
+        db.InterviewQuestions.Add(question);
+        db.InterviewAnswers.Add(InterviewAnswer.Create(user.Id, posting.Id, question.Id, "I would add a Dockerfile.", "Clear", "Add compose", "I added a Dockerfile to a.", new CreatedAt(DateTimeOffset.UtcNow)));
         await db.SaveChangesAsync();
         return user;
     }
@@ -51,6 +55,12 @@ public class AccountDeleterTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         var victim = await Seed(options, "victim@example.com");
         var other = await Seed(options, "other@example.com");
+        await using (var shared = new InternshipCoachDbContext(options, new FakeCurrentUser(victim.Id)))
+        {
+            shared.CompanyQuestions.Add(CompanyQuestion.Create("Acme", "Why Acme?"));
+            await shared.SaveChangesAsync();
+        }
+
 
         await using (var db = new InternshipCoachDbContext(options, new FakeCurrentUser(victim.Id)))
         {
@@ -68,6 +78,9 @@ public class AccountDeleterTests
             Assert.DoesNotContain(victim.Id, rows);
             Assert.True(rows.Contains(other.Id), $"{type.ClrType.Name} lost the other user's rows");
         }
+
+        // Shared company questions are not user data and must survive.
+        Assert.NotEmpty(await check.CompanyQuestions.ToListAsync());
 
         Assert.Null(await check.Users.FirstOrDefaultAsync(user => user.Id == victim.Id));
         Assert.NotNull(await check.Users.FirstOrDefaultAsync(user => user.Id == other.Id));

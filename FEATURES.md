@@ -51,12 +51,12 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 33 | Settings page (basic) | Default language, sign out. | todo |
 | 34 | AI chat assistant | Round button bottom-right on every signed-in page, opens a chat through route33 (`anthropic/claude-sonnet-5-5`). Answers questions about the app and suggests a page with a "Go to" chip (whitelisted routes only). Later: navigates and acts on the user's data. See `BUILD.md` prompt 10. | todo |
 | 35 | CV tailoring (paste) | Paste CV text + a posting on `/documents`; Claude (Smart model only) rewrites the CV for that posting in its language (or NL/FR/EN on request). Every bullet and skill carries a verbatim CV quote checked with `QuoteCheck`; lines with a failed quote or a number not in the CV are dropped and counted. Saved as a `Document` (edit, copy, delete, print to PDF). Stand-in for row 24 until profile and postings exist. | done (not run live against route33) |
+| 36 | Interview prep | `GET /api/interview/{postingId}/questions` generates once and stores 3 gap + 3 repo questions (Smart model, every question must name one of the student's repos, max 2 LLM calls) plus shared anonymous `CompanyQuestions` (seeded for the 4 demo companies). `POST /api/interview/answers` gives short feedback (good, add, example sentence), max 5 tries per question. `/interview` page. | done (not run live against route33; plain controls) |
 
 ## Next (pitch slide, not built)
 
 | Feature | Why it waits |
 | --- | --- |
-| Interview prep (gap, repo and company questions, answer feedback) | Needs the core and drafts first |
 | Applications kanban | Built, not part of the core value: `/applications` board (Saved, Applied, Interview, Offer, Rejected) with drag and drop and a "Move to" menu, `GET/POST /api/applications`, `PATCH /api/applications/{id}`, `GET /api/applications/stats?months=6`. Stats are not wired into the dashboard yet. Not run against a real database or browser. |
 | Adzuna postings | Free tier is evaluation only; Belgium not confirmed |
 | Zapier/webhook job alerts | Depends on accounts and postings |
