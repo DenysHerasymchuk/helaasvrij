@@ -7,6 +7,7 @@ import { Field, NativeSelect } from "@/features/postings/fields";
 import type { PostingSummary } from "@/features/postings/types";
 import { Board } from "./board";
 import { type Application, type Stage, stageLabel } from "./types";
+import { PageHeader } from "@/core/ui";
 
 const message = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong. Try again.");
 
@@ -77,13 +78,11 @@ export function ApplicationsPage() {
     }
 
     return (
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-display-xs font-semibold text-primary">Applications</h1>
-                    <p className="mt-1 text-md text-tertiary">Drag a card to a new column, or use Move to.</p>
-                </div>
-                {items && postings.length > 0 && (
+        <div className="flex max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader
+                title="Applications"
+                description="Drag a card to a new column, or use Move to."
+                action={items && postings.length > 0 && (
                     <div className="flex w-full items-end gap-2 sm:w-auto">
                         <div className="min-w-0 flex-1 sm:w-72 sm:flex-none">
                             <Field label="Track a posting">
@@ -102,7 +101,7 @@ export function ApplicationsPage() {
                         </Button>
                     </div>
                 )}
-            </div>
+            />
             <JourneyBar />
 
             {notice && (

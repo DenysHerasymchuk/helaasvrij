@@ -5,6 +5,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import type { PostingSummary } from "@/features/postings/types";
+import { fieldClass, PageHeader, ErrorState, LoadingState } from "@/core/ui";
 
 type Answer = { id: string; answer: string; good: string; add: string; example: string; createdAt: string };
 type Question = { id: string; source: "gap" | "repo" | "company"; text: string; project: string | null; answers: Answer[] };
@@ -14,8 +15,6 @@ const MAX_ANSWER = 3000;
 const sourceLabel: Record<Question["source"], string> = { gap: "From a gap", repo: "From your repo", company: "Asked at this company" };
 const sourceColor = { gap: "warning", repo: "brand", company: "gray" } as const;
 
-const fieldClass =
-    "w-full rounded-lg bg-primary px-3.5 py-2.5 text-md text-primary shadow-xs ring-1 ring-primary ring-inset placeholder:text-placeholder outline-none focus:ring-2 focus:ring-brand";
 
 const errorText = (error: unknown) => (error instanceof ApiError ? error.message : "Something went wrong. Try again.");
 
@@ -153,21 +152,15 @@ export function InterviewPage() {
         );
 
     return (
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <header className="flex flex-col gap-1">
-                <h1 className="text-display-xs font-semibold text-primary">Interview prep</h1>
-                <p className="text-md text-tertiary">Practice questions built from your gaps and your own repos. Pick a posting to start.</p>
-            </header>
+        <div className="flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader title="Interview prep" description="Practice questions built from your gaps and your own repos. Pick a posting to start." />
 
             {postingsError ? (
-                <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 ring-1 ring-secondary">
-                    <p className="text-sm text-error-primary">{postingsError}</p>
-                    <Button size="sm" color="secondary" onPress={loadPostings}>Try again</Button>
-                </div>
+                <ErrorState message={postingsError} onRetry={loadPostings} />
             ) : postings === null ? (
-                <p className="text-sm text-tertiary">Loading your postings...</p>
+                <LoadingState>Loading your postings...</LoadingState>
             ) : postings.length === 0 ? (
-                <div className="flex flex-col items-start gap-3 rounded-xl bg-primary p-6 ring-1 ring-secondary">
+                <div className="flex flex-col items-start gap-3 rounded-xl bg-primary p-6 shadow-xs ring-1 ring-secondary">
                     <MessageChatCircle className="size-8 text-fg-quaternary" />
                     <p className="text-md font-semibold text-primary">No postings yet</p>
                     <p className="text-sm text-tertiary">Add a posting and run its gap analysis. Then the questions appear here.</p>
@@ -194,7 +187,7 @@ export function InterviewPage() {
                     )}
 
                     {error && (
-                        <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 ring-1 ring-secondary">
+                        <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
                             <p className="flex items-start gap-2 text-sm text-error-primary">
                                 <AlertCircle className="mt-0.5 size-4 shrink-0" /> {error}
                             </p>

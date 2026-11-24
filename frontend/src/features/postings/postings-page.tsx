@@ -10,6 +10,7 @@ import { BoardStatus, useBoard } from "@/features/applications/board-status";
 import { AddPostingModal } from "./add-posting-modal";
 import { PostingsTabs } from "./postings-tabs";
 import { type PostingSummary, formatDate, formatStagePeriod } from "./types";
+import { PageHeader } from "@/core/ui";
 
 
 export function PostingsPage() {
@@ -47,15 +48,12 @@ export function PostingsPage() {
     }, [load]);
 
     return (
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div>
-                <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
-                <p className="mt-1 text-md text-tertiary">Your saved list: track each posting and apply on your own.</p>
-            </div>
+        <div className="flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader title="Postings" description="Your saved list: track each posting and apply on your own." />
 
             <PostingsTabs />
 
-            <div className="flex flex-col items-start gap-3 rounded-xl bg-secondary p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex flex-col items-start gap-3 rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary sm:flex-row sm:items-center sm:justify-between sm:p-5">
                 <div>
                     <p className="text-md font-semibold text-primary">Found one elsewhere? Add it here.</p>
                     <p className="text-sm text-tertiary">Paste the posting text or a link.</p>

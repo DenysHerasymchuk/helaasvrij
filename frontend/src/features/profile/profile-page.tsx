@@ -33,6 +33,7 @@ import {
     syncGitHub,
     uploadCv,
 } from "./api";
+import { PageHeader } from "@/core/ui";
 
 const message = (error: unknown) => (error instanceof ApiError ? error.message : "Something went wrong. Try again.");
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -133,11 +134,8 @@ export function ProfilePage() {
     useEffect(load, [load]);
 
     return (
-        <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <div>
-                <h1 className="text-display-xs font-semibold text-primary">Profile</h1>
-                <p className="mt-1 text-md text-tertiary">Four steps: add your sources, let us read them, confirm what is true, add your details.</p>
-            </div>
+        <div className="flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader title="Profile" description="Four steps: add your sources, let us read them, confirm what is true, add your details." />
             <JourneyBar />
 
             {loadError ? (
@@ -150,7 +148,7 @@ export function ProfilePage() {
             ) : !sources || !profile ? (
                 <div aria-busy="true" aria-label="Loading profile" className="flex flex-col gap-6">
                     {[0, 1, 2].map((key) => (
-                        <div key={key} className="h-40 animate-pulse rounded-xl bg-secondary" />
+                        <div key={key} className="h-40 animate-pulse rounded-xl bg-tertiary" />
                     ))}
                 </div>
             ) : (

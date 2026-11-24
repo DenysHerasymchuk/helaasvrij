@@ -1,17 +1,18 @@
 @import "./styles/globals.css";
 
-/* Chart ramps, validated with the dataviz palette checker (ordinal, one hue) for each mode.
+/* Chart ramps in the Stamp green, validated with the dataviz palette checker (ordinal, one hue)
+   against the card surfaces: light #fffdf8 (and Paper #f6f1e7), dark #24221e.
    In dark mode the most important step is the brightest, so the ramp order flips. */
 :root {
-    --chart-applied: #fb7185;
-    --chart-interview: #e11d48;
-    --chart-offer: #9f1239;
+    --chart-applied: #74ba92;
+    --chart-interview: #2b8a5a;
+    --chart-offer: #154f33;
 }
 
 .dark-mode {
-    --chart-applied: #9f1239;
-    --chart-interview: #e11d48;
-    --chart-offer: #fb7185;
+    --chart-applied: #2b8a5a;
+    --chart-interview: #5dae80;
+    --chart-offer: #a3d2b5;
 }
 
 /* Dashboard motion: one staggered entrance, fills on load, reveals on click. Off for reduced motion. */

@@ -1,7 +1,7 @@
 @theme {
     /* FONT FAMILY */
-    --font-body: var(--font-inter, "Inter"), -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    --font-display: var(--font-inter, "Inter"), -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-body: "Instrument Sans", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
     --font-mono: ui-monospace, "Roboto Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
     /* FONT SIZE */
@@ -121,17 +121,73 @@
     --color-alpha-white: rgb(255 255 255);
     --color-alpha-black: rgb(0 0 0);
 
-    --color-brand-50: var(--color-rose-50);
-    --color-brand-100: var(--color-rose-100);
-    --color-brand-200: var(--color-rose-200);
-    --color-brand-300: var(--color-rose-300);
-    --color-brand-400: var(--color-rose-400);
-    --color-brand-500: var(--color-rose-500);
-    --color-brand-600: var(--color-rose-600);
-    --color-brand-700: var(--color-rose-700);
-    --color-brand-800: var(--color-rose-800);
-    --color-brand-900: var(--color-rose-900);
-    --color-brand-950: var(--color-rose-950);
+    /* HELAASVRIJ PALETTE: Stamp green brand, warm Paper/Ink neutrals, Gap red, Highlight yellow.
+       These override Tailwind's default ramps so every Untitled UI token below follows the brand. */
+    --color-brand-25: #f4faf6;
+    --color-brand-50: #e7f3eb;
+    --color-brand-100: #cde6d6;
+    --color-brand-200: #a3d2b5;
+    --color-brand-300: #74ba92;
+    --color-brand-400: #48a06f;
+    --color-brand-500: #2b8a5a;
+    --color-brand-600: #1f7a4d; /* Stamp */
+    --color-brand-700: #19643f;
+    --color-brand-800: #154f33;
+    --color-brand-900: #11402a;
+    --color-brand-950: #0a2719;
+
+    /* Success is the same stamp of approval. */
+    --color-green-25: var(--color-brand-25);
+    --color-green-50: var(--color-brand-50);
+    --color-green-100: var(--color-brand-100);
+    --color-green-200: var(--color-brand-200);
+    --color-green-300: var(--color-brand-300);
+    --color-green-400: var(--color-brand-400);
+    --color-green-500: var(--color-brand-500);
+    --color-green-600: var(--color-brand-600);
+    --color-green-700: var(--color-brand-700);
+    --color-green-800: var(--color-brand-800);
+    --color-green-900: var(--color-brand-900);
+    --color-green-950: var(--color-brand-950);
+
+    --color-neutral-25: #fffdf8;
+    --color-neutral-50: #f6f1e7; /* Paper */
+    --color-neutral-100: #eee8db;
+    --color-neutral-200: #e2daca;
+    --color-neutral-300: #cdc4b1;
+    --color-neutral-400: #a9a191;
+    --color-neutral-500: #8a8578; /* Muted */
+    --color-neutral-600: #6a655a;
+    --color-neutral-700: #4f4b43;
+    --color-neutral-800: #34312c;
+    --color-neutral-900: #1b1b1b; /* Ink */
+    --color-neutral-950: #121110;
+
+    --color-red-25: #fff8f6;
+    --color-red-50: #fdefec;
+    --color-red-100: #fadcd6;
+    --color-red-200: #f4b8ae;
+    --color-red-300: #ec8e80;
+    --color-red-400: #e86a5c;
+    --color-red-500: #d93a2b; /* Gap */
+    --color-red-600: #bf3324;
+    --color-red-700: #9e2a1d;
+    --color-red-800: #7e2419;
+    --color-red-900: #651f16;
+    --color-red-950: #3a0f0a;
+
+    --color-yellow-25: #fffdf2;
+    --color-yellow-50: #fffae0;
+    --color-yellow-100: #fff3ad;
+    --color-yellow-200: #ffe45c; /* Highlight */
+    --color-yellow-300: #f5d032;
+    --color-yellow-400: #e0b814;
+    --color-yellow-500: #b8950a;
+    --color-yellow-600: #8f7206;
+    --color-yellow-700: #7a5e08;
+    --color-yellow-800: #5e480b;
+    --color-yellow-900: #4a390d;
+    --color-yellow-950: #2b2005;
 
     /* LIGHT MODE VARIABLES */
 
@@ -292,7 +348,7 @@
     --color-text-primary: var(--color-neutral-900);
     --color-text-tertiary: var(--color-neutral-600);
     --color-text-error-primary: var(--color-red-600);
-    --color-text-warning-primary: var(--color-yellow-600);
+    --color-text-warning-primary: var(--color-yellow-700);
     --color-text-success-primary: var(--color-green-600);
     --color-text-white: var(--color-white);
     --color-text-secondary: var(--color-neutral-700);
@@ -303,7 +359,7 @@
     --color-text-brand-tertiary: var(--color-brand-600);
     --color-text-editor-icon-fg: var(--color-neutral-400);
     --color-text-editor-icon-fg_active: var(--color-neutral-500);
-    --color-text-quaternary: var(--color-neutral-500);
+    --color-text-quaternary: var(--color-neutral-600);
     --color-text-brand-primary: var(--color-brand-900);
     --color-text-primary_on-brand: var(--color-white);
     --color-text-secondary_on-brand: var(--color-brand-200);
@@ -345,17 +401,17 @@
     --color-fg-brand-secondary_hover: var(--color-brand-600);
 
     /* BACKGROUND COLORS */
-    --color-bg-primary: var(--color-white);
+    --color-bg-primary: var(--color-neutral-25);
     --color-bg-tertiary: var(--color-neutral-100);
     --color-bg-brand-primary: var(--color-brand-50);
     --color-bg-error-secondary: var(--color-red-100);
     --color-bg-warning-primary: var(--color-yellow-50);
-    --color-bg-warning-secondary: var(--color-yellow-100);
+    --color-bg-warning-secondary: var(--color-yellow-200);
     --color-bg-success-primary: var(--color-green-50);
     --color-bg-success-secondary: var(--color-green-100);
     --color-bg-brand-solid: var(--color-brand-600);
     --color-bg-secondary-solid: var(--color-neutral-600);
-    --color-bg-error-solid: var(--color-red-600);
+    --color-bg-error-solid: var(--color-red-500);
     --color-bg-warning-solid: var(--color-yellow-600);
     --color-bg-success-solid: var(--color-green-600);
     --color-bg-secondary_hover: var(--color-neutral-100);
@@ -366,14 +422,14 @@
     --color-bg-brand-secondary: var(--color-brand-100);
     --color-bg-secondary: var(--color-neutral-50);
     --color-bg-quaternary: var(--color-neutral-200);
-    --color-bg-primary_alt: var(--color-white);
+    --color-bg-primary_alt: var(--color-neutral-25);
     --color-bg-brand-primary_alt: var(--color-brand-50);
     --color-bg-secondary_alt: var(--color-neutral-50);
     --color-bg-overlay: var(--color-neutral-950);
     --color-bg-brand-section: var(--color-brand-800);
     --color-bg-brand-section_subtle: var(--color-brand-700);
     --color-bg-primary-solid: var(--color-neutral-950);
-    --color-bg-error-solid_hover: var(--color-red-700);
+    --color-bg-error-solid_hover: var(--color-red-600);
 
     /* COMPONENT COLORS */
     --color-app-store-badge-border: 166 166 166 1;
@@ -498,7 +554,7 @@
     /* DARK MODE VARIABLES */
 
     .dark-mode {
-        --color-alpha-white: rgb(12 14 18);
+        --color-alpha-white: rgb(27 27 27);
         --color-alpha-black: rgb(255 255 255);
 
         /* UTILITY COLORS */
@@ -661,9 +717,9 @@
         --color-text-secondary: var(--color-neutral-300);
         --color-text-secondary_hover: var(--color-neutral-200);
         --color-text-tertiary_hover: var(--color-neutral-300);
-        --color-text-brand-secondary: var(--color-neutral-300);
+        --color-text-brand-secondary: var(--color-brand-300);
         --color-text-placeholder: var(--color-neutral-500);
-        --color-text-brand-tertiary: var(--color-neutral-400);
+        --color-text-brand-tertiary: var(--color-brand-400);
         --color-text-editor-icon-fg: var(--color-neutral-400);
         --color-text-editor-icon-fg_active: var(--color-white);
         --color-text-quaternary: var(--color-neutral-400);
@@ -674,7 +730,7 @@
         --color-text-quaternary_on-brand: var(--color-neutral-400);
         --color-text-brand-tertiary_alt: var(--color-neutral-50);
         --color-text-error-primary_hover: var(--color-red-300);
-        --color-text-brand-secondary_hover: var(--color-neutral-200);
+        --color-text-brand-secondary_hover: var(--color-brand-200);
 
         --color-border-secondary: var(--color-neutral-800);
         --color-border-error_subtle: var(--color-red-500);
@@ -692,8 +748,8 @@
         --color-fg-success-secondary: var(--color-green-400);
         --color-fg-secondary_hover: var(--color-neutral-200);
         --color-fg-primary: var(--color-white);
-        --color-fg-brand-secondary: var(--color-brand-500);
-        --color-fg-brand-primary: var(--color-brand-500);
+        --color-fg-brand-secondary: var(--color-brand-400);
+        --color-fg-brand-primary: var(--color-brand-400);
         --color-fg-quaternary: var(--color-neutral-600);
         --color-fg-quaternary_hover: var(--color-neutral-500);
         --color-fg-error-primary: var(--color-red-500);
@@ -701,13 +757,13 @@
         --color-fg-error-secondary: var(--color-red-400);
         --color-fg-tertiary: var(--color-neutral-400);
         --color-fg-tertiary_hover: var(--color-neutral-300);
-        --color-fg-brand-primary_alt: var(--color-neutral-300);
+        --color-fg-brand-primary_alt: var(--color-brand-300);
         --color-fg-brand-secondary_alt: var(--color-neutral-600);
         --color-fg-brand-secondary_hover: var(--color-neutral-500);
 
-        --color-bg-primary: var(--color-neutral-950);
+        --color-bg-primary: #24221e;
         --color-bg-tertiary: var(--color-neutral-800);
-        --color-bg-brand-primary: var(--color-brand-500);
+        --color-bg-brand-primary: var(--color-brand-950);
         --color-bg-error-secondary: var(--color-red-600);
         --color-bg-warning-primary: var(--color-yellow-950);
         --color-bg-warning-secondary: var(--color-yellow-600);
@@ -719,11 +775,11 @@
         --color-bg-warning-solid: var(--color-yellow-600);
         --color-bg-success-solid: var(--color-green-600);
         --color-bg-secondary_hover: var(--color-neutral-800);
-        --color-bg-primary_hover: var(--color-neutral-900);
+        --color-bg-primary_hover: #2c2a25;
         --color-bg-active: var(--color-neutral-800);
-        --color-bg-brand-solid_hover: var(--color-brand-500);
+        --color-bg-brand-solid_hover: var(--color-brand-700);
         --color-bg-error-primary: var(--color-red-950);
-        --color-bg-brand-secondary: var(--color-brand-600);
+        --color-bg-brand-secondary: var(--color-brand-900);
         --color-bg-secondary: var(--color-neutral-900);
         --color-bg-quaternary: var(--color-neutral-700);
         --color-bg-primary_alt: var(--color-bg-secondary);
@@ -743,10 +799,10 @@
         --color-featured-icon-light-fg-success: var(--color-green-200);
         --color-featured-icon-light-fg-warning: var(--color-yellow-200);
         --color-focus-ring-error: var(--color-red-500);
-        --color-focus-ring: var(--color-brand-500);
+        --color-focus-ring: var(--color-brand-400);
         --color-footer-button-fg: var(--color-neutral-300);
         --color-footer-button-fg_hover: var(--color-neutral-100);
-        --color-icon-fg-brand: var(--color-neutral-400);
+        --color-icon-fg-brand: var(--color-brand-400);
         --color-icon-fg-brand_on-brand: var(--color-neutral-400);
         --color-screen-mockup-border: var(--color-neutral-700);
         --color-slider-handle-bg: var(--color-fg-brand-primary);

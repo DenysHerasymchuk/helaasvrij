@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { ChatMarkdown } from "./chat-markdown";
+import { fieldClass } from "@/core/ui";
+import { cx } from "@/utils/cx";
 
 type Role = "user" | "assistant";
 type ToolCall = { name: string; args: string; status: "ok" | "error"; summary: string; durationMs: number };
@@ -363,7 +365,7 @@ export function ChatWidget() {
                             onChange={(event) => setDraft(event.target.value)}
                             onKeyDown={onKeyDown}
                             placeholder="Ask a question"
-                            className="max-h-32 min-h-10 flex-1 resize-none rounded-lg bg-primary px-3 py-2 text-md text-primary shadow-xs ring-1 ring-primary outline-none ring-inset placeholder:text-placeholder focus:ring-2 focus:ring-brand"
+                            className={cx(fieldClass, "max-h-32 min-h-10 flex-1 resize-none")}
                         />
                         <Button type="submit" size="md" iconLeading={Send01} aria-label="Send" isDisabled={sending || !draft.trim()} />
                     </form>

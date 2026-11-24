@@ -9,6 +9,7 @@ import { ApiError, api } from "@/core/api";
 import type { PostingSummary } from "@/features/postings/types";
 import { getProfile } from "@/features/profile/api";
 import { cx } from "@/utils/cx";
+import { fieldClass, PageHeader } from "@/core/ui";
 
 type Language = "nl" | "fr" | "en";
 
@@ -34,8 +35,6 @@ const RECRUITER_MAX = 300;
 const languageNames: Record<Language, string> = { nl: "Nederlands", fr: "Français", en: "English" };
 const MAX_CHARS = 20000;
 
-const fieldClass =
-    "w-full rounded-lg bg-primary px-3.5 py-2.5 text-md text-primary shadow-xs ring-1 ring-primary ring-inset placeholder:text-placeholder outline-none focus:ring-2 focus:ring-brand aria-invalid:ring-error_subtle";
 
 // Shows only the CV sheet when printing: the app shell (sidebar, header) and the rest of the page are hidden.
 const printCss = `@media print {
@@ -374,12 +373,12 @@ export function DocumentsPage() {
     const showCvText = cvSource === "paste" || cvText.length > 0;
 
     return (
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <style>{printCss}</style>
-            <div className="flex flex-col gap-1">
-                <h1 className="text-display-xs font-semibold text-primary">Documents</h1>
-                <p className="text-md text-tertiary">No CV yet? Create one from your confirmed profile. Already have one? Tailor it to a job posting. Both use only facts you gave us.</p>
-            </div>
+            <PageHeader
+                title="Documents"
+                description="No CV yet? Create one from your confirmed profile. Already have one? Tailor it to a job posting. Both use only facts you gave us."
+            />
 
             <div className="grid items-start gap-6 lg:grid-cols-2">
                 <div className="flex flex-col gap-6">

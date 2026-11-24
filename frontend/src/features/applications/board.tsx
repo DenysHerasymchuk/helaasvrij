@@ -128,7 +128,7 @@ function ApplicationCard({ card, onMove, onSaveNotes }: { card: Application; onM
             )}
 
             {!editing && (
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <MoveMenu card={card} onMove={onMove} />
                     <Button color="link-gray" size="sm" iconLeading={Edit03} onPress={() => setEditing(true)}>
                         {card.notes ? "Edit notes" : "Add notes"}
