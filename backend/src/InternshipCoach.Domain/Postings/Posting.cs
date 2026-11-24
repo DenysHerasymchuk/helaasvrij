@@ -10,6 +10,7 @@ public sealed class Posting : IUserOwned
     public const int UrlMaxLength = 2000;
     public const int RawTextMaxLength = 20000;
     public const int MaxRequirements = 30;
+    public const int GenericAnswerMaxLength = 8000;
 
     /// <summary>Below this percentage, or with too few required items covered, the posting is "no clear fit".</summary>
     public const int NoClearFitBelowScore = 40;
@@ -28,6 +29,11 @@ public sealed class Posting : IUserOwned
     public DateOnly? Deadline { get; private set; }
     public DateTimeOffset? InterviewAt { get; private set; }
     public bool IsDemo { get; private set; }
+
+    /// <summary>A generic chatbot answer for this posting (posting text only, no profile data), shown next to the gap matrix.</summary>
+    public string? GenericAnswer { get; private set; }
+
+    public DateTimeOffset? GenericAnswerAt { get; private set; }
     public CreatedAt CreatedAt { get; private set; } = null!;
 
     public IReadOnlyList<Requirement> Requirements => _requirements;
@@ -93,6 +99,17 @@ public sealed class Posting : IUserOwned
     {
         Deadline = deadline;
         InterviewAt = interviewAt?.ToUniversalTime();
+    }
+
+    public void SetGenericAnswer(string text, DateTimeOffset capturedAt)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new DomainException("Generic answer text is required.");
+        }
+
+        GenericAnswer = Truncate(text.Trim(), GenericAnswerMaxLength);
+        GenericAnswerAt = capturedAt.ToUniversalTime();
     }
 
     /// <summary>

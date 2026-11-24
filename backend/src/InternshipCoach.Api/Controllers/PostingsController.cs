@@ -4,6 +4,7 @@ using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Profile;
 using InternshipCoach.Application.Postings.Browse;
 using InternshipCoach.Contracts.Jobs;
+using InternshipCoach.Application.Postings.Generic;
 using InternshipCoach.Contracts.Postings;
 using InternshipCoach.Domain.Postings;
 using Microsoft.AspNetCore.Authorization;
@@ -38,8 +39,10 @@ public sealed class PostingsController : ControllerBase
     {
         try
         {
-            var posting = await handler.HandleAsync(id, ct);
-            return posting is null ? NotFound() : Ok(ToDetail(posting, await sources.HandleAsync(posting, ct)));
+            var result = await handler.HandleAsync(id, ct);
+            return result is null
+                ? NotFound()
+                : Ok(ToDetail(result.Posting, await sources.HandleAsync(result.Posting, ct), result.FromDemoCache));
         }
         catch (GapInputException ex)
         {
@@ -56,6 +59,30 @@ public sealed class PostingsController : ControllerBase
         catch (LlmException)
         {
             return Problem(statusCode: StatusCodes.Status502BadGateway, title: "The analysis failed. Try again.");
+        }
+    }
+
+    [HttpPost("{id:guid}/generic-answer")]
+    public async Task<ActionResult<GenericAnswerResponse>> GenericAnswer(Guid id, [FromServices] GenericAnswerHandler handler, CancellationToken ct)
+    {
+        try
+        {
+            var posting = await handler.HandleAsync(id, ct);
+            return posting is null
+                ? NotFound()
+                : Ok(new GenericAnswerResponse(posting.GenericAnswer!, posting.GenericAnswerAt!.Value, posting.IsDemo));
+        }
+        catch (LlmDailyCapExceededException ex)
+        {
+            return Problem(statusCode: StatusCodes.Status429TooManyRequests, title: ex.Message);
+        }
+        catch (LlmUnavailableException)
+        {
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable, title: "The AI service is not available right now. Try again later.");
+        }
+        catch (LlmException)
+        {
+            return Problem(statusCode: StatusCodes.Status502BadGateway, title: "The generic answer failed. Try again.");
         }
     }
 
@@ -123,7 +150,7 @@ public sealed class PostingsController : ControllerBase
         new(p.Id, p.Company, p.Title, p.City, p.Language.ToCode(), p.Deadline, p.InterviewAt, p.IsDemo,
             p.Requirements.Count, p.CreatedAt.Value);
 
-    private static PostingDetailResponse ToDetail(Posting p, IReadOnlyDictionary<Guid, DocumentRef>? sources) =>
+    private static PostingDetailResponse ToDetail(Posting p, IReadOnlyDictionary<Guid, DocumentRef>? sources, bool fromDemoCache = false) =>
         new(p.Id, p.Company, p.Title, p.City, p.Language.ToCode(), p.Url, p.RawText, p.Deadline, p.InterviewAt, p.IsDemo,
             p.CreatedAt.Value,
             p.Requirements.OrderBy(r => r.Position)
@@ -131,7 +158,7 @@ public sealed class PostingsController : ControllerBase
                     r.Id, r.Text, r.Importance.ToString().ToLowerInvariant(), r.Coverage.ToString().ToLowerInvariant(),
                     r.EvidenceQuote, EvidenceSource(r, sources), r.Action, r.ActionProject, r.DueDate, r.Done, r.AnalysedAt)).ToList(),
             new GapAnalysisResponse(
-                p.IsAnalysed, p.Score(), p.IsAnalysed && p.NoClearFit(), p.Requirements.Max(r => r.AnalysedAt)));
+                p.IsAnalysed, p.Score(), p.IsAnalysed && p.NoClearFit(), p.Requirements.Max(r => r.AnalysedAt), fromDemoCache));
 
     private static EvidenceSourceResponse? EvidenceSource(Requirement r, IReadOnlyDictionary<Guid, DocumentRef>? sources) =>
         r.EvidenceSourceDocumentId is { } id && sources is not null && sources.TryGetValue(id, out var d)

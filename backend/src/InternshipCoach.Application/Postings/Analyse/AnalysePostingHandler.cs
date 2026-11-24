@@ -1,4 +1,5 @@
 using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Domain.Postings;
 
 namespace InternshipCoach.Application.Postings.Analyse;
@@ -7,9 +8,10 @@ namespace InternshipCoach.Application.Postings.Analyse;
 /// Runs the gap matrix for a posting: loads the confirmed evidence, lets the model label coverage, applies the code
 /// checks, stores the result and a score snapshot. At most <see cref="GapAnalyser.MaxCalls" /> model calls.
 /// </summary>
-public sealed class AnalysePostingHandler(IPostingRepository postings, GapEvidenceLoader loader, GapAnalyser analyser, IClock clock)
+public sealed class AnalysePostingHandler(
+    IPostingRepository postings, GapEvidenceLoader loader, GapAnalyser analyser, IClock clock, DemoSafetyOptions demo)
 {
-    public async Task<Posting?> HandleAsync(Guid postingId, CancellationToken ct)
+    public async Task<AnalysePostingResult?> HandleAsync(Guid postingId, CancellationToken ct)
     {
         var posting = await postings.FindAsync(postingId, ct);
         if (posting is null)
@@ -24,7 +26,26 @@ public sealed class AnalysePostingHandler(IPostingRepository postings, GapEviden
         }
 
         var requirements = posting.Requirements.OrderBy(r => r.Position).ToList();
-        var verdicts = await analyser.AnalyseAsync(requirements, posting.Language, evidence, ct);
+        IReadOnlyList<RequirementVerdict> verdicts;
+        if (demo.Enabled && posting.IsDemo && posting.IsAnalysed)
+        {
+            // Demo only: keep the stored analysis when the model is down or slower than the timeout.
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(demo.TimeoutSeconds));
+            try
+            {
+                verdicts = await analyser.AnalyseAsync(requirements, posting.Language, evidence, timeout.Token);
+            }
+            catch (Exception ex) when ((ex is LlmException || ex is OperationCanceledException) && !ct.IsCancellationRequested)
+            {
+                return new AnalysePostingResult(posting, FromDemoCache: true);
+            }
+        }
+        else
+        {
+            verdicts = await analyser.AnalyseAsync(requirements, posting.Language, evidence, ct);
+        }
+
         var byId = requirements.ToDictionary(r => r.Id);
 
         var now = clock.UtcNow;
@@ -38,7 +59,7 @@ public sealed class AnalysePostingHandler(IPostingRepository postings, GapEviden
 
         posting.RecordSnapshot("analyse", now);
         await postings.SaveAsync(ct);
-        return posting;
+        return new AnalysePostingResult(posting, FromDemoCache: false);
     }
 }
 

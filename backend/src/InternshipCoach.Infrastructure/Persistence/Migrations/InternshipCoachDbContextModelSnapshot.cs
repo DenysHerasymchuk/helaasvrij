@@ -415,6 +415,15 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("date")
                         .HasColumnName("deadline");
 
+                    b.Property<string>("GenericAnswer")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)")
+                        .HasColumnName("generic_answer");
+
+                    b.Property<DateTimeOffset?>("GenericAnswerAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generic_answer_at");
+
                     b.Property<DateTimeOffset?>("InterviewAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("interview_at");

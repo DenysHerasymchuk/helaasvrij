@@ -12,8 +12,14 @@ public sealed record RequirementResponse(
     Guid Id, string Text, string Importance, string Coverage, string? EvidenceQuote, EvidenceSourceResponse? EvidenceSource,
     string? Action, string? ActionProject, DateOnly? DueDate, bool Done, DateTimeOffset? AnalysedAt);
 
-/// <summary>The score is computed in code. NoClearFit is only meaningful when Analysed is true.</summary>
-public sealed record GapAnalysisResponse(bool Analysed, int Score, bool NoClearFit, DateTimeOffset? AnalysedAt);
+/// <summary>
+/// The score is computed in code. NoClearFit is only meaningful when Analysed is true. FromDemoCache: demo postings
+/// only, the AI call failed or was too slow and the stored analysis was returned instead.
+/// </summary>
+public sealed record GapAnalysisResponse(bool Analysed, int Score, bool NoClearFit, DateTimeOffset? AnalysedAt, bool FromDemoCache = false);
+
+/// <summary>Generic chatbot answer built from the posting text only. IsDemo: stored text captured for a demo posting.</summary>
+public sealed record GenericAnswerResponse(string Text, DateTimeOffset CapturedAt, bool IsDemo);
 
 public sealed record PostingSummaryResponse(
     Guid Id, string Company, string Title, string City, string Language, DateOnly? Deadline, DateTimeOffset? InterviewAt,

@@ -13,6 +13,8 @@ Use the synthetic persona or a consenting student. Never record a real student's
    ```
    Recordings go to `demo-recordings/llm-replay.json` (git-ignored, contains model output about the persona; do not commit or share it).
 3. Walk through the whole demo once with the demo user so every LLM call is stored. Check the file grew.
+   Analyse every demo posting once while route33 is up. In Development, a later re-analyse of a demo posting that
+   fails or takes longer than 20 seconds (`COACH_Demo__TimeoutSeconds`) keeps that stored analysis and says so on screen.
 4. Set `COACH_Demo__Record=false` and restart the api. Replay stays on: identical inputs are now answered from the file with no network.
 5. Reset the demo user's data so the score starts low (about 62%) and the demo posting is unscanned.
 6. Run `dotnet run --project backend/tests/InternshipCoach.Evaluation` once and check: quote-check failures 0.
@@ -20,7 +22,7 @@ Use the synthetic persona or a consenting student. Never record a real student's
 ## 2. Set up the screen
 
 - Browser at 1920x1080, light mode, zoom 110%, bookmarks bar hidden, notifications off (Do Not Disturb).
-- Second tab ready with plain ChatGPT answering the same question ("what do I need for this internship?") for the side-by-side shot.
+- Side-by-side shot: tick "Compare with a generic answer" on the posting page (stored generic answer for demo postings). A second tab with plain ChatGPT answering "What do I need to get this internship?" is optional.
 - macOS: Cmd+Shift+5, "Record Entire Screen" or selected window, microphone on if narrating, save to Desktop.
 
 ## 3. Take (target 90 seconds, rehearse once first)
@@ -28,7 +30,7 @@ Use the synthetic persona or a consenting student. Never record a real student's
 1. 0:00 Sign in with GitHub. Sources fill the profile; point at one item with its source link.
 2. 0:15 Postings list: a judge's company posting is there. Open it.
 3. 0:25 Gap matrix with score (e.g. 62%). Show one evidence quote and one action naming a project.
-4. 0:40 Switch to the ChatGPT tab: generic answer, no evidence, no project names.
+4. 0:40 Tick "Compare with a generic answer": generic advice on the right, no evidence, no project names, no score.
 5. 0:50 Back in the app: tick a gap, re-scan. Score rises (e.g. 62% to 81%).
 6. 1:05 Documents: download the CV in Dutch.
 7. 1:15 Interview prep: tailored questions from gaps and repos.

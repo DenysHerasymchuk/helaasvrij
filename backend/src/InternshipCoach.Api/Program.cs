@@ -17,6 +17,13 @@ builder.Configuration.AddEnvironmentVariables("COACH_");
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Demo only: a slow or failing AI call on a seeded demo posting keeps its stored analysis. Never outside Development.
+if (builder.Environment.IsDevelopment() && builder.Configuration.GetValue("Demo:Fallback", true))
+{
+    builder.Services.AddSingleton(new InternshipCoach.Application.Postings.Analyse.DemoSafetyOptions(
+        Enabled: true, TimeoutSeconds: builder.Configuration.GetValue("Demo:TimeoutSeconds", 20)));
+}
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddCoachForwardedHeaders();

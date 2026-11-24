@@ -52,6 +52,11 @@ export function GapPanel({ posting, onUpdated }: { posting: PostingDetail; onUpd
                             Score = sum of (weight × coverage) ÷ sum of weights. Required counts 2, nice to have counts 1. Strong counts 1, partial 0.5, none 0.
                             Code computes it from the labels below, so the same data always gives the same number.
                         </p>
+                        {analysis.fromDemoCache && (
+                            <p role="status" className="rounded-lg bg-secondary px-4 py-3 text-sm text-secondary">
+                                The AI service was slow or unavailable, so this shows the last saved analysis of this demo posting.
+                            </p>
+                        )}
                         {analysis.noClearFit && (
                             <div role="status" className="rounded-lg bg-secondary px-4 py-3 text-sm text-secondary">
                                 <p className="font-semibold text-primary">No clear fit yet</p>
