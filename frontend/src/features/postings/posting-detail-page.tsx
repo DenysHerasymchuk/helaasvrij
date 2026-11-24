@@ -4,6 +4,7 @@ import { ArrowLeft, LinkExternal01, Trash01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { DateField, Field } from "./fields";
+import { GapMatrix, GapPanel } from "./gap-analysis";
 import { type PostingDetail, formatDate, formatDateTime, toLocalInput } from "./types";
 
 
@@ -132,6 +133,8 @@ export function PostingDetailPage() {
 
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="flex flex-col gap-6 lg:col-span-2">
+                    {posting.analysis.analysed && <GapMatrix posting={posting} />}
+
                     <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
                         <h2 className="border-b border-secondary px-5 py-4 text-md font-semibold text-primary">Requirements</h2>
                         {posting.requirements.length === 0 ? (
@@ -165,10 +168,7 @@ export function PostingDetailPage() {
                 </div>
 
                 <div className="flex flex-col gap-6">
-                    <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
-                        <h2 className="border-b border-secondary px-5 py-4 text-md font-semibold text-primary">Gap analysis</h2>
-                        <p className="px-5 py-4 text-md text-tertiary">Gap analysis comes next. Your match score and gap plan will show here.</p>
-                    </section>
+                    <GapPanel posting={posting} onUpdated={setPosting} />
 
                     <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
                         <h2 className="border-b border-secondary px-5 py-4 text-md font-semibold text-primary">Dates</h2>

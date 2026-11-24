@@ -1,6 +1,7 @@
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Auth.GitHubSignIn;
 using InternshipCoach.Application.Llm;
+using InternshipCoach.Application.Applications;
 using InternshipCoach.Application.Auth.Login;
 using InternshipCoach.Application.Auth.Me;
 using InternshipCoach.Application.Auth.Register;
@@ -19,6 +20,7 @@ using InternshipCoach.Application.Sources.Site;
 using InternshipCoach.Application.Sources.Text;
 using InternshipCoach.Application.Postings;
 using InternshipCoach.Application.Postings.Add;
+using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Postings.Browse;
 using InternshipCoach.Application.Chat.Send;
 using InternshipCoach.Application.Documents.DeleteDocument;
@@ -57,6 +59,11 @@ public static class DependencyInjection
         services.AddScoped<GetPostingHandler>();
         services.AddScoped<UpdatePostingDatesHandler>();
         services.AddScoped<DeletePostingHandler>();
+        services.AddScoped<GapEvidenceLoader>();
+        services.AddScoped<GapAnalyser>();
+        services.AddScoped<AnalysePostingHandler>();
+        services.AddScoped<RecheckRequirementHandler>();
+        services.AddScoped<ResolveEvidenceSourcesHandler>();
         services.AddScoped<ExtractProfileHandler>();
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<SetItemConfirmedHandler>();
@@ -68,6 +75,10 @@ public static class DependencyInjection
         services.AddScoped<GetDocumentHandler>();
         services.AddScoped<UpdateDocumentHandler>();
         services.AddScoped<DeleteDocumentHandler>();
+        services.AddScoped<ListApplicationsHandler>();
+        services.AddScoped<CreateApplicationHandler>();
+        services.AddScoped<UpdateApplicationHandler>();
+        services.AddScoped<GetApplicationStatsHandler>();
         return services;
     }
 }

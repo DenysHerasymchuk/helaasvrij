@@ -1,0 +1,76 @@
+using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Domain.Postings;
+
+namespace InternshipCoach.Application.Postings.Analyse;
+
+/// <summary>
+/// Runs the gap matrix for a posting: loads the confirmed evidence, lets the model label coverage, applies the code
+/// checks, stores the result and a score snapshot. At most <see cref="GapAnalyser.MaxCalls" /> model calls.
+/// </summary>
+public sealed class AnalysePostingHandler(IPostingRepository postings, GapEvidenceLoader loader, GapAnalyser analyser, IClock clock)
+{
+    public async Task<Posting?> HandleAsync(Guid postingId, CancellationToken ct)
+    {
+        var posting = await postings.FindAsync(postingId, ct);
+        if (posting is null)
+        {
+            return null;
+        }
+
+        var evidence = await loader.LoadAsync(ct);
+        if (evidence.Quotes.Count == 0)
+        {
+            throw new GapInputException("Confirm at least one item on your profile first. Only confirmed items are used.");
+        }
+
+        var requirements = posting.Requirements.OrderBy(r => r.Position).ToList();
+        var verdicts = await analyser.AnalyseAsync(requirements, posting.Language, evidence, ct);
+        var byId = requirements.ToDictionary(r => r.Id);
+
+        var now = clock.UtcNow;
+        var due = GapPlan.DueDates(verdicts.Select(v => (byId[v.RequirementId], v.Coverage)), DateOnly.FromDateTime(now.UtcDateTime));
+        foreach (var verdict in verdicts)
+        {
+            byId[verdict.RequirementId].RecordAnalysis(
+                verdict.Coverage, verdict.Quote, verdict.DocumentId, verdict.Action, verdict.Project,
+                due.TryGetValue(verdict.RequirementId, out var date) ? date : null, now);
+        }
+
+        posting.RecordSnapshot("analyse", now);
+        await postings.SaveAsync(ct);
+        return posting;
+    }
+}
+
+/// <summary>
+/// Re-checks one requirement against freshly loaded evidence (after a source was re-synced) and stores a "rescan"
+/// snapshot. The due date and the other requirements stay as they are.
+/// </summary>
+public sealed class RecheckRequirementHandler(IPostingRepository postings, GapEvidenceLoader loader, GapAnalyser analyser, IClock clock)
+{
+    public async Task<Posting?> HandleAsync(Guid postingId, Guid requirementId, CancellationToken ct)
+    {
+        var posting = await postings.FindAsync(postingId, ct);
+        var requirement = posting?.Requirements.FirstOrDefault(r => r.Id == requirementId);
+        if (posting is null || requirement is null)
+        {
+            return null;
+        }
+
+        var evidence = await loader.LoadAsync(ct);
+        if (evidence.Quotes.Count == 0)
+        {
+            throw new GapInputException("Confirm at least one item on your profile first. Only confirmed items are used.");
+        }
+
+        var verdict = (await analyser.AnalyseAsync([requirement], posting.Language, evidence, ct)).Single();
+        var now = clock.UtcNow;
+        requirement.RecordAnalysis(
+            verdict.Coverage, verdict.Quote, verdict.DocumentId, verdict.Action, verdict.Project,
+            verdict.Coverage == Coverage.Strong ? null : requirement.DueDate, now);
+
+        posting.RecordSnapshot("rescan", now);
+        await postings.SaveAsync(ct);
+        return posting;
+    }
+}

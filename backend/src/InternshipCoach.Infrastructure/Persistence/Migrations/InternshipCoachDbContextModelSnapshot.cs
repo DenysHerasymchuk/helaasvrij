@@ -23,6 +23,54 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("InternshipCoach.Domain.Applications.JobApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AppliedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("applied_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("PostingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posting_id");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("stage");
+
+                    b.Property<DateTimeOffset>("StageChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("stage_changed_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostingId");
+
+                    b.HasIndex("UserId", "PostingId")
+                        .IsUnique();
+
+                    b.ToTable("applications", "coach");
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Documents.Document", b =>
                 {
                     b.Property<Guid>("Id")
@@ -193,6 +241,45 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Action")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("action");
+
+                    b.Property<string>("ActionProject")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("action_project");
+
+                    b.Property<DateTimeOffset?>("AnalysedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("analysed_at");
+
+                    b.Property<string>("Coverage")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("None")
+                        .HasColumnName("coverage");
+
+                    b.Property<bool>("Done")
+                        .HasColumnType("boolean")
+                        .HasColumnName("done");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("due_date");
+
+                    b.Property<string>("EvidenceQuote")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("evidence_quote");
+
+                    b.Property<Guid?>("EvidenceSourceDocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("evidence_source_document_id");
+
                     b.Property<string>("Importance")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -222,6 +309,41 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.HasIndex("PostingId");
 
                     b.ToTable("requirements", "coach");
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Postings.ScoreSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("PostingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posting_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("reason");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.Property<DateTimeOffset>("TakenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("taken_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostingId", "TakenAt");
+
+                    b.ToTable("score_snapshots", "coach");
                 });
 
             modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileBasics", b =>
@@ -525,10 +647,28 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("DataProtectionKeys", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Applications.JobApplication", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
+                        .WithMany()
+                        .HasForeignKey("PostingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Postings.Requirement", b =>
                 {
                     b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
                         .WithMany("Requirements")
+                        .HasForeignKey("PostingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Postings.ScoreSnapshot", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
+                        .WithMany("Snapshots")
                         .HasForeignKey("PostingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -570,6 +710,8 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("InternshipCoach.Domain.Postings.Posting", b =>
                 {
                     b.Navigation("Requirements");
+
+                    b.Navigation("Snapshots");
                 });
 
             modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileItem", b =>

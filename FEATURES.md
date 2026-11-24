@@ -19,11 +19,11 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 9 | Verbatim-quote check | Code checks that every evidence quote is an exact substring of its source text. Drop or retry on failure. Count failures (target 0). In tests, GLM spliced quotes in 3 of 12 runs; this check caught every one. | done (`QuoteCheck`; failure counting is wired in by profile extraction) |
 | 10 | Confirm/remove profile items | Student confirms or removes each extracted item. Drafts use only confirmed items. | done (`PATCH`/`DELETE /api/profile/items/{id}`, `POST /api/profile/items/confirm-all`; items cascade away when their source is removed or re-synced) |
 | 11 | Paste a posting | Paste text (or one of the demo postings). Detect language (NL/FR/EN). | done (`POST /api/postings/paste`, Cheap model via `UntrustedInput.Wrap`; 4 demo postings seeded for the dev user) |
-| 12 | Gap matrix | Per requirement: importance (required/nice), coverage (strong/partial/none), evidence quote + source, action, action project. | todo |
-| 13 | Action must name a project | Code rejects any action whose project is not one of the student's repos, then regenerates once. | todo |
-| 14 | Score in code | sum(weight x coverage) / sum(weight); required 2, nice 1; strong 1, partial 0.5, none 0. | todo |
-| 15 | Formula shown on the report | Show the weights and the formula next to the score. No unexplained number. | todo |
-| 16 | "No clear fit" state | Honest message when the score is low or the requirements barely overlap. | todo |
+| 12 | Gap matrix | Per requirement: importance (required/nice), coverage (strong/partial/none), evidence quote + source, action, action project. | done (`POST /api/postings/{id}/analyse`, Smart model, only confirmed items; matrix on the posting detail page; `RecheckRequirementHandler` is ready for the re-scan, no endpoint yet) |
+| 13 | Action must name a project | Code rejects any action whose project is not one of the student's repos, then regenerates once. | done (project must be one of the GitHub repo names and appear in the action; one regeneration call, then the action stays empty; hard cap 2 LLM calls per analyse) |
+| 14 | Score in code | sum(weight x coverage) / sum(weight); required 2, nice 1; strong 1, partial 0.5, none 0. | done (`Posting.Score()` in Domain, whole-percent rounding, zero requirements = 0; `ScoreSnapshot` stored on every analyse) |
+| 15 | Formula shown on the report | Show the weights and the formula next to the score. No unexplained number. | done (formula and weights next to the score ring) |
+| 16 | "No clear fit" state | Honest message when the score is low or the requirements barely overlap. | done (`Posting.NoClearFit()`: below 40% or fewer than half the required items at least Partial) |
 | 17 | Dated gap plan | Gaps as a checklist sorted by impact (weight x missing coverage), each with a target date. | todo |
 | 18 | Re-scan | Tick a gap, re-ingest that repo, re-check that requirement, update the score (demo: 62% to 81%). | todo |
 | 19 | Prompt-injection safety | Postings, CVs and READMEs are data only. The model gets no tools. Strict schema validation with one retry. | done in the client (delimiters, no tools, schema validation, one retry); each feature must use `UntrustedInput.Wrap` |
@@ -35,7 +35,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 20 | Accounts: email + password and GitHub OAuth sign-in | Cookie session (HttpOnly, SameSite=Lax), users table, `/api/auth/*`, rate-limited. No email verification or password reset yet. Optional: P0 works without it. | done |
 | 21 | Per-user data isolation | `UserId` on every owned table, EF Core global query filter. Needed once accounts exist. `IUserOwned`, `ICurrentUser`, filter + save guard in `InternshipCoachDbContext`; no owned tables yet. | done |
 | 22 | Sidebar layout + dashboard | Profile strength, top postings, top gap actions, score trend. Design done with mock data (`features/demo/demo-user.ts`); connect to `GET /api/dashboard`. | done (mock) |
-| 23 | Postings list + detail | Filters (language, score, new); detail shows the gap matrix and score. | partly done (list with search and language filter, detail with requirements, dates, delete; score filter and gap matrix come with the gap matrix feature) |
+| 23 | Postings list + detail | Filters (language, score, new); detail shows the gap matrix and score. | partly done (list with search and language filter, detail with requirements, dates, delete; gap matrix and score done in rows 12-16; score filter still todo) |
 | 24 | CV draft | Confirmed items only, in the posting's language, print to PDF. | todo |
 | 25 | Cover letter draft | Uses closed gaps as evidence. | todo |
 | 26 | Recruiter message | Max 300 characters, copy only, never auto-sent. | todo |
@@ -57,7 +57,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | Feature | Why it waits |
 | --- | --- |
 | Interview prep (gap, repo and company questions, answer feedback) | Needs the core and drafts first |
-| Applications kanban | Not part of the core value |
+| Applications kanban | Built, not part of the core value: `/applications` board (Saved, Applied, Interview, Offer, Rejected) with drag and drop and a "Move to" menu, `GET/POST /api/applications`, `PATCH /api/applications/{id}`, `GET /api/applications/stats?months=6`. Stats are not wired into the dashboard yet. Not run against a real database or browser. |
 | Adzuna postings | Free tier is evaluation only; Belgium not confirmed |
 | Zapier/webhook job alerts | Depends on accounts and postings |
 | CV in all three languages at once | One language (the posting's) is enough for the demo |
