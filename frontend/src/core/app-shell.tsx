@@ -1,4 +1,4 @@
-import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Moon01, SearchLg, Settings01, Sun, User01 } from "@untitledui/icons";
+import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Moon01, SearchLg, Settings01, Sun, Terminal, User01 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -34,7 +34,10 @@ const sections: { title?: string; items: NavItemType[] }[] = [
     },
 ];
 
-const footerItems: NavItemType[] = [{ label: "Settings", href: "/settings", icon: Settings01 }];
+const footerItems: NavItemType[] = [
+    { label: "Settings", href: "/settings", icon: Settings01 },
+    { label: "Connect Claude", href: "/connect-claude", icon: Terminal },
+];
 
 function ThemeToggle() {
     const { theme, toggle } = useTheme();

@@ -16,6 +16,7 @@ import { DocumentsPage } from '@/features/documents/documents-page'
 import { ApplicationsPage } from '@/features/applications/applications-page'
 import { InterviewPage } from '@/features/interview/interview-page'
 import { GapsPage } from '@/features/gaps/gaps-page'
+import { ConnectClaudePage } from '@/features/mcp/connect-claude-page'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
       { path: '/applications', element: <ApplicationsPage /> },
       { path: '/interview', element: <InterviewPage /> },
       { path: '/gaps', element: <GapsPage /> },
+      { path: '/connect-claude', element: <ConnectClaudePage /> },
     ],
   },
 ])
