@@ -1,4 +1,5 @@
 using DotNetEnv;
+using InternshipCoach.Api.Auth;
 using InternshipCoach.Application;
 using InternshipCoach.Infrastructure;
 using InternshipCoach.Infrastructure.Persistence;
@@ -12,6 +13,10 @@ builder.Configuration.AddEnvironmentVariables("COACH_");
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddCoachForwardedHeaders();
+builder.Services.AddCoachAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddCoachRateLimiting(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
@@ -30,6 +35,8 @@ if (args.Contains("--migrate"))
     return;
 }
 
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -42,6 +49,8 @@ if (!app.Configuration.GetValue<bool>("Hosting:HttpsTerminatedAtProxy"))
 }
 
 app.UseCors("DefaultCorsPolicy");
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

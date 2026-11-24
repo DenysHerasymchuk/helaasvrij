@@ -6,5 +6,8 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  server: { proxy: { '/api': 'http://localhost:5080' } },
+  server: {
+    // Keep the browser's Host (localhost:5174) so the GitHub OAuth redirect URI points back at this dev server.
+    proxy: { '/api': { target: 'http://localhost:5080', changeOrigin: false } },
+  },
 })

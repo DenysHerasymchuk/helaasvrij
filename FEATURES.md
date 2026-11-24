@@ -32,7 +32,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 
 | # | Feature | Technical notes | Status |
 | --- | --- | --- | --- |
-| 20 | GitHub OAuth sign-in | Cookie session. Saves the profile and runs. Optional: P0 works without it. | todo |
+| 20 | Accounts: email + password and GitHub OAuth sign-in | Cookie session (HttpOnly, SameSite=Lax), users table, `/api/auth/*`, rate-limited. No email verification or password reset yet. Optional: P0 works without it. | done |
 | 21 | Per-user data isolation | `UserId` on every owned table, EF Core global query filter. Needed once accounts exist. | todo |
 | 22 | Sidebar layout + dashboard | Profile strength, top postings, top gap actions, score trend. Design done with mock data (`features/demo/demo-user.ts`); connect to `GET /api/dashboard`. | done (mock) |
 | 23 | Postings list + detail | Filters (language, score, new); detail shows the gap matrix and score. | todo |
