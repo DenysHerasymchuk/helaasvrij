@@ -34,7 +34,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | --- | --- | --- | --- |
 | 20 | Accounts: email + password and GitHub OAuth sign-in | Cookie session (HttpOnly, SameSite=Lax), users table, `/api/auth/*`, rate-limited. No email verification or password reset yet. Optional: P0 works without it. | done |
 | 21 | Per-user data isolation | `UserId` on every owned table, EF Core global query filter. Needed once accounts exist. `IUserOwned`, `ICurrentUser`, filter + save guard in `InternshipCoachDbContext`; no owned tables yet. | done |
-| 22 | Sidebar layout + dashboard | Profile strength, top postings, top gap actions, score trend. Design done with mock data (`features/demo/demo-user.ts`); connect to `GET /api/dashboard`. | done (mock) |
+| 22 | Sidebar layout + dashboard | Profile strength, top postings, top gap actions, score trend. Reads `GET /api/dashboard` through `useDashboard()` (sources, postings with requirements and scores, applications by month). | done |
 | 23 | Postings list + detail | Filters (language, score, new); detail shows the gap matrix and score. | partly done (list with search and language filter, detail with requirements, dates, delete; gap matrix and score done in rows 12-16; score filter still todo) |
 | 24 | CV draft | Confirmed items only, in the posting's language, print to PDF. | todo |
 | 25 | Cover letter draft | Uses closed gaps as evidence. | todo |
@@ -57,7 +57,7 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 
 | Feature | Why it waits |
 | --- | --- |
-| Applications kanban | Built, not part of the core value: `/applications` board (Saved, Applied, Interview, Offer, Rejected) with drag and drop and a "Move to" menu, `GET/POST /api/applications`, `PATCH /api/applications/{id}`, `GET /api/applications/stats?months=6`. Stats are not wired into the dashboard yet. Not run against a real database or browser. |
+| Applications kanban | Built, not part of the core value: `/applications` board (Saved, Applied, Interview, Offer, Rejected) with drag and drop and a "Move to" menu, `GET/POST /api/applications`, `PATCH /api/applications/{id}`, `GET /api/applications/stats?months=6`. Stats feed the dashboard through `GET /api/dashboard`. Not run against a real database or browser. |
 | Adzuna postings | Free tier is evaluation only; Belgium not confirmed |
 | Zapier/webhook job alerts | Depends on accounts and postings |
 | CV in all three languages at once | One language (the posting's) is enough for the demo |
