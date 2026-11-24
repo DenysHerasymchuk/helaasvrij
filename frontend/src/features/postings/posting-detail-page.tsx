@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, LinkExternal01, Trash01 } from "@untitledui/icons";
-import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { DateField, Field } from "./fields";
 import { type PostingDetail, formatDate, formatDateTime, toLocalInput } from "./types";
 
-const languageLabel = { nl: "Dutch", fr: "French", en: "English" } as const;
 
 function safeHref(url: string | null) {
     return url && /^https?:\/\//i.test(url) ? url : null;
@@ -63,7 +61,7 @@ export function PostingDetailPage() {
         setDeleting(true);
         try {
             await api.del(`/api/postings/${id}`);
-            navigate("/postings", { replace: true });
+            navigate("/postings/saved", { replace: true });
         } catch (e) {
             setSaveMessage(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
             setDeleting(false);
@@ -73,7 +71,7 @@ export function PostingDetailPage() {
 
     const back = (
         <div>
-            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/postings">
+            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/postings/saved">
                 All postings
             </Button>
         </div>
@@ -118,14 +116,6 @@ export function PostingDetailPage() {
             <header className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                     <h1 className="text-display-xs font-semibold text-primary">{posting.title}</h1>
-                    <Badge type="pill-color" size="sm" color="gray">
-                        {languageLabel[posting.language]}
-                    </Badge>
-                    {posting.isDemo && (
-                        <Badge type="pill-color" size="sm" color="brand">
-                            Demo data
-                        </Badge>
-                    )}
                 </div>
                 <p className="text-md text-tertiary">
                     {posting.company}
