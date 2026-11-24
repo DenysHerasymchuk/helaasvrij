@@ -20,7 +20,7 @@ function redirectToLogin() {
 }
 
 async function request<T>(url: string, method: Method, body?: unknown): Promise<T | null> {
-    const hasBody = method === "POST" || method === "PUT";
+    const hasBody = method === "POST" || method === "PUT" || (method === "DELETE" && body !== undefined);
     const response = await fetch(url, {
         method,
         credentials: "same-origin",
@@ -54,5 +54,5 @@ export const api = {
     get: <T>(url: string) => request<T>(url, "GET"),
     post: <T>(url: string, body?: unknown) => request<T>(url, "POST", body),
     put: <T>(url: string, body?: unknown) => request<T>(url, "PUT", body),
-    del: (url: string) => request<null>(url, "DELETE"),
+    del: (url: string, body?: unknown) => request<null>(url, "DELETE", body),
 };

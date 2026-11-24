@@ -6,6 +6,7 @@ import { AuthProvider } from '@/core/auth'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
+import { SettingsPage } from '@/features/settings/settings-page'
 import { ComingSoonPage } from '@/features/placeholder/coming-soon-page'
 import './index.css'
 
@@ -16,7 +17,6 @@ const placeholders = [
   ['interview', 'Interview prep'],
   ['applications', 'Applications'],
   ['profile', 'Profile'],
-  ['settings', 'Settings'],
 ] as const
 
 const router = createBrowserRouter([
@@ -27,6 +27,7 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/settings', element: <SettingsPage /> },
       ...placeholders.map(([path, title]) => ({ path: `/${path}`, element: <ComingSoonPage title={title} /> })),
     ],
   },

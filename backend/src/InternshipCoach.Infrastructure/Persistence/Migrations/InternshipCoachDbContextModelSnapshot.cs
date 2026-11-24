@@ -72,6 +72,38 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("llm_calls", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Settings.UserSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("DefaultLanguage")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("default_language");
+
+                    b.Property<bool>("EmailAlerts")
+                        .HasColumnType("boolean")
+                        .HasColumnName("email_alerts");
+
+                    b.Property<int>("StrongMatchThreshold")
+                        .HasColumnType("integer")
+                        .HasColumnName("strong_match_threshold");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("user_settings", "coach");
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
