@@ -57,7 +57,7 @@ export function JobDetailPage() {
 
     if (error) {
         return (
-            <div className="flex max-w-4xl flex-col gap-4 px-4 py-8 md:px-8">
+            <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-8 md:px-8">
                 {back}
                 <p role="alert" className="text-md text-error-primary">
                     {error.message}
@@ -86,7 +86,7 @@ export function JobDetailPage() {
     const href = safeHref(job.url);
 
     return (
-        <div className="flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             {back}
 
             <header className="flex flex-col gap-4 sm:flex-row sm:items-start">

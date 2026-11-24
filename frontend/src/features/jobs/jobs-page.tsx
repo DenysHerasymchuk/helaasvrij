@@ -33,7 +33,7 @@ export function JobsPage() {
     }, []);
 
     return (
-        <div className="flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             <PageHeader title="Postings" description="Internships in Belgium. Open one to read it, then save it to see what it asks from you." />
 
             <PostingsTabs />

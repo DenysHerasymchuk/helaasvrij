@@ -152,7 +152,7 @@ export function InterviewPage() {
         );
 
     return (
-        <div className="flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             <PageHeader title="Interview prep" description="Practice questions built from your gaps and your own repos. Pick a posting to start." />
 
             {postingsError ? (

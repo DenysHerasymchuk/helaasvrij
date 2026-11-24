@@ -134,7 +134,7 @@ export function ProfilePage() {
     useEffect(load, [load]);
 
     return (
-        <div className="flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             <PageHeader title="Profile" description="Four steps: add your sources, let us read them, confirm what is true, add your details." />
             <JourneyBar />
 

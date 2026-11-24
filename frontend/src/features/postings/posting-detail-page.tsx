@@ -98,7 +98,7 @@ export function PostingDetailPage() {
 
     if (error) {
         return (
-            <div className="flex max-w-6xl flex-col gap-4 px-4 py-8 md:px-8">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 md:px-8">
                 {back}
                 <p role="alert" className="text-md text-error-primary">
                     {error.message}
@@ -131,7 +131,7 @@ export function PostingDetailPage() {
     const boardStatus = <BoardStatus postingId={posting.id} byPosting={board.byPosting} onAdded={board.added} />;
 
     return (
-        <div className="flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             {back}
 
             <header className="flex flex-col gap-2">

@@ -48,7 +48,7 @@ export function PostingsPage() {
     }, [load]);
 
     return (
-        <div className="flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <PageHeader title="Postings" description="Your saved list: track each posting and apply on your own." />
 
             <PostingsTabs />

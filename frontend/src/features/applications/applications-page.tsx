@@ -78,7 +78,7 @@ export function ApplicationsPage() {
     }
 
     return (
-        <div className="flex max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
             <PageHeader
                 title="Applications"
                 description="Drag a card to a new column, or use Move to."

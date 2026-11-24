@@ -116,7 +116,7 @@ export function GapsPage() {
     }
 
     return (
-        <div className="flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             <PageHeader
                 title="Gap plan"
                 description="Every gap from your postings in one checklist, biggest impact first. Tick one after you changed the repo and it is re-scanned."
