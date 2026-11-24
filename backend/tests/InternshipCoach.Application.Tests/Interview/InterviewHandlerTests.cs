@@ -75,10 +75,78 @@ public class InterviewHandlerTests
     }
 
     [Fact]
-    public async Task Needs_an_analysed_posting()
+    public async Task Unanalysed_posting_returns_no_questions_without_a_call_then_generates_after_analysis()
     {
-        var unanalysed = Build(false, true);
-        await Assert.ThrowsAsync<InterviewInputException>(() => unanalysed.Get.HandleAsync(unanalysed.Posting.Id, default));
+        var s = Build(false, true, Good, Good);
+        s.Repo.Company.Add(CompanyQuestion.Create("Acme", "Why Acme?"));
+
+        var before = (await s.Get.HandleAsync(s.Posting.Id, default))!;
+        Assert.False(before.Posting.IsAnalysed);
+        Assert.Empty(before.Questions);
+        Assert.Single(before.CompanyQuestions); // company questions can be practised already
+        Assert.Empty(s.Transport.Requests);
+
+        foreach (var r in s.Posting.Requirements)
+        {
+            r.RecordAnalysis(Coverage.None, null, null, null, null, null, Clock.UtcNow); // what POST /api/postings/{id}/analyse does
+        }
+
+        var after = (await s.Get.HandleAsync(s.Posting.Id, default))!;
+        Assert.Equal(2, after.Questions.Count);
+        Assert.Equal(2, s.Transport.Requests.Count);
+    }
+
+    [Fact]
+    public async Task Regenerating_an_unanalysed_posting_is_refused_without_a_call()
+    {
+        var s = Build(false, true);
+        await Assert.ThrowsAsync<InterviewInputException>(() => s.Get.HandleAsync(s.Posting.Id, default, regenerate: true));
+        Assert.Empty(s.Transport.Requests);
+    }
+
+    [Fact]
+    public async Task Regenerate_replaces_the_set_and_its_answers_but_keeps_company_answers()
+    {
+        var other = """
+            {"gapQuestions":[{"req":1,"question":"Which base image would you pick for weather-app?","project":"weather-app"}],
+             "repoQuestions":[{"question":"How do you test weather-app?","project":"weather-app"}]}
+            """;
+        var feedback = """{"score":3,"good":"a","add":"b","example":"c"}""";
+        var s = Build(true, true, Good, Good, feedback, feedback, other, other);
+        var company = CompanyQuestion.Create("Acme", "Why Acme?");
+        s.Repo.Company.Add(company);
+        var first = (await s.Get.HandleAsync(s.Posting.Id, default))!;
+        await s.Submit.HandleAsync(new SubmitAnswerCommand(s.Posting.Id, first.Questions[0].Id, "Dockerfile."), default);
+        await s.Submit.HandleAsync(new SubmitAnswerCommand(s.Posting.Id, company.Id, "Because."), default);
+
+        var second = (await s.Get.HandleAsync(s.Posting.Id, default, regenerate: true))!;
+
+        Assert.Equal(["Which base image would you pick for weather-app?", "How do you test weather-app?"], second.Questions.Select(q => q.Text));
+        Assert.DoesNotContain(s.Repo.Questions, q => first.Questions.Any(f => f.Id == q.Id));
+        Assert.Equal(company.Id, Assert.Single(second.Answers).QuestionId);
+    }
+
+    [Fact]
+    public async Task Failed_regeneration_keeps_the_old_set()
+    {
+        var bad = """{"gapQuestions":[],"repoQuestions":[{"question":"About nothing","project":"ghost"}]}""";
+        var s = Build(true, true, Good, Good, bad, bad);
+        var first = (await s.Get.HandleAsync(s.Posting.Id, default))!;
+
+        await Assert.ThrowsAsync<InterviewGenerationException>(() => s.Get.HandleAsync(s.Posting.Id, default, regenerate: true));
+
+        Assert.Equal(first.Questions.Select(q => q.Id), s.Repo.Questions.Select(q => q.Id));
+    }
+
+    [Fact]
+    public async Task Feedback_score_is_stored_and_an_out_of_range_score_is_dropped()
+    {
+        var s = Build(true, true, Good, Good, """{"score":4,"good":"a","add":"b","example":"c"}""", """{"good":"a","add":"b","example":"c"}""");
+        var q = (await s.Get.HandleAsync(s.Posting.Id, default))!.Questions[0];
+
+        Assert.Equal(4, (await s.Submit.HandleAsync(new SubmitAnswerCommand(s.Posting.Id, q.Id, "One."), default)).Answer!.Score);
+        Assert.Null((await s.Submit.HandleAsync(new SubmitAnswerCommand(s.Posting.Id, q.Id, "Two."), default)).Answer!.Score);
+        Assert.Null(InterviewAnswer.Create(UserId, s.Posting.Id, q.Id, "x", "a", "b", "c", new CreatedAt(Clock.UtcNow), 9).Score);
     }
 
     [Fact]

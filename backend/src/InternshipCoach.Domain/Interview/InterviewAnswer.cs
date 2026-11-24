@@ -16,6 +16,9 @@ public sealed class InterviewAnswer : IUserOwned
     public string WhatWasGood { get; private set; } = null!;
     public string WhatToAdd { get; private set; } = null!;
     public string ExampleSentence { get; private set; } = null!;
+
+    /// <summary>1 (weak) to 5 (interview-ready); null for answers rated before scores existed or when the model gave none.</summary>
+    public int? Score { get; private set; }
     public CreatedAt CreatedAt { get; private set; } = null!;
 
     private InterviewAnswer()
@@ -23,7 +26,7 @@ public sealed class InterviewAnswer : IUserOwned
     }
 
     public static InterviewAnswer Create(
-        Guid userId, Guid postingId, Guid questionId, string? answer, string? good, string? add, string? example, CreatedAt createdAt)
+        Guid userId, Guid postingId, Guid questionId, string? answer, string? good, string? add, string? example, CreatedAt createdAt, int? score = null)
     {
         if (userId == Guid.Empty || postingId == Guid.Empty || questionId == Guid.Empty)
         {
@@ -46,6 +49,7 @@ public sealed class InterviewAnswer : IUserOwned
             WhatWasGood = Cap(good),
             WhatToAdd = Cap(add),
             ExampleSentence = Cap(example),
+            Score = score is >= 1 and <= 5 ? score : null,
             CreatedAt = createdAt ?? throw new DomainException("Creation time is required.")
         };
     }

@@ -16,6 +16,17 @@ public sealed class InterviewRepository(InternshipCoachDbContext db) : IIntervie
         return questions;
     }
 
+    public async Task<IReadOnlyList<InterviewQuestion>> ReplaceQuestionsAsync(Guid postingId, IReadOnlyList<InterviewQuestion> questions, CancellationToken ct)
+    {
+        var old = await db.InterviewQuestions.Where(q => q.PostingId == postingId).ToListAsync(ct);
+        var oldIds = old.Select(q => q.Id).ToList();
+        db.InterviewAnswers.RemoveRange(await db.InterviewAnswers.Where(a => oldIds.Contains(a.QuestionId)).ToListAsync(ct));
+        db.InterviewQuestions.RemoveRange(old);
+        db.InterviewQuestions.AddRange(questions);
+        await db.SaveChangesAsync(ct); // one SaveChanges = one transaction, so a crash never leaves the posting without a set
+        return questions;
+    }
+
     public async Task<IReadOnlyList<CompanyQuestion>> ListCompanyQuestionsAsync(string companyKey, CancellationToken ct) =>
         await db.CompanyQuestions.Where(q => q.CompanyKey == companyKey).OrderBy(q => q.Id).ToListAsync(ct);
 
