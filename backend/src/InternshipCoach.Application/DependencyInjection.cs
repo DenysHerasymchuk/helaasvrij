@@ -7,6 +7,10 @@ using InternshipCoach.Application.Auth.Register;
 using InternshipCoach.Application.Account.Delete;
 using InternshipCoach.Application.Settings.Get;
 using InternshipCoach.Application.Settings.Update;
+using InternshipCoach.Application.Profile.Basics;
+using InternshipCoach.Application.Profile.Extract;
+using InternshipCoach.Application.Profile.Get;
+using InternshipCoach.Application.Profile.Items;
 using InternshipCoach.Application.Sources.Cv;
 using InternshipCoach.Application.Sources.Delete;
 using InternshipCoach.Application.Sources.GitHub;
@@ -48,6 +52,12 @@ public static class DependencyInjection
         services.AddScoped<GetPostingHandler>();
         services.AddScoped<UpdatePostingDatesHandler>();
         services.AddScoped<DeletePostingHandler>();
+        services.AddScoped<ExtractProfileHandler>();
+        services.AddScoped<GetProfileHandler>();
+        services.AddScoped<SetItemConfirmedHandler>();
+        services.AddScoped<ConfirmAllItemsHandler>();
+        services.AddScoped<DeleteItemHandler>();
+        services.AddScoped<UpdateBasicsHandler>();
         return services;
     }
 }
