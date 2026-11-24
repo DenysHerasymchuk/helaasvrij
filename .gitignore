@@ -6,3 +6,6 @@ node_modules/
 bin/
 obj/
 dist/
+
+# Demo-mode LLM recordings hold model output derived from real CV text
+demo-recordings/
