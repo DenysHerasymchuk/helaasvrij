@@ -44,6 +44,21 @@ public sealed class GitHubClient : IGitHubClient
         return await Task.WhenAll(repos.Select(repo => FetchRepoAsync(username, repo, ct)));
     }
 
+    public async Task<GitHubRepoData> FetchRepoAsync(string username, string repoName, CancellationToken ct)
+    {
+        using var response = await SendAsync($"repos/{Uri.EscapeDataString(username)}/{Uri.EscapeDataString(repoName)}", null, ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new SourceFetchException($"Repository '{repoName}' was not found on GitHub.");
+        }
+
+        EnsureSuccess(response);
+
+        var item = GitHubJson.ParseRepos($"[{await response.Content.ReadAsStringAsync(ct)}]").FirstOrDefault()
+            ?? throw new SourceFetchException($"Repository '{repoName}' could not be read.");
+        return await FetchRepoAsync(username, item, ct);
+    }
+
     private async Task<GitHubRepoData> FetchRepoAsync(string owner, GitHubRepoListItem repo, CancellationToken ct)
     {
         var path = $"repos/{Uri.EscapeDataString(owner)}/{Uri.EscapeDataString(repo.Name)}";

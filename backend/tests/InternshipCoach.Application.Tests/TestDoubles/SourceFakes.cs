@@ -38,6 +38,7 @@ public sealed class FakeGitHubClient : IGitHubClient
 {
     public IReadOnlyList<GitHubRepoData> Repos { get; set; } = [];
     public string? FailWith { get; set; }
+    public GitHubRepoData? Fresh { get; set; }
     public string? LastUsername { get; private set; }
 
     public Task<IReadOnlyList<GitHubRepoData>> FetchReposAsync(string username, int max, CancellationToken ct)
@@ -45,6 +46,11 @@ public sealed class FakeGitHubClient : IGitHubClient
         LastUsername = username;
         return FailWith is null ? Task.FromResult(Repos) : throw new SourceFetchException(FailWith);
     }
+
+    public Task<GitHubRepoData> FetchRepoAsync(string username, string repoName, CancellationToken ct) =>
+        FailWith is null
+            ? Task.FromResult(Fresh ?? Repos.First(r => r.Name == repoName))
+            : throw new SourceFetchException(FailWith);
 }
 
 public sealed class FakePdfTextExtractor(params string[] pages) : IPdfTextExtractor

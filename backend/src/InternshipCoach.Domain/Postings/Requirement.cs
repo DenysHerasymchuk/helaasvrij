@@ -74,5 +74,10 @@ public sealed class Requirement : IUserOwned
         AnalysedAt = analysedAt.ToUniversalTime();
     }
 
+    /// <summary>The student ticked the gap. A re-analysis clears the tick, so tick again after one.</summary>
+    public void MarkDone() => Done = true;
+
+    public void Undo() => Done = false;
+
     private static string Clip(string value, int max) => value.Length > max ? value[..max] : value;
 }

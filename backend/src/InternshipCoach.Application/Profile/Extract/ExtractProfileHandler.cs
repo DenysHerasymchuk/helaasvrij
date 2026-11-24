@@ -64,10 +64,21 @@ public sealed class ExtractProfileHandler(IProfileRepository repository, ILlmCli
         }
         """;
 
-    public async Task<ExtractionResult> HandleAsync(CancellationToken ct)
+    public Task<ExtractionResult> HandleAsync(CancellationToken ct) => HandleAsync(null, ct);
+
+    /// <summary>Reads only the given documents when <paramref name="onlyDocuments" /> is set (re-scan of one repo).</summary>
+    public async Task<ExtractionResult> HandleAsync(IReadOnlySet<Guid>? onlyDocuments, CancellationToken ct)
     {
         var documents = await repository.ListReadyDocumentsAsync(ct);
-        if (documents.Count == 0)
+        if (onlyDocuments is not null)
+        {
+            documents = documents.Where(d => onlyDocuments.Contains(d.Id)).ToList();
+            if (documents.Count == 0)
+            {
+                return new ExtractionResult(0, 0, 0, 0, 0);
+            }
+        }
+        else if (documents.Count == 0)
         {
             throw new ProfileInputException("Add a source first (GitHub, a CV, your website or pasted text).");
         }

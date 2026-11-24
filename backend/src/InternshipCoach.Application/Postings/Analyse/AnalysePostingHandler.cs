@@ -48,7 +48,7 @@ public sealed class AnalysePostingHandler(IPostingRepository postings, GapEviden
 /// </summary>
 public sealed class RecheckRequirementHandler(IPostingRepository postings, GapEvidenceLoader loader, GapAnalyser analyser, IClock clock)
 {
-    public async Task<Posting?> HandleAsync(Guid postingId, Guid requirementId, CancellationToken ct)
+    public async Task<Posting?> HandleAsync(Guid postingId, Guid requirementId, CancellationToken ct, string reason = "rescan")
     {
         var posting = await postings.FindAsync(postingId, ct);
         var requirement = posting?.Requirements.FirstOrDefault(r => r.Id == requirementId);
@@ -69,7 +69,7 @@ public sealed class RecheckRequirementHandler(IPostingRepository postings, GapEv
             verdict.Coverage, verdict.Quote, verdict.DocumentId, verdict.Action, verdict.Project,
             verdict.Coverage == Coverage.Strong ? null : requirement.DueDate, now);
 
-        posting.RecordSnapshot("rescan", now);
+        posting.RecordSnapshot(reason, now);
         await postings.SaveAsync(ct);
         return posting;
     }
