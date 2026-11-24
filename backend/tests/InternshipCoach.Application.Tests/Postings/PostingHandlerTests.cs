@@ -1,3 +1,4 @@
+using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Llm;
 using InternshipCoach.Application.Postings;
@@ -137,5 +138,44 @@ public class PostingHandlerTests
         Assert.Single(await new ListPostingsHandler(_repo).HandleAsync(new ListPostingsQuery("xx", null), default));
         Assert.Single(await new ListPostingsHandler(_repo).HandleAsync(new ListPostingsQuery("nl", "acme"), default));
         Assert.Empty(await new ListPostingsHandler(_repo).HandleAsync(new ListPostingsQuery("fr", null), default));
+    }
+
+    private sealed class FakeJobSnapshot(params Job[] jobs) : IJobSnapshot
+    {
+        public Task<IReadOnlyList<Job>?> LoadAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<Job>?>(jobs);
+    }
+
+    private static readonly Job AdzunaJob = new(
+        "4931028811", "Stage .NET developer", "Acme Software NV", "Gent, Oost-Vlaanderen",
+        "Voor onze afdeling zoeken we een stagiair met kennis van C# en SQL.", "2026-11-20T09:14:02Z",
+        "https://www.adzuna.be/land/ad/4931028811?se=x");
+
+    [Fact]
+    public async Task From_job_saves_the_snapshot_facts_not_what_the_model_read()
+    {
+        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer())
+            .HandleAsync(new AddPostingFromJobCommand("4931028811"), default);
+
+        Assert.Equal(PostingStatus.Created, outcome.Status);
+        var posting = Assert.Single(_repo.Items);
+        Assert.Equal("Acme Software NV", posting.Company);
+        Assert.Equal("Stage .NET developer", posting.Title);
+        Assert.Equal("Gent, Oost-Vlaanderen", posting.City);
+        Assert.Equal(AdzunaJob.Url, posting.Url);
+        Assert.Contains("kennis van C# en SQL", posting.RawText);
+        Assert.Contains("Posted 2026-11-20", posting.RawText);
+        Assert.Equal(PostingLanguage.Nl, posting.Language);
+        Assert.Equal(2, posting.Requirements.Count);
+    }
+
+    [Fact]
+    public async Task From_job_with_an_unknown_id_is_not_found_and_never_calls_the_model()
+    {
+        var outcome = await new AddPostingFromJobHandler(new FakeJobSnapshot(AdzunaJob), Importer())
+            .HandleAsync(new AddPostingFromJobCommand("nope"), default);
+
+        Assert.Equal(PostingStatus.NotFound, outcome.Status);
+        Assert.Empty(_transport.Requests);
+        Assert.Empty(_repo.Items);
     }
 }
