@@ -10,6 +10,7 @@ import { ProfilePage } from '@/features/profile/profile-page'
 import { SettingsPage } from '@/features/settings/settings-page'
 import { PostingDetailPage } from '@/features/postings/posting-detail-page'
 import { JobsPage } from '@/features/jobs/jobs-page'
+import { JobDetailPage } from '@/features/jobs/job-detail-page'
 import { PostingsPage } from '@/features/postings/postings-page'
 import { DocumentsPage } from '@/features/documents/documents-page'
 import { ApplicationsPage } from '@/features/applications/applications-page'
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
       { path: '/settings', element: <SettingsPage /> },
       { path: '/postings', element: <JobsPage /> },
       { path: '/postings/saved', element: <PostingsPage /> },
+      { path: '/postings/job/:jobId', element: <JobDetailPage /> },
       { path: '/postings/:id', element: <PostingDetailPage /> },
       { path: '/jobs', element: <Navigate to="/postings" replace /> },
       { path: '/documents', element: <DocumentsPage /> },

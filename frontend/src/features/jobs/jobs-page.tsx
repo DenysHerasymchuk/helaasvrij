@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
-import { api } from "@/core/api";
-
-type Job = { id: string; title: string; company?: string; location?: string; description?: string; created?: string; url: string };
+import { ApiError, api } from "@/core/api";
+import { AdzunaLink, CompanyLogo, type Job, JobFacts } from "./job-meta";
 
 const field = "w-full rounded-lg bg-primary px-3 py-2 text-md text-primary shadow-xs ring-1 ring-primary outline-none placeholder:text-placeholder focus:ring-2 focus:ring-brand";
-const dateFmt = new Intl.DateTimeFormat("en-BE", { day: "numeric", month: "short" });
 
 export function JobsPage() {
     const [what, setWhat] = useState("");
@@ -14,32 +12,15 @@ export function JobsPage() {
     const [jobs, setJobs] = useState<Job[] | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [saving, setSaving] = useState<string | null>(null);
-    const navigate = useNavigate();
-
-    // Saves an Adzuna result as your own posting so it gets a gap analysis.
-    async function save(j: Job) {
-        setSaving(j.id);
-        try {
-            const text = [j.title, [j.company, j.location].filter(Boolean).join(", "), "", j.description ?? ""].join("\n");
-            const saved = await api.post<{ id: string }>("/api/postings/paste", { text, url: j.url });
-            navigate(saved ? `/postings/${saved.id}` : "/postings/saved");
-        } catch {
-            setError("Could not save this posting. Try again.");
-            setSaving(null);
-        }
-    }
 
     async function search(e?: React.FormEvent) {
         e?.preventDefault();
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`/api/jobs?${new URLSearchParams({ what, where })}`, { credentials: "include" });
-            if (!res.ok) throw new Error(res.status === 503 ? "Job search is not set up yet (Adzuna keys missing)." : "Could not load postings. Try again.");
-            setJobs(await res.json());
+            setJobs((await api.get<Job[]>(`/api/jobs?${new URLSearchParams({ what, where })}`)) ?? []);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Could not load postings. Try again.");
+            setError(err instanceof ApiError ? err.message : "Could not load postings. Try again.");
         } finally {
             setLoading(false);
         }
@@ -55,10 +36,10 @@ export function JobsPage() {
             <div className="flex flex-col gap-1">
                 <h1 className="text-display-xs font-semibold text-primary">Postings</h1>
                 <p className="text-md text-tertiary">
-                    Internships in Belgium. Save one to see what it asks from you.{" "}
-                    <a href="/postings/saved" className="font-semibold text-brand-secondary hover:underline">
+                    Internships in Belgium. Open one to read it, then save it to see what it asks from you.{" "}
+                    <Link to="/postings/saved" className="font-semibold text-brand-secondary hover:underline">
                         Your saved postings
-                    </a>
+                    </Link>
                 </p>
             </div>
 
@@ -79,34 +60,37 @@ export function JobsPage() {
                 </div>
             )}
 
+            {loading && !jobs && (
+                <p role="status" className="text-md text-tertiary">
+                    Loading postings...
+                </p>
+            )}
+
             {jobs && jobs.length === 0 && <p className="text-md text-tertiary">No postings found. Try another role or city.</p>}
 
             {jobs && jobs.length > 0 && (
                 <ul className="flex flex-col divide-y divide-secondary rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
                     {jobs.map((j) => (
-                        <li key={j.id} className="flex flex-col gap-1 px-5 py-4">
-                            <div className="flex items-start justify-between gap-4">
-                                <a href={j.url} target="_blank" rel="noopener noreferrer" className="text-md font-semibold text-primary hover:underline">
+                        <li key={j.id} className="relative flex gap-4 px-5 py-4 hover:bg-primary_hover">
+                            <CompanyLogo company={j.company} />
+                            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                                {/* The title link covers the whole row; the Adzuna link sits above it. */}
+                                <Link
+                                    to={`/postings/job/${encodeURIComponent(j.id)}`}
+                                    className="rounded-sm text-md font-semibold text-primary outline-focus-ring after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2"
+                                >
                                     {j.title}
-                                </a>
-                                <div className="flex shrink-0 items-center gap-3">
-                                    {j.created && <span className="text-sm text-tertiary">{dateFmt.format(new Date(j.created))}</span>}
-                                    <Button size="sm" color="secondary" isLoading={saving === j.id} isDisabled={saving !== null} onClick={() => save(j)}>
-                                        Save
-                                    </Button>
-                                </div>
+                                </Link>
+                                {j.company && <p className="text-sm font-medium text-secondary">{j.company}</p>}
+                                <JobFacts job={j} />
+                                {j.description && <p className="line-clamp-2 text-sm text-tertiary">{j.description}</p>}
+                                <AdzunaLink className="relative z-10 mt-1 self-start" />
                             </div>
-                            <p className="text-sm text-secondary">{[j.company, j.location].filter(Boolean).join(", ")}</p>
-                            {j.description && <p className="line-clamp-2 text-sm text-tertiary">{j.description}</p>}
                         </li>
                     ))}
                 </ul>
             )}
 
-            {/* Required by the Adzuna API terms on every page that shows their ads. */}
-            <a href="https://www.adzuna.be" target="_blank" rel="noopener noreferrer" className="self-start text-sm font-semibold text-secondary hover:underline">
-                Jobs by Adzuna
-            </a>
         </div>
     );
 }

@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<PostingImporter>();
         services.AddScoped<AddPostingFromPasteHandler>();
         services.AddScoped<AddPostingFromUrlHandler>();
+        services.AddScoped<AddPostingFromJobHandler>();
         services.AddScoped<ListPostingsHandler>();
         services.AddScoped<GetPostingHandler>();
         services.AddScoped<UpdatePostingDatesHandler>();

@@ -3,6 +3,7 @@ using InternshipCoach.Application.Postings.Add;
 using InternshipCoach.Application.Postings.Analyse;
 using InternshipCoach.Application.Profile;
 using InternshipCoach.Application.Postings.Browse;
+using InternshipCoach.Contracts.Jobs;
 using InternshipCoach.Contracts.Postings;
 using InternshipCoach.Domain.Postings;
 using Microsoft.AspNetCore.Authorization;
@@ -68,6 +69,11 @@ public sealed class PostingsController : ControllerBase
     public Task<IActionResult> FromUrl(UrlPostingRequest request, [FromServices] AddPostingFromUrlHandler handler, CancellationToken ct) =>
         Add(() => handler.HandleAsync(new AddPostingFromUrlCommand(request.Url), ct));
 
+    [HttpPost("from-job")]
+    [Consumes("application/json")]
+    public Task<IActionResult> FromJob(JobPostingRequest request, [FromServices] AddPostingFromJobHandler handler, CancellationToken ct) =>
+        Add(() => handler.HandleAsync(new AddPostingFromJobCommand(request.JobId), ct));
+
     // PUT is accepted next to PATCH because the shared api client has no PATCH helper.
     [HttpPatch("{id:guid}")]
     [HttpPut("{id:guid}")]
@@ -108,6 +114,7 @@ public sealed class PostingsController : ControllerBase
         {
             PostingStatus.Created => Created($"/api/postings/{outcome.Posting!.Id}", ToDetail(outcome.Posting, null)),
             PostingStatus.Invalid => Problem(statusCode: StatusCodes.Status400BadRequest, title: outcome.Message),
+            PostingStatus.NotFound => Problem(statusCode: StatusCodes.Status404NotFound, title: outcome.Message),
             _ => Problem(statusCode: StatusCodes.Status422UnprocessableEntity, title: outcome.Message)
         };
     }

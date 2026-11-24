@@ -3,6 +3,7 @@ using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Infrastructure.Llm;
 using InternshipCoach.Infrastructure.Llm.Replay;
 using InternshipCoach.Infrastructure.Auth;
+using InternshipCoach.Infrastructure.Jobs;
 using InternshipCoach.Application.Applications;
 using InternshipCoach.Application.Profile;
 using InternshipCoach.Application.Sources;
@@ -37,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IAccountDeleter, AccountDeleter>();
         services.AddScoped<IPostingRepository, PostingRepository>();
         services.AddSingleton<IPageFetcher, SafePageFetcher>();
+        services.AddSingleton<IJobSnapshot>(provider => new AdzunaJobSnapshot(configuration, provider.GetRequiredService<IClock>()));
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
 
