@@ -12,7 +12,8 @@ public sealed class SourceRepository(InternshipCoachDbContext db) : ISourceRepos
             .OrderBy(source => source.Kind)
             .ThenBy(source => source.Label)
             .Select(source => new SourceSummary(
-                source.Id, source.Kind, source.Label, source.Status, source.LastSyncedAt, source.Error, source.Documents.Count()))
+                source.Id, source.Kind, source.Label, source.Status, source.LastSyncedAt, source.Error, source.Documents.Count(),
+                source.Kind == SourceKind.GitHub ? source.Documents.Count(d => d.Path.EndsWith(SourceSummary.RepoSummarySuffix)) : 0))
             .ToListAsync(ct);
 
     public Task<Source?> FindByKindAsync(SourceKind kind, CancellationToken ct) =>
