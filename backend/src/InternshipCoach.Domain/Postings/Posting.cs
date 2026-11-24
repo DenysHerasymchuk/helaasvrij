@@ -11,7 +11,11 @@ public sealed class Posting : IUserOwned
     public const int RawTextMaxLength = 20000;
     public const int MaxRequirements = 30;
 
+    /// <summary>Below this percentage, or with too few required items covered, the posting is "no clear fit".</summary>
+    public const int NoClearFitBelowScore = 40;
+
     private readonly List<Requirement> _requirements = [];
+    private readonly List<ScoreSnapshot> _snapshots = [];
 
     public Guid Id { get; private set; }
     public Guid UserId { get; private set; }
@@ -27,6 +31,11 @@ public sealed class Posting : IUserOwned
     public CreatedAt CreatedAt { get; private set; } = null!;
 
     public IReadOnlyList<Requirement> Requirements => _requirements;
+
+    /// <summary>Only loaded when the repository includes them.</summary>
+    public IReadOnlyCollection<ScoreSnapshot> Snapshots => _snapshots;
+
+    public bool IsAnalysed => _requirements.Any(r => r.AnalysedAt is not null);
 
     private Posting()
     {
@@ -84,6 +93,43 @@ public sealed class Posting : IUserOwned
     {
         Deadline = deadline;
         InterviewAt = interviewAt?.ToUniversalTime();
+    }
+
+    /// <summary>
+    /// sum(weight x coverage) / sum(weight) as a whole percentage (half rounds up). Required 2, nice 1;
+    /// strong 1, partial 0.5, none 0. No requirements gives 0. Same input, same score.
+    /// </summary>
+    public int Score()
+    {
+        var total = _requirements.Sum(r => r.Importance.Weight());
+        if (total == 0)
+        {
+            return 0;
+        }
+
+        var earnedHalfUnits = _requirements.Sum(r => r.Importance.Weight() * r.Coverage.HalfUnits());
+        return (int)Math.Round(100m * earnedHalfUnits / (2m * total), MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>True when the score is below 40% or fewer than half of the required items are at least Partial.</summary>
+    public bool NoClearFit()
+    {
+        if (Score() < NoClearFitBelowScore)
+        {
+            return true;
+        }
+
+        var required = _requirements.Where(r => r.Importance == Importance.Required).ToList();
+        var covered = required.Count(r => r.Coverage != Coverage.None);
+        return covered * 2 < required.Count;
+    }
+
+    /// <summary>Stores the current score. Call after the requirements were (re)analysed.</summary>
+    public ScoreSnapshot RecordSnapshot(string reason, DateTimeOffset takenAt)
+    {
+        var snapshot = ScoreSnapshot.Create(UserId, Id, Score(), reason, takenAt);
+        _snapshots.Add(snapshot);
+        return snapshot;
     }
 
     private static string Truncate(string value, int max) => value.Length > max ? value[..max] : value;

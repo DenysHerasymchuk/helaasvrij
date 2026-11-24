@@ -52,6 +52,8 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<Requirement> Requirements => Set<Requirement>();
 
+    public DbSet<ScoreSnapshot> ScoreSnapshots => Set<ScoreSnapshot>();
+
     // Cookie-encryption keys live in the database so sessions survive an api container restart.
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
