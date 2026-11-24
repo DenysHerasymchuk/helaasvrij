@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+graphify-out/
+node_modules/
+bin/
+obj/
+dist/

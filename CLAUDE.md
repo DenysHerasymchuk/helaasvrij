@@ -1,0 +1,111 @@
+# Internship Coach (working name)
+
+Hack The Future (Belgium) project, built in a 6-hour timebox with AI coding agents. Final product name is not decided yet (shortlist: StagiAIr, DeSync, Gatenkaas, Geen Zever, Brugske).
+
+Branding for now: the name "Internship Coach" is the logo (plain text wordmark) and the favicon/icon is just the name; no custom logo or icon yet. Repository: `internship-coach` (private, GitHub).
+
+## The idea
+
+A private, personal dashboard that helps students in Belgium land an internship (stage).
+
+The student connects GitHub, uploads a CV or LinkedIn PDF and adds a personal website. The app builds an evidence-backed profile, matches it against real Belgian internship postings, and turns every gap into a concrete action tied to the student's own projects. From the same data it writes the CV, cover letter, recruiter message and interview prep.
+
+Pitch: "Drop in your links, see exactly what each Belgian internship wants from you, close the gaps, and apply with a CV, cover letter and interview prep built from your real work."
+
+## Core principles (do not break these)
+
+- **The gap plan is the product; the CV is a by-product.** Generic CV generation is a commodity (ChatGPT, Teal, Kickresume). The value is gap analysis that cites the student's own evidence.
+- **Every claim has a source.** Every extracted skill, project or experience stores where it came from (repo, file, CV line, site). Claims without a source are dropped. The CV and drafts use only items the student confirmed. Never invent or inflate.
+- **Actions must be specific.** Every gap action names one of the student's own projects ("Add a Dockerfile to `weather-app`"). Reject and regenerate any action that does not.
+- **The match score is computed in code, not by the LLM.** The LLM labels each requirement; code computes the number so the same input always gives the same score.
+- **Private by default.** Each student sees only their own data.
+- **Belgian context.** Postings and outputs in NL, FR or EN (output in the posting's language), CEFR language levels, school stage periods.
+
+## Privacy and data ownership
+
+- Sign-in with GitHub OAuth. No anonymous access to any page except the landing page.
+- Every user-owned table has a `UserId`. Every query and endpoint filters by the signed-in user. Never return another user's data; enforce this in the data layer (EF Core global query filter on `UserId`), not only in controllers.
+- Shared data is limited to: anonymous `CompanyQuestions` (interview questions per company) and public postings that arrive through the webhook, copied into a user's list only when matched.
+- "Delete my data" removes every row owned by the user.
+- Never scrape LinkedIn. LinkedIn data comes only from the user's own "Save to PDF" export.
+
+## Pages (sidebar navigation)
+
+| Sidebar item | Route | Content |
+| --- | --- | --- |
+| Dashboard | `/dashboard` | Profile strength, source status, top matched postings, top gap actions, next deadline and interview, score trend |
+| Postings | `/postings`, `/postings/:id` | List with filters (language, score, deadline, new), add by paste or URL, find on Adzuna; detail shows full posting, gap matrix, match score |
+| Gap plan | `/gaps` | All gaps across postings as one checklist, sorted by impact; ticking re-scans and updates scores; closed gaps feed cover letters |
+| Documents | `/documents` | CV (NL/FR/EN, print to PDF), cover letters and recruiter messages (max 300 chars, copy only) per posting |
+| Interview prep | `/interview` | Questions from gaps, from the student's repos, and shared company questions; practice answers with feedback |
+| Applications | `/applications` | Kanban: Saved, Applied, Interview, Offer, Rejected |
+| Profile | `/profile` | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback), extracted items with source links and confirm/remove, school and stage period |
+| Settings | `/settings` | Email alerts and strong-match threshold, default language, delete all my data, sign out |
+
+The landing page `/` has the pitch and "Sign in with GitHub".
+
+## Stack
+
+- **Frontend:** React + React Router + Tailwind CSS (Vite, TypeScript).
+- **Backend:** ASP.NET Core (.NET) Web API.
+- **Data:** EF Core with PostgreSQL. Schema changes only through EF Core migrations.
+- **Auth:** GitHub OAuth in ASP.NET Core, cookie session shared with the frontend.
+- **LLM:** route33 gateway (`https://api.route33.ai`, Anthropic-compatible; base URL without `/v1`). Use the official Anthropic C# SDK with a custom base URL.
+  - `deepseek/deepseek-v4.1-flash-1017` for cheap work: profile extraction, language detection.
+  - `anthropic/claude-sonnet-5-5` for gap matrix, CV, cover letter, recruiter message, interview prep.
+  - Ask for JSON and validate it against a schema; if structured output is not passed through by route33, put the schema in the prompt, parse, validate and retry once.
+  - Budget is about EUR 50 per key. Keep prompts lean; never loop LLM calls without a cap.
+- **External APIs:** GitHub REST API (with the user's OAuth token), Adzuna jobs API (country `be`), optional Zapier webhook for job-alert emails.
+- **Infra:** Docker + Docker Compose (services: `web`, `api`, `db`). Git for version control.
+
+## UI: Untitled UI + design skill
+
+- **Build the UI mostly from the Untitled UI MCP server** (`untitledui`). Before writing any component or page by hand, look for an existing one:
+  - `get_page_templates` / `get_page_template_files` for whole pages (dashboard, settings, sidebar layouts).
+  - `search_components` / `list_components`, then `get_component` or `get_component_bundle` for sidebar, cards, tables, tabs, badges, checklists, kanban, file upload, empty states, modals.
+  - `search_icons` for icons.
+- Adapt the fetched components to this project (React Router links, our data, Tailwind tokens); do not rebuild what Untitled UI already provides. Hand-write a component only when nothing fits, and match the Untitled UI style when you do.
+- **Load the `frontend-design` skill before building or reshaping any page or layout**, and follow it for visual direction, typography, spacing and hierarchy. The result must not look like a default template.
+- Keep one consistent design system: shared colour and spacing tokens in the Tailwind config, light and dark mode, responsive down to phone width, accessible (labels, focus states, contrast).
+
+## Suggested layout
+
+```
+/frontend      React + Vite + Tailwind app
+/backend       ASP.NET Core API, EF Core DbContext, migrations
+docker-compose.yml
+.env.example   names of required secrets, no values
+```
+
+## Core flow (build this first)
+
+1. Ingest: GitHub repos (languages, README, file tree: Dockerfile, tests, CI; commit count), CV/LinkedIn PDF text, site text.
+2. Extract profile: DeepSeek turns raw sources into skills, projects, experience, languages, each with a source reference.
+3. Gap matrix against a posting: per requirement — importance (required/nice), coverage (strong/partial/none), evidence quote and source, action, action project.
+4. Score: sum(weight x coverage) / sum(weight); required = 2, nice = 1; strong = 1, partial = 0.5, none = 0.
+5. Re-scan: when a gap is ticked, re-ingest that repo and re-check that requirement.
+
+Nothing else is built until this flow works end to end.
+
+## Build order
+
+1. Scaffold frontend, backend, compose, GitHub sign-in, LLM client; test a JSON call through route33.
+2. Ingest, profile extraction, gap matrix, score.
+3. Dashboard, postings detail, gap re-scan.
+4. Adzuna postings, documents (CV, cover letter, recruiter message), interview prep.
+5. Profile page, Belgian layer, delete my data, cache the demo path.
+6. Webhook/Zapier, applications board — only if the core is solid.
+
+## Non-goals
+
+- No employer side, no public job board, no browsing other students.
+- No LinkedIn scraping, no auto-sending messages.
+- No "role type without a posting" mode (it produces generic advice).
+
+## Secrets
+
+Required: `R33_API_KEY`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `WEBHOOK_SECRET`, database password. Keep them in `.env` (git-ignored); commit only `.env.example`. Never log keys or user CV content.
+
+## Demo (90 seconds)
+
+Sign in, sources fill the profile with evidence, a judge's company posting appears in the list, open its gap matrix next to plain ChatGPT's generic answer, tick a gap and re-scan (score rises, e.g. 62% to 81%), download the CV in Dutch, show tailored interview questions.
