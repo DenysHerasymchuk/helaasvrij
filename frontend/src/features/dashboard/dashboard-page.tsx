@@ -1,7 +1,9 @@
 import { File06, FileCheck02, MessageChatCircle, Plus } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { useAuth } from "@/core/auth";
-import { JourneyBar } from "@/features/journey/journey-bar";
+import { useEffect, useState } from "react";
+import { JourneyBar, useJourney } from "@/features/journey/journey-bar";
+import { FirstStart, isBrandNew, readSkipped } from "./first-start";
 import { ApplicationsBarChart } from "./applications-chart";
 import { BestMatchesCard } from "./best-matches-card";
 import { ComingUpCard } from "./coming-up-card";
@@ -19,6 +21,32 @@ export function DashboardPage() {
     const { user } = useAuth();
     const firstName = user?.displayName.split(/\s+/)[0] ?? "";
     const { data, error, reload } = useDashboard();
+    const journey = useJourney();
+    const [skipped, setSkipped] = useState(readSkipped);
+    // Once shown, the start stays for this visit so steps 2 and 3 can follow; a later visit with a source gets the dashboard.
+    const [started, setStarted] = useState(false);
+    const brandNew = !!journey.journey && isBrandNew(journey.journey);
+    useEffect(() => {
+        if (brandNew) setStarted(true);
+    }, [brandNew]);
+    const showStart = !skipped && !!journey.journey && (brandNew || (started && journey.journey.savedPostingCount === 0));
+
+    if (!skipped && !journey.journey && !journey.error) {
+        return (
+            <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-8">
+                <LoadingState>Loading...</LoadingState>
+            </div>
+        );
+    }
+
+    if (showStart && journey.journey) {
+        return (
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 md:px-8">
+                <PageHeader title={`Goeiemorgen, ${firstName}`} description="Welcome to helaasvrij. Start here." />
+                <FirstStart journey={journey.journey} reload={journey.reload} onSkip={() => setSkipped(true)} />
+            </div>
+        );
+    }
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
