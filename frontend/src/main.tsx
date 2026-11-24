@@ -14,12 +14,8 @@ import { PostingsPage } from '@/features/postings/postings-page'
 import { DocumentsPage } from '@/features/documents/documents-page'
 import { ApplicationsPage } from '@/features/applications/applications-page'
 import { InterviewPage } from '@/features/interview/interview-page'
-import { ComingSoonPage } from '@/features/placeholder/coming-soon-page'
+import { GapsPage } from '@/features/gaps/gaps-page'
 import './index.css'
-
-const placeholders = [
-  ['gaps', 'Gap plan'],
-] as const
 
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
@@ -38,7 +34,7 @@ const router = createBrowserRouter([
       { path: '/documents', element: <DocumentsPage /> },
       { path: '/applications', element: <ApplicationsPage /> },
       { path: '/interview', element: <InterviewPage /> },
-      ...placeholders.map(([path, title]) => ({ path: `/${path}`, element: <ComingSoonPage title={title} /> })),
+      { path: '/gaps', element: <GapsPage /> },
     ],
   },
 ])

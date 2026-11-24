@@ -53,6 +53,8 @@ public sealed class Source : IUserOwned
         return document;
     }
 
+    public bool RemoveDocument(Guid documentId) => _documents.RemoveAll(d => d.Id == documentId) > 0;
+
     public void ClearDocuments() => _documents.Clear();
 
     public void MarkReady(DateTimeOffset now)

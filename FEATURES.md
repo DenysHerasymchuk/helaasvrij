@@ -24,8 +24,8 @@ Status: `done`, `todo`, or `next` (not in the hackathon build; goes on the "next
 | 14 | Score in code | sum(weight x coverage) / sum(weight); required 2, nice 1; strong 1, partial 0.5, none 0. | done (`Posting.Score()` in Domain, whole-percent rounding, zero requirements = 0; `ScoreSnapshot` stored on every analyse) |
 | 15 | Formula shown on the report | Show the weights and the formula next to the score. No unexplained number. | done (formula and weights next to the score ring) |
 | 16 | "No clear fit" state | Honest message when the score is low or the requirements barely overlap. | done (`Posting.NoClearFit()`: below 40% or fewer than half the required items at least Partial) |
-| 17 | Dated gap plan | Gaps as a checklist sorted by impact (weight x missing coverage), each with a target date. | todo |
-| 18 | Re-scan | Tick a gap, re-ingest that repo, re-check that requirement, update the score (demo: 62% to 81%). | todo |
+| 17 | Dated gap plan | Gaps as a checklist sorted by impact (weight x missing coverage), each with a target date. | done (`GET /api/gaps`, `/gaps` page with open/done and posting filters, grouped by posting or repo) |
+| 18 | Re-scan | Tick a gap, re-ingest that repo, re-check that requirement, update the score (demo: 62% to 81%). | done (`POST /api/gaps/{id}/done` and `/undo`; merges only that repo into the GitHub source so confirmed items and evidence survive, reads the changed documents, new items stay unconfirmed, one re-scan per requirement per minute held in memory; returns old and new score; not run live against GitHub or route33) |
 | 19 | Prompt-injection safety | Postings, CVs and READMEs are data only. The model gets no tools. Strict schema validation with one retry. | done in the client (delimiters, no tools, schema validation, one retry); each feature must use `UntrustedInput.Wrap` |
 
 ## P1: after the core works (freeze scope at 15:00)
