@@ -6,11 +6,13 @@ Branding for now: the name is "helaasvrij" (lowercase; tagline "The internship c
 
 ## The idea
 
-A private, personal dashboard that helps students in Belgium land an internship (stage).
+A private, personal dashboard that helps people in Belgium land a position (job, internship or anything in between).
 
-The student connects GitHub, uploads a CV or LinkedIn PDF and adds a personal website. The app builds an evidence-backed profile, matches it against real Belgian internship postings, and turns every gap into a concrete action tied to the student's own projects. From the same data it writes the CV, cover letter, recruiter message and interview prep.
+The user connects GitHub, uploads a CV or LinkedIn PDF and adds a personal website. The app builds an evidence-backed profile, matches it against real Belgian postings, and turns every gap into a concrete action tied to the user's own projects. From the same data it writes the CV, cover letter, recruiter message and interview prep.
 
-Pitch: "Drop in your links, see exactly what each Belgian internship wants from you, close the gaps, and apply with a CV, cover letter and interview prep built from your real work."
+The search is run like a Jira project: every position you consider sits in the **backlog**; a **sprint** is one round of applications (name, goal, dates, started and completed by hand, one running at a time); the **board** shows the running sprint as columns (Saved, Applied, Interview, Offer, Rejected); finished sprints stay in the **sprint history** with a report; every position has an **activity** log. Positions get a key such as `BRI-12` (first three letters of the company plus a per-user running number).
+
+Pitch: "Drop in your links, see exactly what each Belgian position wants from you, close the gaps, and apply with a CV, cover letter and interview prep built from your real work."
 
 ## Core principles (do not break these)
 
@@ -19,7 +21,7 @@ Pitch: "Drop in your links, see exactly what each Belgian internship wants from 
 - **Actions must be specific.** Every gap action names one of the student's own projects ("Add a Dockerfile to `weather-app`"). Reject and regenerate any action that does not. A student without GitHub repos gets a small new project instead ("Start `expense-tracker-api`: ..."), with a kebab-case name and the requirement's skill in the action.
 - **The match score is computed in code, not by the LLM.** The LLM labels each requirement; code computes the number so the same input always gives the same score.
 - **Private by default.** Each student sees only their own data.
-- **Belgian context.** Postings and outputs in NL, FR or EN (output in the posting's language), CEFR language levels, school stage periods.
+- **Belgian context.** Postings and outputs in NL, FR or EN (output in the posting's language), Belgian dates and languages.
 
 ## Privacy and data ownership
 
@@ -33,13 +35,15 @@ Pitch: "Drop in your links, see exactly what each Belgian internship wants from 
 
 | Sidebar item | Route | Content |
 | --- | --- | --- |
-| Dashboard | `/dashboard` | Profile strength, source status, top matched postings, top gap actions, next deadline and interview, score trend |
-| Postings | `/postings`, `/postings/:id` | List with filters (language, score, deadline, new), add by paste or URL, find on Adzuna; detail shows full posting, gap matrix, match score |
+| Home | `/dashboard` | Running sprint (goal, days left, progress) or a prompt to start one, source status, top matched postings, top gap actions, next deadline and interview, applications per month |
 | Gap plan | `/gaps` | All gaps across postings as one checklist, sorted by impact; ticking re-scans and updates scores; closed gaps feed cover letters |
 | Documents | `/documents` | CV (NL/FR/EN, print to PDF), cover letters and recruiter messages (max 300 chars, copy only) per posting |
 | Interview prep | `/interview` | Questions from gaps, from the student's repos, and shared company questions; practice answers with feedback |
-| Applications | `/applications` | Kanban: Saved, Applied, Interview, Offer, Rejected |
-| Profile | `/profile` | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback), extracted items with source links and confirm/remove, school and stage period |
+| Backlog | `/backlog`, `/backlog/find` | Running sprint on top, every other position below; select rows and add them to the sprint; start a sprint; add by paste or URL; "Find positions" tab searches Adzuna |
+| Board | `/board` | Kanban of the running sprint (Saved, Applied, Interview, Offer, Rejected) with the sprint goal, progress and "Complete sprint" (open positions go to the next sprint or back to the backlog) |
+| Sprints | `/sprints`, `/sprints/:id` | History of all sprints; report per sprint (applied, interviews, offers, rejected, average match, gaps closed) |
+| Position | `/positions/:id` | One position: key, gap matrix, requirements, dates, activity log |
+| Profile | `/profile` | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback) and extracted items with source links (remove only; items count at once) |
 | Settings | `/settings` | Email alerts and strong-match threshold, default language, delete all my data, sign out |
 
 No landing page: `/` redirects to `/login`.

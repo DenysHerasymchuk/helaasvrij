@@ -26,9 +26,9 @@ export type Journey = {
 
 const steps = [
     { name: "Build profile", href: "/profile" },
-    { name: "Pick a posting", href: "/postings" },
+    { name: "Pick a posting", href: "/backlog" },
     { name: "Close gaps", href: "/gaps" },
-    { name: "Apply & track", href: "/applications" },
+    { name: "Apply & track", href: "/board" },
 ];
 
 /** Loads GET /api/journey again on every navigation, so the bar follows what the student just did. */

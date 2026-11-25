@@ -5,6 +5,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { ApiError, api } from "@/core/api";
 import { BoardStatus, useBoard } from "@/features/applications/board-status";
+import { ActivityPanel } from "./activity";
 import { DateField, Field } from "./fields";
 import { GapMatrix, GapPanel } from "./gap-analysis";
 import { GenericAnswerPanel } from "./generic-answer";
@@ -70,7 +71,7 @@ export function PostingDetailPage() {
         setDeleting(true);
         try {
             await api.del(`/api/postings/${id}`);
-            navigate("/postings/saved", { replace: true });
+            navigate("/backlog", { replace: true });
         } catch (e) {
             setSaveMessage(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
             setDeleting(false);
@@ -80,8 +81,8 @@ export function PostingDetailPage() {
 
     const back = (
         <div>
-            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/postings/saved">
-                All postings
+            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/backlog">
+                Backlog
             </Button>
         </div>
     );
@@ -118,6 +119,7 @@ export function PostingDetailPage() {
     const required = posting.requirements.filter((r) => r.importance === "required");
     const nice = posting.requirements.filter((r) => r.importance === "nice");
     const analysed = posting.analysis.analysed;
+    const application = board.byPosting?.get(posting.id);
     const boardStatus = <BoardStatus postingId={posting.id} byPosting={board.byPosting} onAdded={board.added} />;
 
     return (
@@ -125,6 +127,7 @@ export function PostingDetailPage() {
             {back}
 
             <header className="flex flex-col gap-2">
+                {posting.key && <p className="text-sm font-semibold text-brand-secondary">{posting.key}</p>}
                 <div className="flex flex-wrap items-center gap-2">
                     <h1 className={pageTitleClass}>{posting.title}</h1>
                 </div>
@@ -211,6 +214,8 @@ export function PostingDetailPage() {
 
                 <div className="flex flex-col gap-6">
                     {analysed && <GapPanel posting={posting} onUpdated={setPosting} />}
+
+                    {application && <ActivityPanel applicationId={application.id} version={`${application.stage}:${application.sprintId}`} />}
 
                     <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
                         <h2 className="border-b border-secondary px-5 py-4 text-md font-semibold text-primary">Dates</h2>

@@ -49,7 +49,7 @@ export function JobDetailPage() {
 
     const back = (
         <div>
-            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/postings">
+            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/backlog/find">
                 All postings
             </Button>
         </div>
@@ -102,13 +102,13 @@ export function JobDetailPage() {
                 <div role="status" className="flex flex-col gap-3 rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary sm:flex-row sm:items-center">
                     <div className="flex flex-1 items-center gap-2">
                         <CheckCircle className="size-5 shrink-0 text-fg-success-primary" aria-hidden="true" />
-                        <p className="text-md font-semibold text-primary">Saved to your postings</p>
+                        <p className="text-md font-semibold text-primary">Added to your backlog</p>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <Button size="sm" color="secondary" href="/postings/saved">
-                            View saved postings
+                        <Button size="sm" color="secondary" href="/backlog">
+                            Open backlog
                         </Button>
-                        <Button size="sm" href={`/postings/${savedId}`}>
+                        <Button size="sm" href={`/positions/${savedId}`}>
                             Open posting
                         </Button>
                     </div>

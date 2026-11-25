@@ -71,7 +71,7 @@ export function JobsPage() {
                             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                                 {/* The title link covers the whole row; the Adzuna link sits above it. */}
                                 <Link
-                                    to={`/postings/job/${encodeURIComponent(j.id)}`}
+                                    to={`/backlog/find/${encodeURIComponent(j.id)}`}
                                     className="rounded-sm text-md font-semibold text-primary outline-focus-ring after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2"
                                 >
                                     {j.title}
