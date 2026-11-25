@@ -1,4 +1,4 @@
-import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, MessageChatCircle, SearchLg, User01 } from "@untitledui/icons";
+import { Briefcase01, Calendar, Columns03, HomeLine, Tool02, User01 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -9,43 +9,39 @@ import { type CurrentUser, useAuth } from "@/core/auth";
 import { Logo } from "@/core/logo";
 import { ChatWidget } from "@/features/chat/chat-widget";
 
-// Sidebar follows the journey: build profile, find a posting, close gaps, apply and track.
-const sections: { title?: string; items: NavItemType[] }[] = [
-    { items: [{ label: "Dashboard", href: "/dashboard", icon: HomeLine }] },
-    { title: "1. Your profile", items: [{ label: "Profile", href: "/profile", icon: User01 }] },
+// Five places for the journey; the per-posting tools live on the posting page, with "All tools" as a shortcut.
+const mainItems: NavItemType[] = [
+    { label: "Home", href: "/dashboard", icon: HomeLine },
+    { label: "Profile", href: "/profile", icon: User01 },
+    { label: "Postings", href: "/postings", icon: Briefcase01 },
+    { label: "Applications", href: "/applications", icon: Columns03 },
+    { label: "Calendar", href: "/calendar", icon: Calendar },
+];
+
+// The href only marks the group so NavList opens it when a child is active; collapsed otherwise.
+const toolItems: NavItemType[] = [
     {
-        title: "2. Find a posting",
+        label: "All tools",
+        href: "#all-tools",
+        icon: Tool02,
         items: [
-            { label: "Find positions", href: "/postings", icon: SearchLg },
-            { label: "My postings", href: "/postings/saved", icon: Briefcase01 },
-        ],
-    },
-    { title: "3. Close your gaps", items: [{ label: "Gap plan", href: "/gaps", icon: CheckDone01 }] },
-    {
-        title: "4. Apply and track",
-        items: [
-            { label: "Documents", href: "/documents", icon: File06 },
-            { label: "Interview prep", href: "/interview", icon: MessageChatCircle },
-            { label: "Applications", href: "/applications", icon: Columns03 },
+            { label: "Gap plan", href: "/gaps" },
+            { label: "Documents", href: "/documents" },
+            { label: "Interview prep", href: "/interview" },
         ],
     },
 ];
 
-// Detail pages highlight their parent item: /postings/job/x -> Find positions, /postings/<id> -> My postings.
-const navMatch = (path: string) =>
-    path.startsWith("/postings/job/") ? "/postings" : /^\/postings\/(?!saved$)[^/]+$/.test(path) ? "/postings/saved" : path;
+// Every /postings/* page (search, saved list, job and posting detail) highlights Postings.
+const navMatch = (path: string) => (path.startsWith("/postings") ? "/postings" : path);
 
 function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: CurrentUser; onSignOut: () => void }) {
     return (
         <nav aria-label="Main" className="flex h-full w-full flex-col justify-between overflow-auto bg-primary pt-6 lg:pt-8">
             <div>
                 <Logo className="mx-6 block h-7 w-auto" />
-                {sections.map((section, i) => (
-                    <div key={section.title ?? i}>
-                        {section.title && <p className="px-7 pt-5 text-xs font-semibold text-quaternary">{section.title}</p>}
-                        <NavList activeUrl={navMatch(activeUrl)} items={section.items} className={section.title ? "pt-1" : undefined} />
-                    </div>
-                ))}
+                <NavList activeUrl={navMatch(activeUrl)} items={mainItems} />
+                <NavList activeUrl={activeUrl} items={toolItems} className="mt-3 border-t border-secondary pt-3" />
             </div>
             <div className="border-t border-secondary pt-4 pb-6">
                 <AccountMenu user={user} onSignOut={onSignOut} />

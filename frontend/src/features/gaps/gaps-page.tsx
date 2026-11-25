@@ -4,7 +4,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { JourneyBar } from "@/features/journey/journey-bar";
-import { type Coverage, formatDate } from "@/features/postings/types";
+import { type Coverage, type PostingSummary, formatDate } from "@/features/postings/types";
 import { fieldClass, PageHeader } from "@/core/ui";
 import { cx } from "@/utils/cx";
 
@@ -48,11 +48,16 @@ export function GapsPage() {
     const [params] = useSearchParams();
     const [postingId, setPostingId] = useState(params.get("postingId") ?? "all");
     const [groupBy, setGroupBy] = useState<"posting" | "repo">("posting");
+    const [saved, setSaved] = useState<PostingSummary[] | null>(null);
+    const [analysing, setAnalysing] = useState<string | null>(null);
+    const [analyseError, setAnalyseError] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         setError(null);
         try {
-            setGaps((await api.get<Gap[]>("/api/gaps")) ?? []);
+            const [g, p] = await Promise.all([api.get<Gap[]>("/api/gaps"), api.get<PostingSummary[]>("/api/postings")]);
+            setGaps(g ?? []);
+            setSaved(p ?? []);
         } catch (e) {
             setError(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
         }
@@ -81,6 +86,23 @@ export function GapsPage() {
         }
         return [...map.entries()];
     }, [visible, groupBy]);
+
+    const pending = (saved ?? []).filter((p) => !p.analysed);
+    const analysedCount = (saved ?? []).length - pending.length;
+
+    // Runs the gap analysis in place, so a saved posting joins the plan without leaving this page.
+    async function analyse(posting: PostingSummary) {
+        setAnalysing(posting.id);
+        setAnalyseError(null);
+        try {
+            await api.post(`/api/postings/${posting.id}/analyse`, {});
+            await load();
+        } catch (e) {
+            setAnalyseError(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
+        } finally {
+            setAnalysing(null);
+        }
+    }
 
     async function tick(gap: Gap) {
         setBusyId(gap.requirementId);
@@ -182,19 +204,24 @@ export function GapsPage() {
                         Try again
                     </Button>
                 </div>
-            ) : gaps === null ? (
+            ) : gaps === null || saved === null ? (
                 <p className="text-md text-tertiary" aria-busy="true">
                     Loading your gaps…
                 </p>
-            ) : gaps.length === 0 ? (
+            ) : analysedCount === 0 && pending.length === 0 ? (
                 <div className="rounded-xl bg-primary px-5 py-10 text-center shadow-xs ring-1 ring-secondary">
-                    <p className="text-md font-semibold text-primary">No gaps.</p>
-                    <p className="mt-1 text-sm text-tertiary">Add a posting and run the analysis.</p>
+                    <p className="text-md font-semibold text-primary">Analyse a posting first.</p>
+                    <p className="mt-1 text-sm text-tertiary">Its missing requirements become your to-do list here.</p>
                     <div className="mt-4">
                         <Button size="md" href="/postings">
-                            Go to postings
+                            Find internships
                         </Button>
                     </div>
+                </div>
+            ) : analysedCount === 0 ? null : gaps.length === 0 || (status === "open" && gaps.every((g) => g.done)) ? (
+                <div className="rounded-xl bg-primary px-5 py-10 text-center shadow-xs ring-1 ring-secondary">
+                    <p className="text-md font-semibold text-primary">No open gaps.</p>
+                    <p className="mt-1 text-sm text-tertiary">Your analysed postings ask for nothing you have not shown yet.</p>
                 </div>
             ) : visible.length === 0 ? (
                 <p className="text-md text-tertiary">Nothing matches these filters.</p>
@@ -256,6 +283,42 @@ export function GapsPage() {
                         </ul>
                     </section>
                 ))
+            )}
+
+            {pending.length > 0 && gaps !== null && (
+                <section aria-labelledby="pending-title" className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
+                    <div className="border-b border-secondary px-5 py-4">
+                        <h2 id="pending-title" className="text-md font-semibold text-primary">
+                            {analysedCount === 0 ? "Analyse a posting first." : "Saved postings not in your plan yet"}
+                        </h2>
+                        <p className="mt-0.5 text-sm text-tertiary">
+                            {analysedCount === 0 ? "Its missing requirements become your to-do list here." : "Analyse one to add its missing requirements to this list."}
+                        </p>
+                    </div>
+                    <ul className="divide-y divide-secondary">
+                        {pending.map((p) => (
+                            <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+                                <Link to={`/postings/${p.id}`} className="min-w-0 rounded-xs outline-focus-ring hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
+                                    <span className="block truncate text-sm font-semibold text-primary">{p.company}</span>
+                                    <span className="block truncate text-sm text-tertiary">{p.title}</span>
+                                </Link>
+                                <Button size="sm" isLoading={analysing === p.id} isDisabled={analysing !== null} onPress={() => analyse(p)}>
+                                    Analyse
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                    {analysing && (
+                        <p role="status" className="border-t border-secondary px-5 py-3 text-sm text-tertiary">
+                            Comparing the posting with your confirmed profile. This takes up to a minute.
+                        </p>
+                    )}
+                    {analyseError && (
+                        <p role="alert" className="border-t border-secondary px-5 py-3 text-sm text-error-primary">
+                            {analyseError}
+                        </p>
+                    )}
+                </section>
             )}
         </div>
     );
