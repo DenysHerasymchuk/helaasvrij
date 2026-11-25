@@ -12,7 +12,7 @@ import { ChatWidget } from "@/features/chat/chat-widget";
 // Five places for the journey; the per-posting tools live on the posting page, with "All tools" as a shortcut.
 const mainItems: NavItemType[] = [
     { label: "Home", href: "/dashboard", icon: HomeLine },
-    { label: "Job search", href: "/summary", icon: Briefcase01 },
+    { label: "Job search", href: "/board", icon: Briefcase01 },
     { label: "Calendar", href: "/calendar", icon: Calendar },
 ];
 
@@ -32,7 +32,7 @@ const toolItems: NavItemType[] = [
 
 // Every tab of the job search, and the position pages, highlight "Job search".
 const searchPaths = ["/summary", "/list", "/board", "/backlog", "/sprints", "/positions"];
-const navMatch = (path: string) => (searchPaths.some((p) => path.startsWith(p)) ? "/summary" : path);
+const navMatch = (path: string) => (searchPaths.some((p) => path.startsWith(p)) ? "/board" : path);
 
 function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: CurrentUser; onSignOut: () => void }) {
     return (
