@@ -35,10 +35,6 @@ services:
       # AI fallback: when route33 fails, run the Claude Code CLI inside this container (log in once: docker compose exec api claude; the login lives in the jobs-data volume).
       COACH_Llm__Fallback: ${LLM_FALLBACK:-}
       COACH_Llm__ClaudeCli__Mode: Local
-      COACH_Llm__ClaudeCli__BridgeUrl: ${CLAUDE_BRIDGE_URL:-http://host.docker.internal:8787}
-      COACH_Llm__ClaudeCli__Token: ${CLAUDE_BRIDGE_TOKEN:-}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     ports:
       - "5080:8080"
 
