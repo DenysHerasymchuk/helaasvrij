@@ -2,30 +2,23 @@ import { type ReactNode, useState } from "react";
 import { Check, Copy01 } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { useAuth } from "@/core/auth";
-import { stages } from "@/features/applications/types";
+import { Link } from "react-router";
 
 const serverPath = "/path/to/internship-coach/mcp/dist/index.js";
 const defaultApiUrl = "http://localhost:5080";
 
-// Mirrors the tools registered in mcp/src/index.ts; keep both in sync.
-const tools: { name: string; does: string; inputs: string; writes: boolean }[] = [
-    { name: "list_postings", does: "Lists your saved postings with match score and board stage.", inputs: "none", writes: false },
-    { name: "get_posting", does: "Shows one posting with its requirements, coverage, score and gap actions.", inputs: "postingId", writes: false },
-    { name: "search_jobs", does: "Searches the Belgian job ads. Returns a jobId per result.", inputs: "what (optional), where (optional)", writes: false },
-    { name: "save_job", does: "Saves a job from search_jobs to your postings. Uses one AI call.", inputs: "jobId", writes: true },
-    { name: "add_posting", does: "Adds a posting from pasted text or a URL. Uses one AI call.", inputs: "text or url", writes: true },
-    { name: "list_applications", does: "Lists the cards on your applications board.", inputs: "none", writes: false },
-    {
-        name: "set_application_stage",
-        does: "Moves a card to another stage and puts the posting on the board first if needed. If the query matches more than one posting, nothing changes and you get the options.",
-        inputs: "postingId, applicationId or query; stage; notes (optional, replaces the card's notes)",
-        writes: true,
-    },
-    { name: "list_gaps", does: "Lists your open gaps across all postings, highest impact first, with the action for each.", inputs: "none", writes: false },
+// The server reads its tool list from GET /api/tools (backend ChatToolbox); keep these groups in sync with it.
+const tools: { names: string[]; does: string; writes: boolean }[] = [
+    { names: ["list_postings", "get_posting", "list_applications", "search_jobs"], does: "Look at your positions, one position in full, the board, and open Belgian job ads.", writes: false },
+    { names: ["get_active_sprint", "list_sprints", "get_sprint_report", "list_backlog", "get_position_activity"], does: "The running sprint with its positions by stage, past sprints and their reports, the backlog, and the history of one position.", writes: false },
+    { names: ["get_activity", "get_calendar", "list_gaps", "get_journey", "get_profile", "list_github_projects", "list_documents"], does: "Latest moves, interviews and deadlines in the next 14 days, your gap plan, and what your profile and documents hold.", writes: false },
+    { names: ["set_application_stage", "add_to_sprint", "remove_from_sprint"], does: "Move a position to another stage, or in and out of the running sprint.", writes: true },
+    { names: ["start_sprint", "complete_sprint"], does: "Start a sprint, or complete the running one (open positions return to the backlog).", writes: true },
+    { names: ["add_position", "save_job", "add_to_applications"], does: "Add a position from text or a link, save a job from search, or put a saved position on the board. Uses one AI call.", writes: true },
+    { names: ["set_notes", "tick_gap", "untick_gap"], does: "Replace the notes on a card, tick a gap (re-reads the repo and uses AI) or undo it.", writes: true },
 ];
 
-const prompts = ["I got an interview at Barco", "Find React positions in Gent", "What should I fix first for Brightlane?"];
+const prompts = ["Do my weekly review", "I got an interview at Barco, move it and help me prepare", "Add the Brightlane position to my sprint"];
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
     return (
@@ -97,11 +90,9 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 const Mono = ({ children }: { children: ReactNode }) => <code className="rounded bg-secondary px-1 py-0.5 font-mono text-xs text-primary">{children}</code>;
 
 export function ConnectClaudePage() {
-    const { user } = useAuth();
-    const email = user?.email ?? "you@example.com";
 
     const claudeCode = `claude mcp add helaasvrij \\
-  -e COACH_EMAIL=${email} -e COACH_PASSWORD='your-password' \\
+  -e COACH_TOKEN='hv_...' \\
   -- node ${serverPath}`;
 
     const claudeDesktop = JSON.stringify(
@@ -110,7 +101,7 @@ export function ConnectClaudePage() {
                 helaasvrij: {
                     command: "node",
                     args: [serverPath],
-                    env: { COACH_API_URL: defaultApiUrl, COACH_EMAIL: email, COACH_PASSWORD: "your-password" },
+                    env: { COACH_API_URL: defaultApiUrl, COACH_TOKEN: "hv_..." },
                 },
             },
         },
@@ -123,8 +114,8 @@ export function ConnectClaudePage() {
             <div>
                 <h1 className="text-display-xs font-semibold text-primary">Connect Claude</h1>
                 <p className="mt-1 text-md text-tertiary">
-                    Use helaasvrij from Claude Code or Claude Desktop: ask Claude to move a posting to Interview, find internships, or list your gaps. The
-                    connector runs on your own computer and acts as you, so it only sees your data. Your password stays in your own Claude config.
+                    Use helaasvrij from Claude Code or Claude Desktop: ask Claude to review your sprint, add a position, move a card or list your gaps. The
+                    connector runs on your own computer and acts as you through a token you can revoke, so it only sees your data. Changes are proposed first and only happen after you agree.
                 </p>
             </div>
 
@@ -134,10 +125,19 @@ export function ConnectClaudePage() {
                         <p className="text-sm text-tertiary">Run this in the internship-coach repository.</p>
                         <CodeBlock label="Build command" code="cd mcp && npm install && npm run build" />
                     </Step>
-                    <Step n={2} title="Add it to Claude">
+                    <Step n={2} title="Make an access token">
                         <p className="text-sm text-tertiary">
-                            Replace <Mono>{serverPath}</Mono> with the full path on your computer, and <Mono>your-password</Mono> with your helaasvrij
-                            password. Pick the app you use.
+                            Open{" "}
+                            <Link to="/settings/account" className="font-semibold text-brand-secondary hover:underline">
+                                Settings, Account
+                            </Link>{" "}
+                            and create a token. Copy it right away: it starts with <Mono>hv_</Mono> and is shown once. It works for GitHub accounts too.
+                        </p>
+                    </Step>
+                    <Step n={3} title="Add it to Claude">
+                        <p className="text-sm text-tertiary">
+                            Replace <Mono>{serverPath}</Mono> with the full path on your computer, and <Mono>hv_...</Mono> with your token. Pick the app you
+                            use.
                         </p>
                         <h4 className="text-sm font-medium text-secondary">Claude Code</h4>
                         <CodeBlock label="Claude Code command" code={claudeCode} />
@@ -148,13 +148,13 @@ export function ConnectClaudePage() {
                         </p>
                         <CodeBlock label="Claude Desktop config" code={claudeDesktop} />
                     </Step>
-                    <Step n={3} title="Check the API address">
+                    <Step n={4} title="Check the API address">
                         <p className="text-sm text-tertiary">
                             <Mono>COACH_API_URL</Mono> defaults to <Mono>{defaultApiUrl}</Mono>, the API from <Mono>docker compose up</Mono>. Running it
                             somewhere else? For Claude Code add <Mono>-e COACH_API_URL=https://...</Mono>; for Claude Desktop change the value in the JSON.
                         </p>
                     </Step>
-                    <Step n={4} title="Restart Claude and ask something">
+                    <Step n={5} title="Restart Claude and ask something">
                         <p className="text-sm text-tertiary">Restart Claude Desktop, or start a new Claude Code session. Then try one of the prompts below.</p>
                     </Step>
                 </ol>
@@ -171,29 +171,20 @@ export function ConnectClaudePage() {
                 </ul>
             </Section>
 
-            <Section title="What Claude can do" description="Eight tools. Read tools only look; write tools change your postings or board.">
+            <Section title="What Claude can do" description="Read tools only look. Tools that change something only propose the change; Claude asks you, then confirms.">
                 <div className="flex flex-col gap-3">
                     {tools.map((t) => (
-                        <div key={t.name} className="flex flex-col gap-1.5 rounded-lg px-3 py-3 ring-1 ring-secondary sm:flex-row sm:gap-4">
-                            <div className="flex shrink-0 items-start gap-2 sm:w-56 sm:flex-col">
-                                <Mono>{t.name}</Mono>
+                        <div key={t.names[0]} className="flex flex-col gap-1.5 rounded-lg px-3 py-3 ring-1 ring-secondary sm:flex-row sm:gap-4">
+                            <div className="flex shrink-0 flex-wrap items-start gap-1.5 sm:w-64">
+                                {t.names.map((n) => (
+                                    <Mono key={n}>{n}</Mono>
+                                ))}
                                 <Badge type="pill-color" size="sm" color={t.writes ? "warning" : "gray"}>
                                     {t.writes ? "Changes data" : "Read only"}
                                 </Badge>
                             </div>
                             <div className="flex min-w-0 flex-col gap-1">
                                 <p className="text-sm text-primary">{t.does}</p>
-                                <p className="text-xs text-tertiary">Inputs: {t.inputs}</p>
-                                {t.name === "set_application_stage" && (
-                                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                        <span className="text-xs text-tertiary">Stages:</span>
-                                        {stages.map((s) => (
-                                            <Badge key={s.id} type="pill-color" size="sm" color={s.color}>
-                                                {s.label}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                         </div>
                     ))}
@@ -202,12 +193,13 @@ export function ConnectClaudePage() {
 
             <Section title="Safety">
                 <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-tertiary">
-                    <li>Claude can't send messages to employers and can't delete anything. There are no tools for that.</li>
+                    <li>Claude can't send messages to employers, delete anything or change your settings. There are no tools for that.</li>
+                    <li>Tools that change something only propose it. Nothing happens until Claude calls the confirm step after you agreed.</li>
                     <li>
-                        Your password sits in plain text in your local Claude config. The connector sends it only to <Mono>COACH_API_URL</Mono> and never logs
-                        it. Don't commit or share that file.
+                        Your token sits in plain text in your local Claude config. The connector sends it only to <Mono>COACH_API_URL</Mono> and never logs it.
+                        It can't sign in to the app or make tokens, and you can revoke it in Settings, Account. Don't commit or share that file.
                     </li>
-                    <li>Claude sees what the tools return: your postings, board and gap plan. It doesn't get your CV text.</li>
+                    <li>Claude sees what the tools return: your positions, board, sprints and gap plan. It doesn't get your CV text.</li>
                     <li>Demoing on a shared screen? Use a test account, not your real one.</li>
                 </ul>
             </Section>
@@ -222,15 +214,14 @@ export function ConnectClaudePage() {
                         </dd>
                     </div>
                     <div>
-                        <dt className="font-medium text-primary">"Login failed: 401"</dt>
+                        <dt className="font-medium text-primary">"The token is unknown or revoked"</dt>
                         <dd className="mt-1 text-tertiary">
-                            Wrong email or password. Check <Mono>COACH_EMAIL</Mono> and <Mono>COACH_PASSWORD</Mono>, then restart Claude. The connector logs in
-                            with email and password, so an account you only use through GitHub won't work.
+                            Make a new token in Settings, Account, put it in <Mono>COACH_TOKEN</Mono>, then restart Claude.
                         </dd>
                     </div>
                     <div>
-                        <dt className="font-medium text-primary">"Set COACH_EMAIL and COACH_PASSWORD"</dt>
-                        <dd className="mt-1 text-tertiary">One of the two is missing from the config.</dd>
+                        <dt className="font-medium text-primary">"Set COACH_TOKEN"</dt>
+                        <dd className="mt-1 text-tertiary">The token is missing from the config.</dd>
                     </div>
                     <div>
                         <dt className="font-medium text-primary">The build fails or the server won't start</dt>
