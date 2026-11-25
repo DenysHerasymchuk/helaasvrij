@@ -11,6 +11,7 @@ import {
   ErrorState,
   fieldClass,
   LoadingState,
+  PageFrame,
   PageHeader,
 } from "@/core/ui";
 
@@ -397,7 +398,7 @@ export function InterviewPage() {
   const active = questions.find((q) => q.id === activeId) ?? questions[0];
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-6 md:px-8 lg:h-dvh lg:overflow-hidden">
+    <PageFrame full>
       <PageHeader
         title="Interview prep"
         description="Practise the questions this company is likely to ask you, built from your gaps and your own work."
@@ -607,6 +608,6 @@ export function InterviewPage() {
           )}
         </>
       )}
-    </div>
+    </PageFrame>
   );
 }

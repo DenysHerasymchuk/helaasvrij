@@ -4,7 +4,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { type Coverage, type PostingSummary, formatDate } from "@/features/postings/types";
-import { itemsInCard, PageHeader } from "@/core/ui";
+import { itemsInCard, PageFrame, PageHeader } from "@/core/ui";
 import { cx } from "@/utils/cx";
 
 type Gap = {
@@ -154,7 +154,7 @@ export function GapsPage() {
     }
 
     return (
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-6 md:px-8 lg:h-dvh lg:overflow-hidden">
+        <PageFrame full>
             <PageHeader
                 title="Gap plan"
                 description="What your positions ask that you cannot show yet, biggest impact first. Tick one after you changed the repo and it is re-scanned."
@@ -347,6 +347,6 @@ export function GapsPage() {
                     </section>
                 </div>
             )}
-        </div>
+        </PageFrame>
     );
 }

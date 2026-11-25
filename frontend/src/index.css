@@ -1,5 +1,8 @@
 @import "./styles/globals.css";
 
+/* The app size: every size is in rem, so this one value scales it all. Settings > Preferences > Density changes it per device. */
+html { font-size: 15px; }
+
 /* Chart ramps in the Stamp green, validated with the dataviz palette checker (ordinal, one hue)
    against the card surfaces: light #fffdf8 (and Paper #f6f1e7), dark #24221e.
    In dark mode the most important step is the brightest, so the ramp order flips. */

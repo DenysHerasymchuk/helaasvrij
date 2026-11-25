@@ -10,10 +10,9 @@ import { getProfile } from "@/features/profile/api";
 import { ChangesView } from "./changes-view";
 import { DocumentsMenu } from "./documents-menu";
 import { cx } from "@/utils/cx";
-import { fieldClass } from "@/core/ui";
+import { fieldClass, PageFrame, PageHeader, sectionTitleClass } from "@/core/ui";
 
-// Denser form fields for this page: smaller type, less padding.
-const compactField = cx(fieldClass, "py-1.5!");
+const compactField = fieldClass;
 
 type Language = "nl" | "fr" | "en";
 
@@ -59,7 +58,7 @@ function Panel({ id, title, action, children, className }: { id?: string; title:
     return (
         <section id={id} className={cx("scroll-mt-6 rounded-xl bg-primary shadow-xs ring-1 ring-secondary", className)}>
             <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-4 py-3">
-                <h2 className="text-md font-semibold text-primary">{title}</h2>
+                <h2 className={sectionTitleClass}>{title}</h2>
                 {action}
             </header>
             {children}
@@ -377,12 +376,9 @@ export function DocumentsPage() {
     const showCvText = cvSource === "paste" || cvText.length > 0;
 
     return (
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-4 py-4 md:px-6 lg:h-dvh lg:overflow-hidden">
+        <PageFrame full>
             <style>{printCss}</style>
-            <header>
-                <h1 className="font-display text-xl font-semibold tracking-tight text-primary">Documents</h1>
-                <p className="text-sm text-tertiary">CV, cover letters and recruiter messages, using only facts from your profile or your own CV.</p>
-            </header>
+            <PageHeader title="Documents" description="CV, cover letters and recruiter messages, using only facts from your profile or your own CV." />
 
             <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
                 <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto lg:pr-1">
@@ -811,6 +807,6 @@ export function DocumentsPage() {
                     </div>
                 </Panel>
             </div>
-        </div>
+        </PageFrame>
     );
 }

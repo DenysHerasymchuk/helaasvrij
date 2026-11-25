@@ -19,6 +19,19 @@ export const itemsOnPage =
 /** Page title style; detail pages with a richer header use it directly. */
 export const pageTitleClass = "font-display text-display-xs font-semibold tracking-tight text-balance text-primary md:text-display-sm";
 
+/** Type scale. Pages use these instead of picking sizes, so one edit here resizes a role everywhere. */
+export const sectionTitleClass = "text-md font-semibold text-primary";
+export const labelClass = "text-sm font-medium text-secondary";
+export const metaClass = "text-sm text-tertiary";
+
+/**
+ * One frame for every page: centred, same padding. `full` makes it exactly the window high on desktop,
+ * for pages whose panes scroll on their own (Gap plan, Documents, Interview prep).
+ */
+export function PageFrame({ children, full = false, width = "max-w-[1400px]" }: { children: ReactNode; full?: boolean; width?: string }) {
+    return <div className={cx("mx-auto flex w-full flex-col gap-4 px-4 py-6 md:px-8", width, full && "lg:h-dvh lg:overflow-hidden")}>{children}</div>;
+}
+
 /** One page header: Fraunces title, one line of description, at most one primary action on the right. */
 export function PageHeader({ title, description, action }: { title: ReactNode; description?: ReactNode; action?: ReactNode }) {
     return (

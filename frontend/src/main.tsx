@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import { applyDensity, readDensity } from '@/core/density'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Navigate, RouterProvider, useLocation, useParams } from 'react-router'
 import { AppShell } from '@/core/app-shell'
@@ -88,6 +89,8 @@ const router = createBrowserRouter([
     ],
   },
 ])
+
+applyDensity(readDensity())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
