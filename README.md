@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="frontend/public/brand/wordmark.svg" alt="helaasvrij" height="64">
+  <img src="frontend/public/favicon.svg" alt="helaasvrij" height="96">
 </p>
-
-<p align="center"><em>The internship coach that tells you what's missing.</em></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React">
