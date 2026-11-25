@@ -2,7 +2,8 @@ import { File06, FileCheck02, MessageChatCircle, Plus } from "@untitledui/icons"
 import { Button } from "@/components/base/buttons/button";
 import { useAuth } from "@/core/auth";
 import { useEffect, useState } from "react";
-import { JourneyBar, useJourney } from "@/features/journey/journey-bar";
+import { useJourney } from "@/features/journey/journey-bar";
+import { ActiveSprintCard } from "./sprint-card";
 import { FirstStart, isBrandNew, readSkipped } from "./first-start";
 import { ApplicationsBarChart } from "./applications-chart";
 import { BestMatchesCard } from "./best-matches-card";
@@ -17,9 +18,16 @@ import { PageHeader, ErrorState, LoadingState } from "@/core/ui";
 const nothingYet = (data: DashboardData) =>
     data.sources.every((s) => !s.synced) && data.postings.length === 0 && data.applicationsByMonth.every((m) => m.applied === 0);
 
+/** Greeting for the local hour: morning until 12, afternoon until 18, evening after. */
+function greeting(now = new Date()) {
+    const hour = now.getHours();
+    return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+}
+
 export function DashboardPage() {
     const { user } = useAuth();
     const firstName = user?.displayName.split(/\s+/)[0] ?? "";
+    const hello = greeting();
     const { data, error, reload } = useDashboard();
     const journey = useJourney();
     const [skipped, setSkipped] = useState(readSkipped);
@@ -42,7 +50,7 @@ export function DashboardPage() {
     if (showStart && journey.journey) {
         return (
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 md:px-8">
-                <PageHeader title={`Goeiemorgen, ${firstName}`} description="Welcome to helaasvrij. Start here." />
+                <PageHeader title={`${hello}, ${firstName}`} description="Welcome to helaasvrij. Start here." />
                 <FirstStart journey={journey.journey} reload={journey.reload} onSkip={() => setSkipped(true)} />
             </div>
         );
@@ -51,11 +59,11 @@ export function DashboardPage() {
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <div className="flex flex-col gap-4">
-                <PageHeader title={`Goeiemorgen, ${firstName}`} />
-                <JourneyBar />
+                <PageHeader title={`${hello}, ${firstName}`} />
+                <ActiveSprintCard />
                 <nav aria-label="Quick actions" className="flex flex-wrap gap-3">
-                    <Button size="md" href="/postings" iconLeading={Plus}>
-                        Add posting
+                    <Button size="md" href="/backlog" iconLeading={Plus}>
+                        Add position
                     </Button>
                     <Button size="md" color="secondary" href="/documents" iconLeading={FileCheck02}>
                         Tailor CV
@@ -93,12 +101,12 @@ export function DashboardPage() {
                         title="Applications"
                         description="Sent per month, and how many led to an interview or an offer."
                         order={1}
-                        action={<HeaderLink href="/applications">See all</HeaderLink>}
+                        action={<HeaderLink href="/sprints">Sprints</HeaderLink>}
                     >
                         {data.applicationsByMonth.some((m) => m.applied > 0) ? (
                             <ApplicationsBarChart data={data.applicationsByMonth} />
                         ) : (
-                            <p className="px-5 py-6 text-sm text-tertiary">No applications yet. Track a posting on the Applications board.</p>
+                            <p className="px-5 py-6 text-sm text-tertiary">No applications yet. Start a sprint and move positions across the board.</p>
                         )}
                     </Panel>
 
