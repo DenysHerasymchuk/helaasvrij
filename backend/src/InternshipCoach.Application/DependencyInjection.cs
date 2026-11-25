@@ -103,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<StartSprintHandler>();
         services.AddScoped<ListSprintsHandler>();
         services.AddScoped<GetSprintReportHandler>();
+        services.AddScoped<GetSprintBurndownHandler>();
         services.AddScoped<AddSprintItemsHandler>();
         services.AddScoped<RemoveSprintItemHandler>();
         services.AddScoped<CompleteSprintHandler>();

@@ -24,4 +24,8 @@ public sealed record SprintReportResponse(SprintResponse Sprint, IReadOnlyList<S
 
 public sealed record AddSprintItemsResponse(int Added);
 
+/// <param name="Scope">Positions in the sprint that day.</param>
+/// <param name="Open">Of those, the ones not yet at Offer or Rejected.</param>
+public sealed record BurndownPointResponse(DateOnly Date, int Scope, int Open);
+
 public sealed record CompleteSprintResponse(SprintResponse Completed, SprintResponse? Next, int Carried, int ReturnedToBacklog);

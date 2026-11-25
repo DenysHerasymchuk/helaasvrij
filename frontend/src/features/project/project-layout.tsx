@@ -1,5 +1,5 @@
-import { NavLink, Outlet } from "react-router";
-import { pageTitleClass } from "@/core/ui";
+import { NavLink, Outlet, useLocation } from "react-router";
+import { PageFrame, pageTitleClass } from "@/core/ui";
 
 const tab = ({ isActive }: { isActive: boolean }) =>
     `-mb-px flex shrink-0 items-center gap-2 border-b-2 px-1 pb-3 text-sm font-semibold whitespace-nowrap outline-focus-ring transition focus-visible:rounded-sm focus-visible:outline-2 ${
@@ -14,11 +14,12 @@ const tabs = [
     { to: "/sprints", label: "Sprints" },
 ];
 
-/** One home for the search, like a Jira project: tabs across the top, the page below. */
+/** One home for the search, like a Jira project: tabs across the top, the page below. The Board tab fills the window and scrolls inside. */
 export function ProjectLayout() {
+    const full = useLocation().pathname.startsWith("/board");
     return (
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
-            <header className="flex flex-col gap-4">
+        <PageFrame full={full} width="max-w-[1600px]">
+            <header className="flex flex-col gap-3">
                 <h1 className={pageTitleClass}>Board</h1>
                 <nav aria-label="Board sections" className="flex gap-6 overflow-x-auto overflow-y-hidden border-b border-secondary [scrollbar-width:none]">
                     {tabs.map((t) => (
@@ -28,7 +29,9 @@ export function ProjectLayout() {
                     ))}
                 </nav>
             </header>
-            <Outlet />
-        </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-4">
+                <Outlet />
+            </div>
+        </PageFrame>
     );
 }

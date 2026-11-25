@@ -294,3 +294,51 @@ public sealed class ListApplicationEventsHandler(IApplicationRepository applicat
         return events.Select(e => new ApplicationEventView(e, e.SprintId is { } id && names.TryGetValue(id, out var name) ? name : null)).ToList();
     }
 }
+
+/// <param name="Scope">Positions in the sprint that day (joined, not yet taken out).</param>
+/// <param name="Open">Of those, the ones still saved, applied or in interview.</param>
+public sealed record BurndownPoint(DateOnly Date, int Scope, int Open);
+
+public sealed class GetSprintBurndownHandler(ISprintRepository sprints, IApplicationRepository applications, IClock clock)
+{
+    // shortcut: days are UTC dates, not Brussels dates; a move near midnight can land on the next day. Upgrade when the chart needs exact days.
+    /// <summary>One point per day from the sprint start to its end (or today, or the completion day). Null when the sprint does not exist.</summary>
+    public async Task<IReadOnlyList<BurndownPoint>?> HandleAsync(Guid sprintId, CancellationToken ct)
+    {
+        var sprint = await sprints.FindAsync(sprintId, ct);
+        if (sprint is null)
+        {
+            return null;
+        }
+
+        var events = (await applications.ListEventsAsync(ct)).Where(e => e.SprintId == sprintId || e.Type == ApplicationEventType.SprintChanged).ToList();
+        var byApplication = events.GroupBy(e => e.ApplicationId).ToList();
+
+        // Per application: the day it joined, the day it reached Offer or Rejected here, the day it left.
+        var spans = new List<(DateOnly Joined, DateOnly? Closed, DateOnly? Left)>();
+        foreach (var group in byApplication)
+        {
+            var ordered = group.OrderBy(e => e.At).ToList();
+            var join = ordered.FirstOrDefault(e => e.SprintId == sprintId && e.Type is ApplicationEventType.Added or ApplicationEventType.SprintChanged);
+            if (join is null)
+            {
+                continue;
+            }
+
+            var closed = ordered.FirstOrDefault(e => e.Type == ApplicationEventType.StageChanged && e.SprintId == sprintId && e.ToStage is ApplicationStage.Offer or ApplicationStage.Rejected);
+            var left = ordered.FirstOrDefault(e => e.Type == ApplicationEventType.SprintChanged && e.SprintId != sprintId && e.At > join.At);
+            spans.Add((DateOnly.FromDateTime(join.At.UtcDateTime), closed is null ? null : DateOnly.FromDateTime(closed.At.UtcDateTime), left is null ? null : DateOnly.FromDateTime(left.At.UtcDateTime)));
+        }
+
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var last = sprint.CompletedAt is { } done ? DateOnly.FromDateTime(done.UtcDateTime) : today < sprint.EndsOn ? today : sprint.EndsOn;
+        var points = new List<BurndownPoint>();
+        for (var day = sprint.StartsOn; day <= last; day = day.AddDays(1))
+        {
+            var inScope = spans.Where(s => s.Joined <= day && (s.Left is null || s.Left > day)).ToList();
+            points.Add(new BurndownPoint(day, inScope.Count, inScope.Count(s => s.Closed is null || s.Closed > day)));
+        }
+
+        return points;
+    }
+}

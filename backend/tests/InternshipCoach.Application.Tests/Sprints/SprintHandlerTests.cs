@@ -130,6 +130,28 @@ public class SprintHandlerTests
     }
 
     [Fact]
+    public async Task Burndown_counts_positions_in_scope_and_still_open_per_day()
+    {
+        var sprint = await StartSprint();
+        var a = AddPosting("Alpha");
+        var b = AddPosting("Beta");
+        await Add().HandleAsync(sprint.Id, [a.Id, b.Id], default);
+        _applications.Items.Single(x => x.PostingId == a.Id).MoveTo(ApplicationStage.Offer, Now.AddDays(1));
+        _clock.Set(Now.AddDays(2));
+
+        var points = await new GetSprintBurndownHandler(_sprints, _applications, _clock).HandleAsync(sprint.Id, default);
+
+        Assert.Equal([(2, 2), (2, 1), (2, 1)], points!.Select(p => (p.Scope, p.Open)).ToArray());
+        Assert.Equal(Today, points![0].Date);
+    }
+
+    [Fact]
+    public async Task Burndown_of_an_unknown_sprint_is_null()
+    {
+        Assert.Null(await new GetSprintBurndownHandler(_sprints, _applications, _clock).HandleAsync(Guid.NewGuid(), default));
+    }
+
+    [Fact]
     public async Task Complete_with_next_carries_open_cards_and_leaves_finished_ones()
     {
         var sprint = await StartSprint();

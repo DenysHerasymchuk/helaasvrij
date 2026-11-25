@@ -31,6 +31,13 @@ public sealed class SprintsController : ControllerBase
         return Ok(new SprintReportResponse(ToResponse(report.Summary), items, report.AverageScore, report.GapsClosed));
     }
 
+    [HttpGet("{id:guid}/burndown")]
+    public async Task<ActionResult<IReadOnlyList<BurndownPointResponse>>> Burndown(Guid id, [FromServices] GetSprintBurndownHandler handler, CancellationToken ct)
+    {
+        var points = await handler.HandleAsync(id, ct);
+        return points is null ? NotFound() : Ok(points.Select(p => new BurndownPointResponse(p.Date, p.Scope, p.Open)).ToList());
+    }
+
     [HttpPost]
     [Consumes("application/json")]
     public async Task<IActionResult> Start(StartSprintRequest request, [FromServices] StartSprintHandler handler, CancellationToken ct)
