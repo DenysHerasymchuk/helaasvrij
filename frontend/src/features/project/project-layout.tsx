@@ -19,8 +19,8 @@ export function ProjectLayout() {
     return (
         <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
             <header className="flex flex-col gap-4">
-                <h1 className={pageTitleClass}>Job search</h1>
-                <nav aria-label="Job search sections" className="flex gap-6 overflow-x-auto border-b border-secondary">
+                <h1 className={pageTitleClass}>Board</h1>
+                <nav aria-label="Board sections" className="flex gap-6 overflow-x-auto border-b border-secondary">
                     {tabs.map((t) => (
                         <NavLink key={t.to} to={t.to} className={tab}>
                             {t.label}

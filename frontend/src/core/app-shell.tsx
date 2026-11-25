@@ -1,4 +1,4 @@
-import { Briefcase01, Calendar, HomeLine, Tool02 } from "@untitledui/icons";
+import { Calendar, Columns03, HomeLine, SearchLg, Tool02 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -12,7 +12,8 @@ import { ChatWidget } from "@/features/chat/chat-widget";
 // Five places for the journey; the per-posting tools live on the posting page, with "All tools" as a shortcut.
 const mainItems: NavItemType[] = [
     { label: "Home", href: "/dashboard", icon: HomeLine },
-    { label: "Job search", href: "/board", icon: Briefcase01 },
+    { label: "Board", href: "/board", icon: Columns03 },
+    { label: "Find positions", href: "/find", icon: SearchLg },
     { label: "Calendar", href: "/calendar", icon: Calendar },
 ];
 
@@ -30,9 +31,9 @@ const toolItems: NavItemType[] = [
     },
 ];
 
-// Every tab of the job search, and the position pages, highlight "Job search".
-const searchPaths = ["/summary", "/list", "/board", "/backlog", "/sprints", "/positions"];
-const navMatch = (path: string) => (searchPaths.some((p) => path.startsWith(p)) ? "/board" : path);
+// Every tab of the board, and the position pages, highlight "Board"; the search pages highlight "Find positions".
+const boardPaths = ["/summary", "/list", "/board", "/backlog", "/sprints", "/positions"];
+const navMatch = (path: string) => (path.startsWith("/find") ? "/find" : boardPaths.some((p) => path.startsWith(p)) ? "/board" : path);
 
 function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: CurrentUser; onSignOut: () => void }) {
     return (

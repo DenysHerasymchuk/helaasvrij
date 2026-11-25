@@ -49,7 +49,7 @@ export function JobDetailPage() {
 
     const back = (
         <div>
-            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/backlog/find">
+            <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/find">
                 All postings
             </Button>
         </div>
@@ -57,7 +57,7 @@ export function JobDetailPage() {
 
     if (error) {
         return (
-            <div className="flex w-full max-w-4xl flex-col gap-4">
+            <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-8 md:px-8">
                 {back}
                 <p role="alert" className="text-md text-error-primary">
                     {error.message}
@@ -75,7 +75,7 @@ export function JobDetailPage() {
 
     if (!job) {
         return (
-            <div className="max-w-4xl">
+            <div className="mx-auto max-w-4xl px-4 py-8 md:px-8">
                 <p role="status" className="text-md text-tertiary">
                     Loading posting...
                 </p>
@@ -86,7 +86,7 @@ export function JobDetailPage() {
     const href = safeHref(job.url);
 
     return (
-        <div className="flex w-full max-w-4xl flex-col gap-6">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
             {back}
 
             <header className="flex flex-col gap-4 sm:flex-row sm:items-start">

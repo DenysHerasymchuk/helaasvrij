@@ -3,7 +3,7 @@ import { useAuth } from "@/core/auth";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useJourney } from "@/features/journey/journey-bar";
-import { MenuTab } from "./menu-tab";
+import { ShortcutButtons } from "./shortcut-buttons";
 import { FirstStart, isBrandNew, readSkipped } from "./first-start";
 import { ApplicationsBarChart } from "./applications-chart";
 import { BestMatchesCard } from "./best-matches-card";
@@ -27,7 +27,6 @@ function greeting(now = new Date()) {
 const sections = [
     { id: "overview", label: "Overview" },
     { id: "insights", label: "Insights" },
-    { id: "menu", label: "Menu" },
     { id: "sources", label: "Sources" },
 ];
 
@@ -69,6 +68,7 @@ export function DashboardPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <div className="flex flex-col gap-4">
                 <PageHeader title={`${hello}, ${firstName}`} />
+                <ShortcutButtons />
                 <nav aria-label="Home sections" className="flex gap-6 overflow-x-auto border-b border-secondary [scrollbar-width:none]">
                     {sections.map((s) => (
                         <button
@@ -86,9 +86,7 @@ export function DashboardPage() {
                 </nav>
             </div>
 
-            {tab === "menu" ? (
-                <MenuTab />
-            ) : error ? (
+            {error ? (
                 <ErrorState message={error} onRetry={reload} />
             ) : !data ? (
                 <LoadingState>Loading your dashboard...</LoadingState>

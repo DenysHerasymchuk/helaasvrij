@@ -144,7 +144,7 @@ export function BacklogPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-2xl text-md text-tertiary">Every position you are considering. Pull the ones you will chase this round into a sprint.</p>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                    <Button size="md" color="secondary" href="/backlog/find">
+                    <Button size="md" color="secondary" href="/find">
                         Find positions
                     </Button>
                     <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
@@ -226,7 +226,7 @@ export function BacklogPage() {
                                 <p className="text-md font-semibold text-primary">{debounced ? "No positions match." : "The backlog is empty."}</p>
                                 <p className="text-md text-tertiary">{debounced ? "Try another search." : "Find positions or paste one you found elsewhere."}</p>
                                 {!debounced && (
-                                    <Button size="md" color="secondary" href="/backlog/find">
+                                    <Button size="md" color="secondary" href="/find">
                                         Find positions
                                     </Button>
                                 )}
