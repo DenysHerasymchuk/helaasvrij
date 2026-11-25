@@ -22,7 +22,7 @@ const series: { key: SeriesKey; label: string; color: string }[] = [
 
 const pct = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
 
-export function ApplicationsBarChart({ data }: { data: MonthRow[] }) {
+export function ApplicationsBarChart({ data, compact = false }: { data: MonthRow[]; compact?: boolean }) {
     const [months, setMonths] = useState<3 | 6>(6);
     const [hidden, setHidden] = useState<Set<SeriesKey>>(new Set());
     const rows = data.slice(-months);
@@ -38,9 +38,9 @@ export function ApplicationsBarChart({ data }: { data: MonthRow[] }) {
         });
 
     return (
-        <div className="flex flex-col gap-4 p-5">
+        <div className={cx("flex flex-col", compact ? "gap-2 p-4" : "gap-4 p-5")}>
             <div className="flex flex-wrap items-end justify-between gap-4">
-                <dl className="flex gap-8">
+                <dl className={cx("flex gap-8", compact && "hidden")}>
                     <div>
                         <dt className="text-sm text-tertiary">Interview rate</dt>
                         <dd className="text-display-xs font-semibold text-primary tabular-nums">{pct(sum("interview"), applied)}%</dd>
@@ -79,7 +79,7 @@ export function ApplicationsBarChart({ data }: { data: MonthRow[] }) {
                 </div>
             </div>
 
-            <div className="h-56" role="img" aria-label={`Applications per month, last ${months} months`}>
+            <div className={compact ? "h-32" : "h-56"} role="img" aria-label={`Applications per month, last ${months} months`}>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={rows} barGap={2} barCategoryGap="28%" margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                         <CartesianGrid vertical={false} stroke="var(--color-border-secondary)" />

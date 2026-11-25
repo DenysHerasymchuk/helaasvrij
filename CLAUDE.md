@@ -35,7 +35,7 @@ Pitch: "Drop in your links, see exactly what each Belgian position wants from yo
 
 | Sidebar item | Route | Content |
 | --- | --- | --- |
-| Home | `/dashboard` | Running sprint (goal, days left, progress) or a prompt to start one, source status, top matched postings, top gap actions, next deadline and interview, applications per month |
+| Home | `/dashboard` | One screen, no tabs: a sentence about the week, shortcut buttons, five number tiles, "Focus today" (interviews, deadlines within 7 days, top gap actions, unchecked positions, each with its own button), pipeline bar of the running sprint, best matches (checked positions only), profile strength, applications per month, recent activity (`GET /api/applications/activity`) |
 | Gap plan | `/gaps` | All gaps across postings as one checklist, sorted by impact; ticking re-scans and updates scores; closed gaps feed cover letters |
 | Documents | `/documents` | CV (NL/FR/EN, print to PDF), cover letters and recruiter messages (max 300 chars, copy only) per posting |
 | Interview prep | `/interview` | Questions from gaps, from the student's repos, and shared company questions; practice answers with feedback |
