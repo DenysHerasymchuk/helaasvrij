@@ -499,17 +499,16 @@ export function InterviewPage() {
 
           {interview && !busy && !interview.analysed && (
             <div
-              className={`flex flex-col items-start gap-3 ${panelClass} p-6`}
+              className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${cardClass} px-5 py-3`}
             >
-              <p className="text-md font-semibold text-primary">
-                Analyse this posting first
-              </p>
               <p className="text-sm text-tertiary">
-                The questions come from what {interview.company} asks for and
-                what your profile is missing. Analyse the posting, then 6
-                questions are written for you. This uses two AI calls.
+                <span className="font-semibold text-primary">
+                  Analyse this position first.
+                </span>{" "}
+                Questions come from what {interview.company} asks for and what
+                your profile is missing. Uses two AI calls.
               </p>
-              <Button size="md" onPress={analyseThenGenerate}>
+              <Button size="md" className="shrink-0" onPress={analyseThenGenerate}>
                 Analyse and write questions
               </Button>
             </div>

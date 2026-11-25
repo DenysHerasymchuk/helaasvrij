@@ -275,7 +275,11 @@ export function GapsPage() {
                     <section aria-label="Gaps" className="min-h-0 overflow-y-auto rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
                         {visible.length === 0 ? (
                             <p className="px-5 py-10 text-center text-sm text-tertiary">
-                                {status === "open" ? "No open gaps here. Everything this asks, you can already show." : "Nothing matches."}
+                                {rail.length === 0
+                                    ? "Analyse a position on the left. What it asks that you cannot show yet appears here."
+                                    : status === "open"
+                                      ? "No open gaps here. Everything this asks, you can already show."
+                                      : "Nothing matches."}
                             </p>
                         ) : (
                             groups.map(([name, rows]) => (

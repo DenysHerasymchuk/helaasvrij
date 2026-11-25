@@ -503,7 +503,7 @@ export function DocumentsPage() {
                                         <textarea
                                             id="cv-text"
                                             required
-                                            rows={6}
+                                            rows={4}
                                             maxLength={MAX_CHARS}
                                             value={cvText}
                                             onChange={(e) => setCvText(e.target.value)}
@@ -575,7 +575,7 @@ export function DocumentsPage() {
                                         <textarea
                                             id="posting-text"
                                             required
-                                            rows={5}
+                                            rows={4}
                                             maxLength={MAX_CHARS}
                                             value={postingText}
                                             onChange={(e) => setPostingText(e.target.value)}

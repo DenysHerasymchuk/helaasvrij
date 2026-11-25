@@ -92,7 +92,7 @@ export function ProfilePage() {
     useEffect(load, [load]);
 
     return (
-        <div className="flex w-full flex-col gap-6">
+        <div className="flex w-full flex-col gap-4">
             {loadError ? (
                 <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
                     <p className="text-sm text-error-primary">{loadError}</p>

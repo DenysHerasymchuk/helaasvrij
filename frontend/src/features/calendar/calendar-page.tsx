@@ -216,7 +216,7 @@ function MonthGrid({ days, month, today, selected, byDay, loading, onSelect }: G
                                     onClick={() => onSelect(date)}
                                     onKeyDown={(e) => onKeyDown(e, date)}
                                     className={cx(
-                                        "flex h-14 w-full flex-col items-center gap-1 rounded-lg p-1 text-left outline-focus-ring transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 md:h-24 md:items-stretch md:p-1.5",
+                                        "flex h-14 w-full flex-col items-center gap-0.5 rounded-lg p-1 text-left outline-focus-ring transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 md:h-[4.25rem] md:items-stretch md:p-1",
                                         isSelected ? "bg-secondary ring-2 ring-brand ring-inset" : "hover:bg-primary_hover",
                                     )}
                                 >
