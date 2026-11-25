@@ -16,7 +16,7 @@ const sections: { title?: string; items: NavItemType[] }[] = [
     {
         title: "2. Find a posting",
         items: [
-            { label: "Find internships", href: "/postings", icon: SearchLg },
+            { label: "Find positions", href: "/postings", icon: SearchLg },
             { label: "My postings", href: "/postings/saved", icon: Briefcase01 },
         ],
     },
@@ -31,7 +31,7 @@ const sections: { title?: string; items: NavItemType[] }[] = [
     },
 ];
 
-// Detail pages highlight their parent item: /postings/job/x -> Find internships, /postings/<id> -> My postings.
+// Detail pages highlight their parent item: /postings/job/x -> Find positions, /postings/<id> -> My postings.
 const navMatch = (path: string) =>
     path.startsWith("/postings/job/") ? "/postings" : /^\/postings\/(?!saved$)[^/]+$/.test(path) ? "/postings/saved" : path;
 

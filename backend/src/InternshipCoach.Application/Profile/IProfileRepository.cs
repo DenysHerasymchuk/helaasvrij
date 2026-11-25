@@ -26,9 +26,5 @@ public interface IProfileRepository
 
     Task RemoveItemAsync(ProfileItem item, CancellationToken ct);
 
-    Task<ProfileBasics?> FindBasicsAsync(CancellationToken ct);
-
-    Task AddBasicsAsync(ProfileBasics basics, CancellationToken ct);
-
     Task SaveAsync(CancellationToken ct);
 }

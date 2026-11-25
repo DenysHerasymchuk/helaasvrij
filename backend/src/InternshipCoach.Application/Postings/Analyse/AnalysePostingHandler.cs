@@ -22,7 +22,7 @@ public sealed class AnalysePostingHandler(
         var evidence = await loader.LoadAsync(ct);
         if (evidence.Quotes.Count == 0)
         {
-            throw new GapInputException("Confirm at least one item on your profile first. Only confirmed items are used.");
+            throw new GapInputException("Read your sources on your profile first. The analysis only uses items from your profile.");
         }
 
         var requirements = posting.Requirements.OrderBy(r => r.Position).ToList();
@@ -81,7 +81,7 @@ public sealed class RecheckRequirementHandler(IPostingRepository postings, GapEv
         var evidence = await loader.LoadAsync(ct);
         if (evidence.Quotes.Count == 0)
         {
-            throw new GapInputException("Confirm at least one item on your profile first. Only confirmed items are used.");
+            throw new GapInputException("Read your sources on your profile first. The analysis only uses items from your profile.");
         }
 
         var verdict = (await analyser.AnalyseAsync([requirement], posting.Language, evidence, ct)).Single();

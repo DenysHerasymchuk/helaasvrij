@@ -49,7 +49,6 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
 
     public DbSet<ProfileEvidence> ProfileEvidence => Set<ProfileEvidence>();
 
-    public DbSet<ProfileBasics> ProfileBasics => Set<ProfileBasics>();
 
     public DbSet<Posting> Postings => Set<Posting>();
 

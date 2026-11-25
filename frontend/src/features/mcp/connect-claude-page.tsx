@@ -12,7 +12,7 @@ const defaultApiUrl = "http://localhost:5080";
 const tools: { name: string; does: string; inputs: string; writes: boolean }[] = [
     { name: "list_postings", does: "Lists your saved postings with match score and board stage.", inputs: "none", writes: false },
     { name: "get_posting", does: "Shows one posting with its requirements, coverage, score and gap actions.", inputs: "postingId", writes: false },
-    { name: "search_jobs", does: "Searches the Belgian internship ads. Returns a jobId per result.", inputs: "what (optional), where (optional)", writes: false },
+    { name: "search_jobs", does: "Searches the Belgian job ads. Returns a jobId per result.", inputs: "what (optional), where (optional)", writes: false },
     { name: "save_job", does: "Saves a job from search_jobs to your postings. Uses one AI call.", inputs: "jobId", writes: true },
     { name: "add_posting", does: "Adds a posting from pasted text or a URL. Uses one AI call.", inputs: "text or url", writes: true },
     { name: "list_applications", does: "Lists the cards on your applications board.", inputs: "none", writes: false },
@@ -25,7 +25,7 @@ const tools: { name: string; does: string; inputs: string; writes: boolean }[] =
     { name: "list_gaps", does: "Lists your open gaps across all postings, highest impact first, with the action for each.", inputs: "none", writes: false },
 ];
 
-const prompts = ["I got an interview at Barco", "Find internships in Gent with React", "What should I fix first for Brightlane?"];
+const prompts = ["I got an interview at Barco", "Find React positions in Gent", "What should I fix first for Brightlane?"];
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
     return (

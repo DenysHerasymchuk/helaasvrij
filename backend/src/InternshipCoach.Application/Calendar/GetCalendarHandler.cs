@@ -8,9 +8,7 @@ public enum CalendarEventType
 {
     Interview,
     Deadline,
-    GapDue,
-    StageStart,
-    StageEnd
+    GapDue
 }
 
 /// <param name="Date">The day in Belgian time.</param>
@@ -45,16 +43,6 @@ public sealed class GetCalendarHandler(IPostingRepository postings, IApplication
             if (p.Deadline is { } deadline && !rejected.Contains(p.Id))
             {
                 events.Add(new CalendarEvent(CalendarEventType.Deadline, deadline, null, $"Application deadline: {p.Company}", p.Id, link));
-            }
-
-            if (p.StageStart is { } start)
-            {
-                events.Add(new CalendarEvent(CalendarEventType.StageStart, start, null, $"Internship at {p.Company} starts", p.Id, link));
-            }
-
-            if (p.StageEnd is { } end)
-            {
-                events.Add(new CalendarEvent(CalendarEventType.StageEnd, end, null, $"Internship at {p.Company} ends", p.Id, link));
             }
 
             foreach (var r in p.Requirements.Where(r => r is { Action: not null, Done: false, DueDate: not null, AnalysedAt: not null }))

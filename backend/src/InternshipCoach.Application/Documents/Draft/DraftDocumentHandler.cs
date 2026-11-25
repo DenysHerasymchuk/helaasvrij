@@ -63,7 +63,7 @@ public sealed partial class DraftDocumentHandler(
         var evidence = await loader.LoadAsync(ct);
         if (evidence.Quotes.Count == 0)
         {
-            throw new GapInputException("Confirm at least one item on your profile first. Drafts use only confirmed items.");
+            throw new GapInputException("Read your sources on your profile first. Drafts only use items from your profile.");
         }
 
         var language = command.Language ?? posting.Language.ToCode();

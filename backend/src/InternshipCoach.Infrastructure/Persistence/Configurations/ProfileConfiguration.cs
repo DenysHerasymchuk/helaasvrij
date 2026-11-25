@@ -16,7 +16,6 @@ public sealed class ProfileItemConfiguration : IEntityTypeConfiguration<ProfileI
         builder.Property(item => item.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(item => item.Name).HasColumnName("name").HasMaxLength(ProfileItem.NameMaxLength).IsRequired();
         builder.Property(item => item.NormalizedName).HasColumnName("normalized_name").HasMaxLength(ProfileItem.NameMaxLength).IsRequired();
-        builder.Property(item => item.Level).HasColumnName("level").HasMaxLength(2);
         builder.Property(item => item.Quote).HasColumnName("quote").HasMaxLength(ProfileEvidence.QuoteMaxLength).IsRequired();
         builder.Property(item => item.SourceDocumentId).HasColumnName("source_document_id").IsRequired();
         builder.Property(item => item.Confirmed).HasColumnName("confirmed").IsRequired();
@@ -54,21 +53,5 @@ public sealed class ProfileEvidenceConfiguration : IEntityTypeConfiguration<Prof
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(evidence => evidence.ProfileItemId);
-    }
-}
-
-public sealed class ProfileBasicsConfiguration : IEntityTypeConfiguration<ProfileBasics>
-{
-    public void Configure(EntityTypeBuilder<ProfileBasics> builder)
-    {
-        builder.ToTable("profile_basics");
-        builder.HasKey(basics => basics.Id);
-        builder.Property(basics => basics.Id).HasColumnName("id").ValueGeneratedNever();
-        builder.Property(basics => basics.UserId).HasColumnName("user_id").IsRequired();
-        builder.Property(basics => basics.School).HasColumnName("school").HasMaxLength(ProfileBasics.SchoolMaxLength);
-        builder.Property(basics => basics.StageStart).HasColumnName("stage_start");
-        builder.Property(basics => basics.StageEnd).HasColumnName("stage_end");
-
-        builder.HasIndex(basics => basics.UserId).IsUnique();
     }
 }

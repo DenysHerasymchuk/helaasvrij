@@ -73,7 +73,7 @@ function why(question: Question, company: string) {
       : "Asked because of a gap in your profile.";
   if (question.source === "repo")
     return `Asked about ${question.project?.replace(/^new:/, "")}, from your own work.`;
-  return `Other students were asked this at ${company}.`;
+  return `Other candidates were asked this at ${company}.`;
 }
 
 function Feedback({ answer }: { answer: Answer }) {

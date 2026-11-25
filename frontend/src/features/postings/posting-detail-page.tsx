@@ -5,12 +5,12 @@ import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { ApiError, api } from "@/core/api";
 import { BoardStatus, useBoard } from "@/features/applications/board-status";
-import { BelgianDateInput, DateField, Field } from "./fields";
+import { DateField, Field } from "./fields";
 import { GapMatrix, GapPanel } from "./gap-analysis";
 import { GenericAnswerPanel } from "./generic-answer";
 import { NextSteps } from "./next-steps";
 import { SHORT_POSTING_CHARS, ShortTextHint } from "./short-text-hint";
-import { type PostingDetail, formatDate, formatDateTime, formatStagePeriod, toLocalInput } from "./types";
+import { type PostingDetail, formatDate, formatDateTime, toLocalInput } from "./types";
 import { pageTitleClass } from "@/core/ui";
 
 
@@ -25,9 +25,6 @@ export function PostingDetailPage() {
     const [error, setError] = useState<{ message: string; notFound: boolean } | null>(null);
     const [deadline, setDeadline] = useState("");
     const [interview, setInterview] = useState("");
-    const [stageStart, setStageStart] = useState("");
-    const [stageEnd, setStageEnd] = useState("");
-    const [stageError, setStageError] = useState<string | undefined>();
     const [saving, setSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -42,8 +39,6 @@ export function PostingDetailPage() {
             setPosting(data);
             setDeadline(data?.deadline ?? "");
             setInterview(toLocalInput(data?.interviewAt ?? null));
-            setStageStart(data?.stageStart ?? "");
-            setStageEnd(data?.stageEnd ?? "");
         } catch (e) {
             const err = e instanceof ApiError ? e : null;
             setError({ message: err?.status === 404 ? "This posting does not exist." : (err?.message ?? "Something went wrong. Try again."), notFound: err?.status === 404 });
@@ -57,20 +52,15 @@ export function PostingDetailPage() {
     async function save() {
         setSaving(true);
         setSaveMessage(null);
-        setStageError(undefined);
         try {
             const updated = await api.put<PostingDetail>(`/api/postings/${id}`, {
                 deadline: deadline || null,
                 interviewAt: interview ? new Date(interview).toISOString() : null,
-                stageStart: stageStart || null,
-                stageEnd: stageEnd || null,
             });
             setPosting(updated);
             setSaveMessage("Saved.");
         } catch (e) {
-            const stageProblem = e instanceof ApiError ? e.fieldErrors.stageEnd : undefined;
-            setStageError(stageProblem);
-            setSaveMessage(stageProblem ? null : e instanceof ApiError ? e.message : "Something went wrong. Try again.");
+            setSaveMessage(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
         } finally {
             setSaving(false);
         }
@@ -143,13 +133,7 @@ export function PostingDetailPage() {
                     {posting.city && `, ${posting.city}`}
                     {posting.deadline && ` · Deadline ${formatDate(posting.deadline)}`}
                     {posting.interviewAt && ` · Interview ${formatDateTime(posting.interviewAt)}`}
-                    {formatStagePeriod(posting.stageStart, posting.stageEnd) && ` · Stage ${formatStagePeriod(posting.stageStart, posting.stageEnd)}`}
                 </p>
-                {posting.stageFit === "conflict" && (
-                    <p role="note" className="text-sm font-medium text-warning-primary">
-                        This internship runs outside the stage period on your profile. Check the dates with your school before you apply.
-                    </p>
-                )}
                 {href && (
                     <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-secondary hover:underline">
                         Open original posting <LinkExternal01 className="size-4" aria-hidden="true" />
@@ -237,8 +221,6 @@ export function PostingDetailPage() {
                             <Field label="Interview">
                                 <DateField type="datetime-local" value={interview} onChange={(e) => setInterview(e.target.value)} />
                             </Field>
-                            <BelgianDateInput label="Stage starts" value={stageStart} max={stageEnd || undefined} onChange={setStageStart} />
-                            <BelgianDateInput label="Stage ends" value={stageEnd} min={stageStart || undefined} onChange={setStageEnd} isInvalid={!!stageError} hint={stageError} />
                             <div className="flex items-center gap-3">
                                 <Button size="md" onPress={save} isLoading={saving}>
                                     Save dates

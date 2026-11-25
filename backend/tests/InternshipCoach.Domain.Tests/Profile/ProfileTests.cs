@@ -11,15 +11,15 @@ public class ProfileTests
     public void Item_needs_a_name_a_quote_and_a_document()
     {
         var doc = Guid.NewGuid();
-        Assert.Throws<DomainException>(() => ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, " ", null, doc, "q", Now));
-        Assert.Throws<DomainException>(() => ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Docker", null, doc, " ", Now));
-        Assert.Throws<DomainException>(() => ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Docker", null, Guid.Empty, "q", Now));
+        Assert.Throws<DomainException>(() => ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, " ", doc, "q", Now));
+        Assert.Throws<DomainException>(() => ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Docker", doc, " ", Now));
+        Assert.Throws<DomainException>(() => ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Docker", Guid.Empty, "q", Now));
     }
 
     [Fact]
     public void Item_starts_unconfirmed_with_its_first_quote_as_evidence()
     {
-        var item = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "  Docker  ", null, Guid.NewGuid(), "Docker compose", Now);
+        var item = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "  Docker  ", Guid.NewGuid(), "Docker compose", Now);
 
         Assert.False(item.Confirmed);
         Assert.Equal("Docker", item.Name);
@@ -28,53 +28,14 @@ public class ProfileTests
     }
 
     [Fact]
-    public void Level_is_kept_only_for_languages_and_only_when_it_is_cefr()
-    {
-        var doc = Guid.NewGuid();
-        var dutch = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Language, "Dutch", "c1", doc, "Dutch: C1", Now);
-        var bad = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Language, "French", "fluent", doc, "French: fluent", Now);
-        var skill = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Java", "B2", doc, "Java", Now);
-
-        Assert.Equal("C1", dutch.Level);
-        Assert.Null(bad.Level);
-        Assert.Null(skill.Level);
-    }
-
-    [Fact]
     public void Same_quote_from_the_same_document_is_not_added_twice()
     {
         var doc = Guid.NewGuid();
-        var item = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Docker", null, doc, "Docker", Now);
+        var item = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Docker", doc, "Docker", Now);
 
-        Assert.False(item.AddEvidence(doc, "Docker", null));
-        Assert.True(item.AddEvidence(doc, "Dockerfile", null));
-        Assert.True(item.AddEvidence(Guid.NewGuid(), "Docker", null));
+        Assert.False(item.AddEvidence(doc, "Docker"));
+        Assert.True(item.AddEvidence(doc, "Dockerfile"));
+        Assert.True(item.AddEvidence(Guid.NewGuid(), "Docker"));
         Assert.Equal(3, item.Evidence.Count);
-    }
-
-    [Fact]
-    public void Basics_reject_an_end_before_the_start_and_a_long_school()
-    {
-        var user = Guid.NewGuid();
-        Assert.Throws<DomainException>(() => ProfileBasics.Create(user, "School", new DateOnly(2027, 3, 1), new DateOnly(2027, 2, 1)));
-        Assert.Throws<DomainException>(() => ProfileBasics.Create(user, new string('x', 201), null, null));
-
-        var ok = ProfileBasics.Create(user, "  Howest ", new DateOnly(2027, 2, 1), new DateOnly(2027, 5, 31));
-        Assert.Equal("Howest", ok.School);
-    }
-
-    [Fact]
-    public void SetLevel_changes_or_clears_a_language_level_and_refuses_anything_else()
-    {
-        var doc = Guid.NewGuid();
-        var dutch = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Language, "Dutch", null, doc, "Dutch", Now);
-        var skill = ProfileItem.Create(Guid.NewGuid(), ProfileItemKind.Skill, "Java", null, doc, "Java", Now);
-
-        dutch.SetLevel("b2");
-        Assert.Equal("B2", dutch.Level);
-        dutch.SetLevel(null);
-        Assert.Null(dutch.Level);
-        Assert.Throws<DomainException>(() => dutch.SetLevel("fluent"));
-        Assert.Throws<DomainException>(() => skill.SetLevel("B2"));
     }
 }

@@ -23,7 +23,7 @@ public class DemoSafetyTests
         var doc = source.AddDocument("weather-app/README.md", "weather-app: shipped it with Docker.");
         source.MarkReady(Clock.UtcNow);
         var profile = new FakeProfileRepository([source]);
-        var item = ProfileItem.Create(UserId, ProfileItemKind.Skill, "Docker", null, doc.Id, "shipped it with Docker", new CreatedAt(Clock.UtcNow));
+        var item = ProfileItem.Create(UserId, ProfileItemKind.Skill, "Docker", doc.Id, "shipped it with Docker", new CreatedAt(Clock.UtcNow));
         item.SetConfirmed(true);
         profile.Items.Add(item);
 

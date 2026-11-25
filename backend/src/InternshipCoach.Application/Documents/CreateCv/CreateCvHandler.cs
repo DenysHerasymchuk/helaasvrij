@@ -13,7 +13,7 @@ namespace InternshipCoach.Application.Documents.CreateCv;
 
 public sealed record CreateCvResult(Document? Document, int DroppedCount, string? Error)
 {
-    public const string NoConfirmedItems = "Confirm some profile items first";
+    public const string NoConfirmedItems = "Read your sources on your profile first";
 
     public bool Succeeded => Document is not null;
 
@@ -31,11 +31,11 @@ public sealed class CreateCvHandler(
     private const string System = """
         You write a first CV for a student from their confirmed profile items.
         Rules:
-        - Use only facts stated in the items (name, level, quotes). Never add employers, schools, dates, grades, numbers, tools or skills that are not there.
+        - Use only facts stated in the items (name, quotes). Never add employers, schools, dates, grades, numbers, tools or skills that are not there.
         - Every bullet has "itemId": the id of the one item it is based on, copied exactly. One item can give one or two bullets.
-        - Skill bullets are just the skill name. Language bullets are the language and its CEFR level when given.
+        - Skill bullets are just the skill name. Language bullets are just the language name.
         - Project, experience and education bullets are one short line each.
-        - "summary" is two or three sentences, built only from the items and the profile basics.
+        - "summary" is two or three sentences, built only from the items.
         """;
 
     private const string Schema = """
@@ -86,18 +86,11 @@ public sealed class CreateCvHandler(
         }
 
         var language = command.Language ?? (await settings.FindAsync(userId, ct))?.DefaultLanguage ?? UserSettings.DefaultLanguageCode;
-        var basics = await profile.FindBasicsAsync(ct);
-        var basicsText = $"school: {basics?.School ?? "-"}\nstage period: {basics?.StageStart?.ToString("yyyy-MM-dd") ?? "-"} to {basics?.StageEnd?.ToString("yyyy-MM-dd") ?? "-"}";
 
         var itemsText = new StringBuilder();
         foreach (var item in items.Values)
         {
             itemsText.Append($"id: {item.Id}\nkind: {item.Kind}\nname: {item.Name}\n");
-            if (item.Level is not null)
-            {
-                itemsText.Append($"level: {item.Level}\n");
-            }
-
             itemsText.Append("quotes:\n");
             foreach (var evidence in item.Evidence)
             {
@@ -107,7 +100,7 @@ public sealed class CreateCvHandler(
             itemsText.Append('\n');
         }
 
-        var user = $"Write the CV in {LanguageNames[language]}.\n\n{UntrustedInput.Wrap("profile_basics", basicsText)}\n\n{UntrustedInput.Wrap("profile_items", itemsText.ToString())}";
+        var user = $"Write the CV in {LanguageNames[language]}.\n\n{UntrustedInput.Wrap("profile_items", itemsText.ToString())}";
         var reply = await llm.CompleteJsonAsync<DraftCv>(
             new LlmCallContext(userId, Feature), LlmModel.Smart, System, user, Schema, LlmModels.SmartMinMaxTokens, ct);
 
@@ -120,7 +113,7 @@ public sealed class CreateCvHandler(
             if (Guid.TryParse(bullet.ItemId, out var id) && items.TryGetValue(id, out var item) && text.Length > 0
                 && TailorCvHandler.Numbers(text).IsSubsetOf(itemNumbers[id]))
             {
-                kept.Add((item, item.Level is not null && !text.Contains(item.Level) ? $"{text} ({item.Level})" : text));
+                kept.Add((item, text));
             }
             else
             {
@@ -134,8 +127,7 @@ public sealed class CreateCvHandler(
         }
 
         var summary = TailorCvHandler.Line(reply.Value.Summary);
-        var allowed = TailorCvHandler.Numbers(basicsText);
-        allowed.UnionWith(itemNumbers.Values.SelectMany(n => n));
+        var allowed = new HashSet<string>(itemNumbers.Values.SelectMany(n => n));
         if (summary.Length > 0 && !TailorCvHandler.Numbers(summary).IsSubsetOf(allowed))
         {
             summary = string.Empty;
@@ -173,7 +165,7 @@ public sealed class CreateCvHandler(
         return new CreateCvResult(document, dropped, null);
     }
 
-    private static string ItemText(ProfileItem item) => $"{item.Name} {item.Level} {item.Quote} {string.Join(' ', item.Evidence.Select(e => e.Quote))}";
+    private static string ItemText(ProfileItem item) => $"{item.Name} {item.Quote} {string.Join(' ', item.Evidence.Select(e => e.Quote))}";
 
     private sealed record DraftCv(string? Summary, List<DraftBullet>? Bullets);
 

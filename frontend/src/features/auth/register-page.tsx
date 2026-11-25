@@ -45,7 +45,7 @@ export function RegisterPage() {
     return (
         <AuthCard
             title="Create your account"
-            subtitle="See what Belgian internships expect from you."
+            subtitle="See what each position expects from you."
             footer={
                 <>
                     <span className="text-sm text-tertiary">Already have an account?</span>
@@ -58,7 +58,7 @@ export function RegisterPage() {
             <Form onSubmit={onSubmit} className="flex flex-col gap-6">
                 <div className="flex flex-col gap-5">
                     <Input isRequired name="name" label="Name" placeholder="Your full name" size="lg" isInvalid={!!errors.name} hint={errors.name} />
-                    <Input isRequired type="email" name="email" label="Email" placeholder="you@student.be" size="lg" isInvalid={!!errors.email} hint={errors.email} />
+                    <Input isRequired type="email" name="email" label="Email" placeholder="you@example.com" size="lg" isInvalid={!!errors.email} hint={errors.email} />
                     <TextField isRequired size="lg" name="password" value={password} onChange={setPassword} minLength={8} isInvalid={!!errors.password}>
                         <Label>Password</Label>
                         <InputBase type="password" placeholder="Create a password" />

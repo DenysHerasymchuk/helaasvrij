@@ -14,7 +14,7 @@ public sealed record JourneyAction(string Label, string Href);
 /// <param name="CurrentStep">1 build profile, 2 pick a posting, 3 close gaps, 4 apply and track.</param>
 /// <param name="Complete">True once the best posting is marked applied.</param>
 public sealed record JourneyResult(
-    int CurrentStep, bool Complete, bool HasSources, int ConfirmedItemCount, bool HasStagePeriod, int SavedPostingCount,
+    int CurrentStep, bool Complete, bool HasSources, int ConfirmedItemCount, int SavedPostingCount,
     int AnalysedPostingCount, JourneyPosting? BestPosting, int OpenGapCount, int DocumentCountForBest, bool BestOnBoard,
     bool BestApplied, int OnBoardCount, int AppliedCount, JourneyAction NextAction);
 
@@ -28,8 +28,6 @@ public sealed class GetJourneyHandler(
         var hasSources = (await sources.ListAsync(ct)).Any(s => s.Status == SourceStatus.Ready);
         var items = await profile.ListItemsAsync(ct);
         var confirmed = items.Count(i => i.Confirmed);
-        var basics = await profile.FindBasicsAsync(ct);
-        var hasStagePeriod = basics?.StageStart is not null && basics.StageEnd is not null;
 
         var allPostings = await postings.ListAsync(null, null, ct);
         var analysed = allPostings.Where(p => p.IsAnalysed).ToList();
@@ -51,11 +49,10 @@ public sealed class GetJourneyHandler(
         var gapsDone = best is not null
             && (best.Requirements.Any(r => r.Done) || best.Requirements.All(r => r.Action is null));
 
-        var (step, next) = (hasSources, confirmed > 0, hasStagePeriod) switch
+        var (step, next) = (hasSources, confirmed > 0) switch
         {
-            (false, _, _) => (1, new JourneyAction("Add your GitHub or CV", "/profile")),
-            (_, false, _) => (1, new JourneyAction(items.Count == 0 ? "Read your sources" : "Confirm your profile items", "/profile")),
-            (_, _, false) => (1, new JourneyAction("Set your stage period", "/profile")),
+            (false, _) => (1, new JourneyAction("Add your GitHub or CV", "/profile")),
+            (_, false) => (1, new JourneyAction("Read your sources", "/profile")),
             _ when allPostings.Count == 0 => (2, new JourneyAction("Find a posting", "/postings")),
             _ when best is null => (2, new JourneyAction($"Analyse {allPostings[0].Company}", $"/postings/{allPostings[0].Id}")),
             _ when !gapsDone => (3, new JourneyAction("Close your top gap", "/gaps")),
@@ -66,7 +63,7 @@ public sealed class GetJourneyHandler(
         };
 
         return new JourneyResult(
-            step, bestApplied, hasSources, confirmed, hasStagePeriod, allPostings.Count, analysed.Count,
+            step, bestApplied, hasSources, confirmed, allPostings.Count, analysed.Count,
             best is null ? null : new JourneyPosting(best.Id, best.Company, best.Title, best.Score()),
             openGaps, docsForBest, bestOnBoard, bestApplied, cards.Count, applied, next);
     }

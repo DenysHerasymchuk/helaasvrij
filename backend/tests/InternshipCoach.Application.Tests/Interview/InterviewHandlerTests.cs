@@ -25,7 +25,7 @@ public class InterviewHandlerTests
         var doc = withRepo ? source.AddDocument("weather-app/README.md", "built a REST API in C#") : source.AddDocument("cv.pdf", "text");
         source.MarkReady(Clock.UtcNow);
         var profile = new FakeProfileRepository([source]);
-        var item = ProfileItem.Create(UserId, ProfileItemKind.Skill, "C#", null, doc.Id, "built a REST API in C#", new CreatedAt(Clock.UtcNow));
+        var item = ProfileItem.Create(UserId, ProfileItemKind.Skill, "C#", doc.Id, "built a REST API in C#", new CreatedAt(Clock.UtcNow));
         item.SetConfirmed(true);
         profile.Items.Add(item);
 

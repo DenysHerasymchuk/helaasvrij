@@ -9,7 +9,7 @@ import { InputFile } from "@/components/base/input/input-file";
 import { ApiError } from "@/core/api";
 import { useAuth } from "@/core/auth";
 import { JourneyBar } from "@/features/journey/journey-bar";
-import { BelgianDateInput, Field, NativeSelect, TextArea } from "@/features/postings/fields";
+import { Field, TextArea } from "@/features/postings/fields";
 import { formatDateTime } from "@/features/postings/types";
 import { cx } from "@/utils/cx";
 import {
@@ -20,16 +20,11 @@ import {
     type Source,
     addSite,
     addText,
-    cefrLevels,
-    confirmAllItems,
     deleteProfileItem,
     deleteSource,
     extractProfile,
     getProfile,
     listSources,
-    saveBasics,
-    setItemConfirmed,
-    setItemLevel,
     syncGitHub,
     uploadCv,
 } from "./api";
@@ -135,7 +130,7 @@ export function ProfilePage() {
 
     return (
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <PageHeader title="Profile" description="Four steps: add your sources, let us read them, confirm what is true, add your details." />
+            <PageHeader title="Profile" description="Three steps: add your sources, let us read them, review what we found." />
             <JourneyBar />
 
             {loadError ? (
@@ -156,7 +151,6 @@ export function ProfilePage() {
                     <SourcesStep sources={sources} reload={reloadAll} />
                     <ReadStep sources={sources} profile={profile} reloadProfile={loadProfile} />
                     <ItemsStep profile={profile} reloadProfile={loadProfile} />
-                    <DetailsStep key={JSON.stringify(profile.basics)} profile={profile} reloadProfile={loadProfile} onSaved={(basics) => setProfile({ ...profile, basics })} />
                 </>
             )}
         </div>
@@ -466,7 +460,7 @@ function ReadStep({ sources, profile, reloadProfile }: { sources: Source[]; prof
         <Step
             number={2}
             title="Read my sources"
-            description="We read your GitHub, CV and site and list the skills and projects we can prove. You confirm what is right."
+            description="We read your GitHub, CV and site and list the skills and projects we can prove. Remove anything that is wrong."
             done={profile.items.length > 0}
         >
             <div className="flex flex-col items-start gap-3">
@@ -479,7 +473,7 @@ function ReadStep({ sources, profile, reloadProfile }: { sources: Source[]; prof
                     {result && (
                         <p className="text-secondary">
                             {result.created > 0
-                                ? `Found ${plural(result.created, "new item")}. Confirm the ones that are right in step 3.`
+                                ? `Found ${plural(result.created, "new item")}. Review them in step 3.`
                                 : "No new items found. Everything we can prove is already in step 3."}
                             {result.skippedDocuments > 0 && ` We skipped ${plural(result.skippedDocuments, "document")} to stay within limits; read again to include them.`}
                         </p>
@@ -494,29 +488,21 @@ function ReadStep({ sources, profile, reloadProfile }: { sources: Source[]; prof
     );
 }
 
-// ---------- Step 3: confirm items ----------
+// ---------- Step 3: review items ----------
 
 function ItemsStep({ profile, reloadProfile }: { profile: Profile; reloadProfile: () => Promise<void> }) {
-    const { busy, error, run } = useRunner(reloadProfile);
-    const pending = profile.items.filter((item) => !item.confirmed).length;
+    const { error } = useRunner(reloadProfile);
 
     return (
         <Step
             number={3}
-            title="Confirm what is right"
-            description="Each item quotes your own source. Your CV, letters and gap plan only use items you confirm."
-            done={profile.items.some((item) => item.confirmed)}
-            action={
-                pending > 0 && (
-                    <Button color="secondary" size="md" iconLeading={Check} isLoading={busy === "all"} onPress={() => run("all", confirmAllItems)}>
-                        Confirm all ({pending})
-                    </Button>
-                )
-            }
+            title="What we found"
+            description="Each item quotes your own source. Your CV, letters and gap plan use all of them, so remove what is wrong."
+            done={profile.items.length > 0}
         >
             <ErrorText text={error} />
             {profile.items.length === 0 ? (
-                <p className="text-sm text-tertiary">Nothing to confirm yet. Read your sources in step 2.</p>
+                <p className="text-sm text-tertiary">Nothing found yet. Read your sources in step 2.</p>
             ) : (
                 <div className="flex flex-col gap-6">
                     {kindOrder.map(({ kind, title }) => {
@@ -548,26 +534,7 @@ function ItemCard({ item, reload }: { item: ProfileItem; reload: () => Promise<v
         <li className="flex flex-col gap-3 rounded-lg p-4 ring-1 ring-secondary">
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-md font-semibold text-primary">{item.name}</span>
-                {item.level && (
-                    <Badge type="pill-color" size="sm" color="brand">
-                        {item.level}
-                    </Badge>
-                )}
-                {item.confirmed && (
-                    <Badge type="pill-color" size="sm" color="success">
-                        Confirmed
-                    </Badge>
-                )}
                 <div className="ml-auto flex gap-2">
-                    <Button
-                        size="sm"
-                        color={item.confirmed ? "secondary" : "primary"}
-                        aria-label={`${item.confirmed ? "Unconfirm" : "Confirm"} ${item.name}`}
-                        isLoading={busy === "confirm"}
-                        onPress={() => run("confirm", () => setItemConfirmed(item.id, !item.confirmed))}
-                    >
-                        {item.confirmed ? "Unconfirm" : "Confirm"}
-                    </Button>
                     <Button size="sm" color="tertiary-destructive" aria-label={`Remove ${item.name}`} isLoading={busy === "remove"} onPress={() => run("remove", () => deleteProfileItem(item.id))}>
                         Remove
                     </Button>
@@ -596,101 +563,5 @@ function ItemCard({ item, reload }: { item: ProfileItem; reload: () => Promise<v
             </ul>
             <ErrorText text={error} />
         </li>
-    );
-}
-
-// ---------- Step 4: details ----------
-
-function DetailsStep({ profile, reloadProfile, onSaved }: { profile: Profile; reloadProfile: () => Promise<void>; onSaved: (basics: Profile["basics"]) => void }) {
-    const { basics } = profile;
-    const [school, setSchool] = useState(basics.school ?? "");
-    const [start, setStart] = useState(basics.stageStart ?? "");
-    const [end, setEnd] = useState(basics.stageEnd ?? "");
-    const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
-    const [error, setError] = useState<ApiError | string | null>(null);
-    const levels = useRunner(reloadProfile);
-    const languages = profile.items.filter((item) => item.kind === "Language");
-
-    const save = async () => {
-        setState("saving");
-        setError(null);
-        try {
-            const saved = await saveBasics({ school: school.trim() || null, stageStart: start || null, stageEnd: end || null });
-            if (saved) onSaved(saved);
-            setState("saved");
-        } catch (caught) {
-            setError(caught instanceof ApiError ? caught : message(caught));
-            setState("idle");
-        }
-    };
-
-    const fieldError = (name: string) => (error instanceof ApiError ? error.fieldErrors[name] : undefined);
-    const generalError = typeof error === "string" ? error : error instanceof ApiError && Object.keys(error.fieldErrors).length === 0 ? error.message : null;
-    const edit = (set: (value: string) => void) => (value: string) => {
-        set(value);
-        setState("idle");
-    };
-
-    return (
-        <Step
-            number={4}
-            title="Your details"
-            description="Your school and stage period flag postings with dates that do not fit. Language levels go into your gap plan and CV."
-            done={!!(basics.school && basics.stageStart && basics.stageEnd)}
-        >
-            <div className="grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
-                    <Input label="School" placeholder="Howest, Thomas More, KU Leuven..." value={school} onChange={edit(setSchool)} isInvalid={!!fieldError("school")} hint={fieldError("school")} />
-                </div>
-                <BelgianDateInput label="Stage starts" value={start} max={end || undefined} onChange={edit(setStart)} />
-                <BelgianDateInput label="Stage ends" value={end} min={start || undefined} onChange={edit(setEnd)} isInvalid={!!fieldError("stageEnd")} hint={fieldError("stageEnd")} />
-            </div>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-                <Button size="md" isLoading={state === "saving"} onPress={save}>
-                    Save details
-                </Button>
-                <span role="status" className="text-sm text-tertiary">
-                    {state === "saved" ? "Saved." : ""}
-                </span>
-                {generalError && (
-                    <span role="alert" className="text-sm text-error-primary">
-                        {generalError}
-                    </span>
-                )}
-            </div>
-
-            <div className="mt-6 border-t border-secondary pt-5">
-                <h3 className="text-sm font-semibold text-primary">Language levels</h3>
-                <p className="mt-0.5 text-sm text-tertiary">Pick the CEFR level you would defend in an interview. Changes save right away.</p>
-                {languages.length === 0 ? (
-                    <p className="mt-3 text-sm text-tertiary">No languages yet. They show up here after step 2 finds them in your sources.</p>
-                ) : (
-                    <ul className="mt-3 flex flex-col divide-y divide-secondary rounded-lg ring-1 ring-secondary">
-                        {languages.map((item) => (
-                            <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                                <span className="text-sm font-medium text-primary">{item.name}</span>
-                                <NativeSelect
-                                    aria-label={`CEFR level for ${item.name}`}
-                                    value={item.level ?? ""}
-                                    disabled={levels.busy === item.id}
-                                    onChange={(event) => levels.run(item.id, () => setItemLevel(item.id, event.target.value || null))}
-                                    className="w-auto py-1 text-sm"
-                                >
-                                    <option value="">No level</option>
-                                    {cefrLevels.map((level) => (
-                                        <option key={level} value={level}>
-                                            {level}
-                                        </option>
-                                    ))}
-                                </NativeSelect>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-                <div className="mt-2">
-                    <ErrorText text={levels.error} />
-                </div>
-            </div>
-        </Step>
     );
 }

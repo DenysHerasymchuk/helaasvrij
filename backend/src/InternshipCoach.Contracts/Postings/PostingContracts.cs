@@ -6,7 +6,7 @@ public sealed record UrlPostingRequest(string? Url);
 
 public sealed record ReplacePostingTextRequest(string? Text);
 
-public sealed record UpdatePostingDatesRequest(DateOnly? Deadline, DateTimeOffset? InterviewAt, DateOnly? StageStart, DateOnly? StageEnd);
+public sealed record UpdatePostingDatesRequest(DateOnly? Deadline, DateTimeOffset? InterviewAt);
 
 public sealed record EvidenceSourceResponse(Guid SourceId, string Kind, string Label, string Path, string? Url);
 
@@ -23,13 +23,12 @@ public sealed record GapAnalysisResponse(bool Analysed, int Score, bool NoClearF
 /// <summary>Generic chatbot answer built from the posting text only. IsDemo: stored text captured for a demo posting.</summary>
 public sealed record GenericAnswerResponse(string Text, DateTimeOffset CapturedAt, bool IsDemo);
 
-/// <summary>StageFit: "fits", "conflict" or "unknown" against the student's stage period on the profile.</summary>
 public sealed record PostingSummaryResponse(
     Guid Id, string Company, string Title, string City, string Language, DateOnly? Deadline, DateTimeOffset? InterviewAt,
-    bool IsDemo, int RequirementCount, DateTimeOffset CreatedAt, DateOnly? StageStart, DateOnly? StageEnd, string StageFit,
+    bool IsDemo, int RequirementCount, DateTimeOffset CreatedAt,
     bool Analysed = false, int? Score = null);
 
 public sealed record PostingDetailResponse(
     Guid Id, string Company, string Title, string City, string Language, string? Url, string RawText, DateOnly? Deadline,
     DateTimeOffset? InterviewAt, bool IsDemo, DateTimeOffset CreatedAt, IReadOnlyList<RequirementResponse> Requirements,
-    GapAnalysisResponse Analysis, DateOnly? StageStart, DateOnly? StageEnd, string StageFit);
+    GapAnalysisResponse Analysis);

@@ -11,7 +11,7 @@ namespace InternshipCoach.Infrastructure.Persistence;
 /// <summary>
 /// Development only: gives the dev test user (and nobody else) a confirmed demo profile and the four synthetic demo
 /// postings. The profile is a GitHub-like source with three repos plus a CV page, twelve confirmed items whose quotes
-/// are verbatim from those documents, and a school with a stage period, so analysis works without connecting real
+/// are verbatim from those documents, and so analysis works without connecting real
 /// sources. Safe to run again: only missing parts are added (documents, items, basics fields, postings, generic
 /// answers, stage dates); nothing the student changed is overwritten.
 /// </summary>
@@ -84,28 +84,16 @@ public static class DemoDataSeeder
         InternshipCoachDbContext db, Guid userId, Dictionary<string, Guid> documents, DateTimeOffset now, CancellationToken ct)
     {
         var items = await db.ProfileItems.ToListAsync(ct);
-        foreach (var (kind, name, level, path, quote) in DemoItems)
+        foreach (var (kind, name, path, quote) in DemoItems)
         {
             if (items.Any(i => i.Kind == kind && i.NormalizedName == ProfileItem.Normalise(name)))
             {
                 continue;
             }
 
-            var item = ProfileItem.Create(userId, kind, name, level, documents[path], quote, new CreatedAt(now));
+            var item = ProfileItem.Create(userId, kind, name, documents[path], quote, new CreatedAt(now));
             item.SetConfirmed(true);
             db.ProfileItems.Add(item);
-        }
-
-        var basics = await db.ProfileBasics.FirstOrDefaultAsync(ct);
-        if (basics is null)
-        {
-            db.ProfileBasics.Add(ProfileBasics.Create(userId, DemoSchool, DemoStageStart, DemoStageEnd));
-        }
-        else if (basics.School is null || (basics.StageStart is null && basics.StageEnd is null))
-        {
-            var noPeriod = basics.StageStart is null && basics.StageEnd is null;
-            basics.Update(basics.School ?? DemoSchool,
-                noPeriod ? DemoStageStart : basics.StageStart, noPeriod ? DemoStageEnd : basics.StageEnd);
         }
     }
 
@@ -126,18 +114,8 @@ public static class DemoDataSeeder
             {
                 posting.SetGenericAnswer(demo.GenericAnswer, GenericAnswerCapturedAt);
             }
-
-            if (posting.StageStart is null && posting.StageEnd is null)
-            {
-                posting.SetStagePeriod(demo.StageStart, demo.StageEnd);
-            }
         }
     }
-
-    // The demo student's stage period. Three demo postings fall inside it; Atelier Lumen starts in January and clashes.
-    private const string DemoSchool = "Thomas More Mechelen";
-    private static readonly DateOnly DemoStageStart = new(2027, 2, 1);
-    private static readonly DateOnly DemoStageEnd = new(2027, 5, 31);
 
     private const string BudgetBuddyReadme =
         "# budget-buddy\n\n" +
@@ -184,24 +162,24 @@ public static class DemoDataSeeder
     ];
 
     // Every quote is copied verbatim from the document at Path (a test checks this with QuoteCheck).
-    private static readonly (ProfileItemKind Kind, string Name, string? Level, string Path, string Quote)[] DemoItems =
+    private static readonly (ProfileItemKind Kind, string Name, string Path, string Quote)[] DemoItems =
     [
-        (ProfileItemKind.Project, "budget-buddy", null, "budget-buddy/README.md", "A personal budget tracker web app built with React and TypeScript."),
-        (ProfileItemKind.Project, "weather-app", null, "weather-app/README.md", "A small weather dashboard in Python."),
-        (ProfileItemKind.Project, "kotlin-quiz", null, "kotlin-quiz/README.md", "An Android quiz app written in Kotlin with Jetpack Compose."),
-        (ProfileItemKind.Skill, "C# and ASP.NET Core", null, "budget-buddy/README.md", "The backend is an ASP.NET Core Web API in C#"),
-        (ProfileItemKind.Skill, "React with TypeScript", null, "budget-buddy/README.md", "built with React and TypeScript"),
-        (ProfileItemKind.Skill, "Python", null, "weather-app/README.md", "A small weather dashboard in Python."),
-        (ProfileItemKind.Skill, "SQL", null, "cv.pdf#page1", "C#, ASP.NET Core, React, TypeScript, Python, SQL, Git"),
-        (ProfileItemKind.Skill, "Kotlin", null, "kotlin-quiz/README.md", "written in Kotlin with Jetpack Compose"),
-        (ProfileItemKind.Education, "Bachelor Applied Computer Science, Thomas More", null, "cv.pdf#page1", "Bachelor Applied Computer Science, Thomas More Mechelen, 2024 - 2027"),
-        (ProfileItemKind.Language, "Dutch", "C2", "cv.pdf#page1", "Dutch: native (C2)"),
-        (ProfileItemKind.Language, "English", "C1", "cv.pdf#page1", "English: fluent (C1)"),
-        (ProfileItemKind.Language, "French", "B1", "cv.pdf#page1", "French: good working knowledge (B1)")
+        (ProfileItemKind.Project, "budget-buddy", "budget-buddy/README.md", "A personal budget tracker web app built with React and TypeScript."),
+        (ProfileItemKind.Project, "weather-app", "weather-app/README.md", "A small weather dashboard in Python."),
+        (ProfileItemKind.Project, "kotlin-quiz", "kotlin-quiz/README.md", "An Android quiz app written in Kotlin with Jetpack Compose."),
+        (ProfileItemKind.Skill, "C# and ASP.NET Core", "budget-buddy/README.md", "The backend is an ASP.NET Core Web API in C#"),
+        (ProfileItemKind.Skill, "React with TypeScript", "budget-buddy/README.md", "built with React and TypeScript"),
+        (ProfileItemKind.Skill, "Python", "weather-app/README.md", "A small weather dashboard in Python."),
+        (ProfileItemKind.Skill, "SQL", "cv.pdf#page1", "C#, ASP.NET Core, React, TypeScript, Python, SQL, Git"),
+        (ProfileItemKind.Skill, "Kotlin", "kotlin-quiz/README.md", "written in Kotlin with Jetpack Compose"),
+        (ProfileItemKind.Education, "Bachelor Applied Computer Science, Thomas More", "cv.pdf#page1", "Bachelor Applied Computer Science, Thomas More Mechelen, 2024 - 2027"),
+        (ProfileItemKind.Language, "Dutch", "cv.pdf#page1", "Dutch: native (C2)"),
+        (ProfileItemKind.Language, "English", "cv.pdf#page1", "English: fluent (C1)"),
+        (ProfileItemKind.Language, "French", "cv.pdf#page1", "French: good working knowledge (B1)")
     ];
 
     private sealed record Demo(
-        string Company, string Title, string City, PostingLanguage Language, DateOnly Deadline, DateOnly StageStart, DateOnly StageEnd, string Text,
+        string Company, string Title, string City, PostingLanguage Language, DateOnly Deadline, string Text,
         (string, Importance)[] Requirements, string GenericAnswer);
 
     // The generic answers below were written by a general-purpose AI assistant given only the posting text and the
@@ -211,7 +189,7 @@ public static class DemoDataSeeder
 
     private static readonly Demo[] Demos =
     [
-        new("Brightlane", "Full-stack .NET stagiair", "Mechelen", PostingLanguage.Nl, new(2026, 12, 12), new(2027, 2, 8), new(2027, 5, 14),
+        new("Brightlane", "Full-stack .NET stagiair", "Mechelen", PostingLanguage.Nl, new(2026, 12, 12),
             "Demo data. Brightlane bouwt planningssoftware voor zorginstellingen. Als stagiair werk je mee aan onze webapp. " +
             "Wat verwachten we: C# en ASP.NET Core, React met TypeScript, Docker, geautomatiseerde tests. Een CI-pipeline is een pluspunt.",
             [("C# and ASP.NET Core", Importance.Required), ("React with TypeScript", Importance.Required), ("Docker", Importance.Required),
@@ -225,7 +203,7 @@ public static class DemoDataSeeder
             "Tips: build a small full-stack project that combines these technologies and put it on GitHub. Tailor your CV " +
             "to highlight relevant coursework and projects, and write a motivation letter (in Dutch) explaining why you are " +
             "interested in healthcare software. Good luck!"),
-        new("Northwind Data", "Data engineering intern", "Brussels", PostingLanguage.En, new(2026, 12, 20), new(2027, 2, 15), new(2027, 5, 28),
+        new("Northwind Data", "Data engineering intern", "Brussels", PostingLanguage.En, new(2026, 12, 20),
             "Demo data. Northwind Data helps retailers make sense of their sales data. As an intern you build and monitor data pipelines. " +
             "You know Python and SQL and you write English at C1 level. Experience with Azure is a plus.",
             [("Python", Importance.Required), ("SQL", Importance.Required), ("Cloud basics (Azure)", Importance.Nice), ("English C1", Importance.Required)],
@@ -238,7 +216,7 @@ public static class DemoDataSeeder
             "Consider building a portfolio project, for example a pipeline that loads a public sales dataset into a database " +
             "and produces a dashboard. Highlight any data-related coursework on your CV and show enthusiasm for retail analytics " +
             "in your application. Good luck!"),
-        new("Atelier Lumen", "Stagiaire développeur mobile", "Liège", PostingLanguage.Fr, new(2027, 1, 10), new(2027, 1, 4), new(2027, 3, 26),
+        new("Atelier Lumen", "Stagiaire développeur mobile", "Liège", PostingLanguage.Fr, new(2027, 1, 10),
             "Demo data. Atelier Lumen crée des applications mobiles pour des musées. Vous développez en Kotlin pour Android " +
             "et vous parlez français (B2). Des notions de tests d'interface sont un atout.",
             [("Kotlin / Android", Importance.Required), ("French B2", Importance.Required), ("UI testing", Importance.Nice)],
@@ -248,7 +226,7 @@ public static class DemoDataSeeder
             "3. UI testing (a plus): look into Espresso or Compose testing.\n\n" +
             "Since they build apps for museums, a portfolio app with a cultural or interactive theme would stand out. Write " +
             "your application in French, keep your CV to one page and mention any mobile projects. Good luck!"),
-        new("Havenstad Logistics", "Software stagiair", "Antwerpen", PostingLanguage.Nl, new(2027, 1, 24), new(2027, 2, 1), new(2027, 5, 31),
+        new("Havenstad Logistics", "Software stagiair", "Antwerpen", PostingLanguage.Nl, new(2027, 1, 24),
             "Demo data. Havenstad Logistics volgt containers door de haven van Antwerpen. Je kent Java of C#, je kunt REST API's bouwen " +
             "en een goede Git-workflow is mooi meegenomen.",
             [("Java or C#", Importance.Required), ("REST APIs", Importance.Required), ("Git workflow", Importance.Nice)],

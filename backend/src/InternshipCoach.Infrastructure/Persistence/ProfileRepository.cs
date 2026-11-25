@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InternshipCoach.Infrastructure.Persistence;
 
-// The global user filter on ProfileItem, ProfileBasics and Source scopes every query to the signed-in user.
+// The global user filter on ProfileItem and Source scopes every query to the signed-in user.
 public sealed class ProfileRepository(InternshipCoachDbContext db) : IProfileRepository
 {
     // Sorted in memory: Npgsql cannot translate OrderBy on a record built by a constructor (crashed every analysis).
@@ -49,14 +49,6 @@ public sealed class ProfileRepository(InternshipCoachDbContext db) : IProfileRep
     public async Task RemoveItemAsync(ProfileItem item, CancellationToken ct)
     {
         db.ProfileItems.Remove(item);
-        await db.SaveChangesAsync(ct);
-    }
-
-    public Task<ProfileBasics?> FindBasicsAsync(CancellationToken ct) => db.ProfileBasics.FirstOrDefaultAsync(ct);
-
-    public async Task AddBasicsAsync(ProfileBasics basics, CancellationToken ct)
-    {
-        db.ProfileBasics.Add(basics);
         await db.SaveChangesAsync(ct);
     }
 

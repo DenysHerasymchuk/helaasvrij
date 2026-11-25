@@ -1,7 +1,6 @@
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Llm;
 using InternshipCoach.Application.Profile;
-using InternshipCoach.Application.Profile.Basics;
 using InternshipCoach.Application.Profile.Extract;
 using InternshipCoach.Application.Profile.Get;
 using InternshipCoach.Application.Profile.Items;
@@ -60,7 +59,7 @@ public class ProfileHandlerTests
         var item = Assert.Single(repo.Items);
         Assert.Equal("Docker", item.Name);
         Assert.Equal(UserId, item.UserId);
-        Assert.False(item.Confirmed);
+        Assert.True(item.Confirmed);
     }
 
     [Fact]
@@ -104,7 +103,7 @@ public class ProfileHandlerTests
             {"items":[
               {"doc":1,"kind":"skill","name":"Docker","quote":"with Docker"},
               {"doc":1,"kind":"skill","name":"  docker ","quote":"Built a REST API"},
-              {"doc":1,"kind":"language","name":"English","level":"c1","quote":"English: C1"}
+              {"doc":1,"kind":"language","name":"English","quote":"English: C1"}
             ]}
             """);
 
@@ -113,7 +112,7 @@ public class ProfileHandlerTests
         Assert.Equal(2, result.Created);
         Assert.Equal(1, result.Merged);
         Assert.Equal(2, repo.Items.Single(i => i.Name == "Docker").Evidence.Count);
-        Assert.Equal("C1", repo.Items.Single(i => i.Kind == ProfileItemKind.Language).Level);
+        Assert.All(repo.Items, item => Assert.True(item.Confirmed)); // extracted items count straight away
     }
 
     [Fact]
@@ -144,7 +143,7 @@ public class ProfileHandlerTests
     }
 
     [Fact]
-    public async Task Get_returns_items_with_their_source_and_basics_roundtrip()
+    public async Task Get_returns_items_with_their_source()
     {
         var cv = CvSource();
         var (handler, _, repo) = Build([cv], """{"items":[{"doc":1,"kind":"skill","name":"Docker","quote":"with Docker"}]}""");
@@ -154,45 +153,19 @@ public class ProfileHandlerTests
         var evidence = Assert.Single(Assert.Single(view.Items).Evidence);
         Assert.Equal("cv.pdf#page-1", evidence.DocumentPath);
         Assert.Equal(SourceKind.Cv, evidence.SourceKind);
-
-        var basics = await new UpdateBasicsHandler(repo, new FakeCurrentUser(UserId))
-            .HandleAsync(new UpdateBasicsCommand("Howest", new DateOnly(2027, 2, 1), new DateOnly(2027, 5, 31)), default);
-        Assert.True(basics.Succeeded);
-        Assert.Equal("Howest", (await new GetProfileHandler(repo).HandleAsync(default)).Basics.School);
-
-        var invalid = await new UpdateBasicsHandler(repo, new FakeCurrentUser(UserId))
-            .HandleAsync(new UpdateBasicsCommand("Howest", new DateOnly(2027, 5, 1), new DateOnly(2027, 2, 1)), default);
-        Assert.False(invalid.Succeeded);
-        Assert.Contains("stageEnd", invalid.Errors!.Keys);
     }
 
     [Fact]
-    public async Task Confirm_one_confirm_all_and_delete()
+    public async Task Delete_removes_an_item_and_refuses_an_unknown_one()
     {
         var repo = new FakeProfileRepository();
         var doc = Guid.NewGuid();
-        var a = ProfileItem.Create(UserId, ProfileItemKind.Skill, "A", null, doc, "a", new CreatedAt(Clock.UtcNow));
-        var b = ProfileItem.Create(UserId, ProfileItemKind.Skill, "B", null, doc, "b", new CreatedAt(Clock.UtcNow));
+        var a = ProfileItem.Create(UserId, ProfileItemKind.Skill, "A", doc, "a", new CreatedAt(Clock.UtcNow));
+        var b = ProfileItem.Create(UserId, ProfileItemKind.Skill, "B", doc, "b", new CreatedAt(Clock.UtcNow));
         repo.Items.AddRange([a, b]);
 
-        Assert.True(await new SetItemConfirmedHandler(repo).HandleAsync(a.Id, true, default));
-        Assert.False(await new SetItemConfirmedHandler(repo).HandleAsync(Guid.NewGuid(), true, default));
-        Assert.Equal(1, await new ConfirmAllItemsHandler(repo).HandleAsync(default));
-        Assert.All(repo.Items, item => Assert.True(item.Confirmed));
+        Assert.False(await new DeleteItemHandler(repo).HandleAsync(Guid.NewGuid(), default));
         Assert.True(await new DeleteItemHandler(repo).HandleAsync(a.Id, default));
         Assert.Single(repo.Items);
-    }
-
-    [Fact]
-    public async Task Set_level_saves_the_cefr_level_of_a_language()
-    {
-        var repo = new FakeProfileRepository();
-        var dutch = ProfileItem.Create(UserId, ProfileItemKind.Language, "Dutch", null, Guid.NewGuid(), "Dutch", new CreatedAt(Clock.UtcNow));
-        repo.Items.Add(dutch);
-
-        Assert.True(await new SetItemLevelHandler(repo).HandleAsync(dutch.Id, "C1", default));
-        Assert.Equal("C1", dutch.Level);
-        Assert.Equal(1, repo.Saves);
-        Assert.False(await new SetItemLevelHandler(repo).HandleAsync(Guid.NewGuid(), "C1", default));
     }
 }

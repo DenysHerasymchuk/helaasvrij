@@ -8,7 +8,6 @@ public sealed class FakeProfileRepository(IEnumerable<Source>? sources = null) :
 {
     public List<Source> Sources { get; } = sources?.ToList() ?? [];
     public List<ProfileItem> Items { get; } = [];
-    public ProfileBasics? Basics { get; private set; }
     public int Saves { get; private set; }
 
     public Task<IReadOnlyList<ProfileDocument>> ListReadyDocumentsAsync(CancellationToken ct) =>
@@ -34,14 +33,6 @@ public sealed class FakeProfileRepository(IEnumerable<Source>? sources = null) :
     public Task RemoveItemAsync(ProfileItem item, CancellationToken ct)
     {
         Items.Remove(item);
-        return Task.CompletedTask;
-    }
-
-    public Task<ProfileBasics?> FindBasicsAsync(CancellationToken ct) => Task.FromResult(Basics);
-
-    public Task AddBasicsAsync(ProfileBasics basics, CancellationToken ct)
-    {
-        Basics = basics;
         return Task.CompletedTask;
     }
 

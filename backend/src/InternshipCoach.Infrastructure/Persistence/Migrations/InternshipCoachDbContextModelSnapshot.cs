@@ -447,14 +447,6 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("raw_text");
 
-                    b.Property<DateOnly?>("StageEnd")
-                        .HasColumnType("date")
-                        .HasColumnName("stage_end");
-
-                    b.Property<DateOnly?>("StageStart")
-                        .HasColumnType("date")
-                        .HasColumnName("stage_start");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -588,37 +580,6 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("score_snapshots", "coach");
                 });
 
-            modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileBasics", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("School")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("school");
-
-                    b.Property<DateOnly?>("StageEnd")
-                        .HasColumnType("date")
-                        .HasColumnName("stage_end");
-
-                    b.Property<DateOnly?>("StageStart")
-                        .HasColumnType("date")
-                        .HasColumnName("stage_start");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("profile_basics", "coach");
-                });
-
             modelBuilder.Entity("InternshipCoach.Domain.Profile.ProfileEvidence", b =>
                 {
                     b.Property<Guid>("Id")
@@ -667,11 +628,6 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("kind");
-
-                    b.Property<string>("Level")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("level");
 
                     b.Property<string>("Name")
                         .IsRequired()

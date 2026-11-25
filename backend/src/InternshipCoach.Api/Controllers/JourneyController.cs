@@ -15,7 +15,7 @@ public sealed class JourneyController : ControllerBase
     {
         var r = await handler.HandleAsync(ct);
         return new JourneyResponse(
-            r.CurrentStep, r.Complete, r.HasSources, r.ConfirmedItemCount, r.HasStagePeriod, r.SavedPostingCount, r.AnalysedPostingCount,
+            r.CurrentStep, r.Complete, r.HasSources, r.ConfirmedItemCount, r.SavedPostingCount, r.AnalysedPostingCount,
             r.BestPosting is { } b ? new JourneyPostingResponse(b.Id, b.Company, b.Title, b.Score) : null,
             r.OpenGapCount, r.DocumentCountForBest, r.BestOnBoard, r.BestApplied, r.OnBoardCount, r.AppliedCount,
             new JourneyActionResponse(r.NextAction.Label, r.NextAction.Href));

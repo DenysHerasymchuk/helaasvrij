@@ -36,7 +36,7 @@ export function LoginPage() {
     return (
         <AuthCard
             title="Welcome back"
-            subtitle="Sign in to see your internship matches."
+            subtitle="Sign in to see your position matches."
             footer={
                 <>
                     <span className="text-sm text-tertiary">Don't have an account?</span>
@@ -48,7 +48,7 @@ export function LoginPage() {
         >
             <Form onSubmit={onSubmit} className="flex flex-col gap-6">
                 <div className="flex flex-col gap-5">
-                    <Input isRequired type="email" name="email" label="Email" placeholder="you@student.be" size="lg" isInvalid={!!error} />
+                    <Input isRequired type="email" name="email" label="Email" placeholder="you@example.com" size="lg" isInvalid={!!error} />
                     <Input isRequired type="password" name="password" label="Password" placeholder="••••••••" size="lg" isInvalid={!!error} />
                 </div>
 

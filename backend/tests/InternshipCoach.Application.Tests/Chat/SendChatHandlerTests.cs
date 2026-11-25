@@ -265,8 +265,8 @@ public class SendChatHandlerTests
     {
         var f = new ChatFixture();
         var longQuote = new string('x', 600);
-        f.AddConfirmedItem(ProfileItemKind.Skill, "C#", null, longQuote);
-        f.AddConfirmedItem(ProfileItemKind.Language, "Dutch", "C1", "Moedertaal");
+        f.AddConfirmedItem(ProfileItemKind.Skill, "C#", longQuote);
+        f.AddConfirmedItem(ProfileItemKind.Language, "Dutch", "Moedertaal");
         f.AddGitHub("weather-app");
         var posting = f.AddPosting("Barco", evidence: longQuote);
 
@@ -286,7 +286,7 @@ public class SendChatHandlerTests
         }
 
         var profile = JsonSerializer.Serialize((await f.Tools.RunReadAsync("get_profile", new Dictionary<string, string>(), default)).Data);
-        Assert.Contains("C1", profile);
+        Assert.Contains("Dutch", profile);
     }
 
     private static ConfirmChatActionCommand Command(string tool, Guid postingId, string? stage)

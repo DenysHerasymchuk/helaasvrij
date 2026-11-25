@@ -49,7 +49,6 @@ public class DemoDataSeederTests
             Assert.All(all.Postings.IgnoreQueryFilters(), p => Assert.Equal(demo, p.UserId));
             Assert.All(all.Sources.IgnoreQueryFilters(), s => Assert.Equal(demo, s.UserId));
             Assert.All(all.ProfileItems.IgnoreQueryFilters(), i => Assert.Equal(demo, i.UserId));
-            Assert.All(all.ProfileBasics.IgnoreQueryFilters(), b => Assert.Equal(demo, b.UserId));
         }
 
         await using var db = new InternshipCoachDbContext(options, new FixedUser(demo));
@@ -57,16 +56,10 @@ public class DemoDataSeederTests
         Assert.Equal(4, postings.Count);
         Assert.All(postings, p => Assert.True(p.IsDemo));
 
-        var basics = await db.ProfileBasics.SingleAsync();
-        Assert.Equal(new DateOnly(2027, 2, 1), basics.StageStart);
-        var fits = postings.Select(p => p.CheckStage(basics.StageStart, basics.StageEnd)).ToList();
-        Assert.Equal(3, fits.Count(f => f == StageFit.Fits));
-        Assert.Equal(1, fits.Count(f => f == StageFit.Conflict));
-
         var items = await db.ProfileItems.Include(i => i.Evidence).ToListAsync();
         Assert.Equal(12, items.Count);
         Assert.All(items, i => Assert.True(i.Confirmed));
-        Assert.Equal(["C2", "C1", "B1"], items.Where(i => i.Kind == ProfileItemKind.Language).OrderBy(i => i.Name).Select(i => i.Level));
+        Assert.Equal(["Dutch", "English", "French"], items.Where(i => i.Kind == ProfileItemKind.Language).OrderBy(i => i.Name).Select(i => i.Name));
 
         var texts = await db.SourceDocuments.ToDictionaryAsync(d => d.Id, d => d.Text);
         Assert.Equal(4, texts.Count);
@@ -87,10 +80,9 @@ public class DemoDataSeederTests
         var demo = await AddUser(options, "lotte@demo.test");
         await using (var old = new InternshipCoachDbContext(options, new FixedUser(demo)))
         {
-            // What the old seeder left behind: a demo posting without stage dates, and a school but no stage period.
+            // What an older seeder left behind: one demo posting without a generic answer or profile.
             old.Postings.Add(Posting.Create(demo, "Brightlane", "Old", "Mechelen", PostingLanguage.Nl, null, "text", null,
                 [("C#", Importance.Required)], isDemo: true, new CreatedAt(Now)));
-            old.ProfileBasics.Add(ProfileBasics.Create(demo, "My school", null, null));
             await old.SaveChangesAsync();
         }
 
@@ -100,11 +92,7 @@ public class DemoDataSeederTests
         Assert.Equal(4, await db.Postings.CountAsync());
         var brightlane = await db.Postings.SingleAsync(p => p.Company == "Brightlane");
         Assert.Equal("Old", brightlane.Title);
-        Assert.NotNull(brightlane.StageStart);
         Assert.NotNull(brightlane.GenericAnswer);
-        var basics = await db.ProfileBasics.SingleAsync();
-        Assert.Equal("My school", basics.School);
-        Assert.Equal(new DateOnly(2027, 5, 31), basics.StageEnd);
         Assert.Equal(12, await db.ProfileItems.CountAsync());
     }
 }

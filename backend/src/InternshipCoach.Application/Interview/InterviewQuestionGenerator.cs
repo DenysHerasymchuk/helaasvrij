@@ -112,7 +112,7 @@ public sealed class InterviewQuestionGenerator(ILlmClient llm, GapEvidenceLoader
                 .ToList();
         if (anchors.Count == 0)
         {
-            throw new InterviewInputException("Confirm items on your Profile page or sync your GitHub first. Every question names something you did.");
+            throw new InterviewInputException("Read your sources on your Profile page or sync your GitHub first. Every question names something you did.");
         }
 
         var system = hasRepos ? System : NoRepoSystem;

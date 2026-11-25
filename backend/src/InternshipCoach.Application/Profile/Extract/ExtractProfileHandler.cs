@@ -9,7 +9,7 @@ namespace InternshipCoach.Application.Profile.Extract;
 
 public sealed record ExtractionResult(int Created, int Merged, int Dropped, int Documents, int SkippedDocuments);
 
-public sealed record ExtractedItem(int Doc, string Kind, string Name, string? Level, string Quote);
+public sealed record ExtractedItem(int Doc, string Kind, string Name, string Quote);
 
 public sealed record ExtractedItems(List<ExtractedItem> Items);
 
@@ -33,7 +33,6 @@ public sealed class ExtractProfileHandler(IProfileRepository repository, ILlmCli
         "For every item return: doc (the number N of the document the quote comes from), " +
         "kind (skill, project, experience, language or education), name (short, e.g. 'Docker', 'weather-app', " +
         "'Intern at Acme', 'Dutch', 'Bachelor Applied Computer Science'), " +
-        "level (only for kind language: the CEFR level A1 to C2 when the document states or clearly implies it, otherwise null), " +
         "and quote. The quote must be copied character for character from that document, 3 to 300 characters, " +
         "with no changes, no ellipsis and no joining of separate passages. " +
         "Only list what a quote proves. Do not invent or infer skills that are not written down. " +
@@ -55,7 +54,6 @@ public sealed class ExtractProfileHandler(IProfileRepository repository, ILlmCli
                   "doc": { "type": "integer", "minimum": 1 },
                   "kind": { "enum": ["skill", "project", "experience", "language", "education"] },
                   "name": { "type": "string", "minLength": 1 },
-                  "level": { "type": ["string", "null"] },
                   "quote": { "type": "string", "minLength": 1 }
                 }
               }
@@ -110,7 +108,7 @@ public sealed class ExtractProfileHandler(IProfileRepository repository, ILlmCli
                 var key = (kind, ProfileItem.Normalise(extracted.Name));
                 if (existing.TryGetValue(key, out var item))
                 {
-                    if (item.AddEvidence(document.Id, extracted.Quote, extracted.Level))
+                    if (item.AddEvidence(document.Id, extracted.Quote))
                     {
                         merged++;
                     }
@@ -118,7 +116,9 @@ public sealed class ExtractProfileHandler(IProfileRepository repository, ILlmCli
                 else
                 {
                     item = ProfileItem.Create(
-                        currentUser.UserId, kind, extracted.Name, extracted.Level, document.Id, extracted.Quote, new CreatedAt(clock.UtcNow));
+                        currentUser.UserId, kind, extracted.Name, document.Id, extracted.Quote, new CreatedAt(clock.UtcNow));
+                    // Extracted items count straight away; the student removes the wrong ones.
+                    item.SetConfirmed(true);
                     existing[key] = item;
                     repository.AddItem(item);
                     created++;

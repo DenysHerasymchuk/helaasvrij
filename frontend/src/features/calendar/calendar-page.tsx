@@ -1,12 +1,12 @@
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { AlarmClock, CalendarPlus01, CheckSquare, ChevronLeft, ChevronRight, Flag01, MessageChatCircle } from "@untitledui/icons";
+import { AlarmClock, CalendarPlus01, CheckSquare, ChevronLeft, ChevronRight, MessageChatCircle } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { cx } from "@/utils/cx";
 import { addDays, downloadInterviewIcs, formatBrusselsTime, todayInBrussels } from "./brussels";
 
-type EventType = "interview" | "deadline" | "gapDue" | "stageStart" | "stageEnd";
+type EventType = "interview" | "deadline" | "gapDue";
 
 type CalendarEvent = { type: EventType; date: string; at: string | null; title: string; postingId: string; link: string };
 
@@ -15,11 +15,9 @@ const kinds: Record<EventType, { label: string; icon: typeof AlarmClock; dot: st
     interview: { label: "Interview", icon: MessageChatCircle, dot: "bg-utility-yellow-500", chip: "bg-utility-yellow-50 text-utility-yellow-700 ring-utility-yellow-200", icon_: "text-utility-yellow-700" },
     deadline: { label: "Deadline", icon: AlarmClock, dot: "bg-utility-red-500", chip: "bg-utility-red-50 text-utility-red-700 ring-utility-red-200", icon_: "text-utility-red-700" },
     gapDue: { label: "Gap action due", icon: CheckSquare, dot: "bg-utility-blue-500", chip: "bg-utility-blue-50 text-utility-blue-700 ring-utility-blue-200", icon_: "text-utility-blue-700" },
-    stageStart: { label: "Internship starts", icon: Flag01, dot: "bg-utility-green-500", chip: "bg-utility-green-50 text-utility-green-700 ring-utility-green-200", icon_: "text-utility-green-700" },
-    stageEnd: { label: "Internship ends", icon: Flag01, dot: "bg-utility-green-500", chip: "bg-utility-green-50 text-utility-green-700 ring-utility-green-200", icon_: "text-utility-green-700" },
 };
 
-const legend: EventType[] = ["interview", "deadline", "gapDue", "stageStart"];
+const legend: EventType[] = ["interview", "deadline", "gapDue"];
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const UPCOMING_DAYS = 14;
 
@@ -134,7 +132,7 @@ export function CalendarPage() {
                                     <li key={type} className="flex items-center gap-1.5 text-sm text-tertiary">
                                         <span className={cx("size-2 rounded-full", k.dot)} aria-hidden="true" />
                                         <k.icon className={cx("size-4", k.icon_)} aria-hidden="true" />
-                                        {type === "stageStart" ? "Internship starts or ends" : k.label}
+                                        {k.label}
                                     </li>
                                 );
                             })}

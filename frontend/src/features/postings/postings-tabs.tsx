@@ -21,7 +21,7 @@ export function PostingsTabs() {
     return (
         <nav aria-label="Postings" className="flex gap-6 overflow-x-auto border-b border-secondary">
             <NavLink to="/postings" end className={tab}>
-                Find internships
+                Find positions
             </NavLink>
             <NavLink to="/postings/saved" className={tab}>
                 My postings{count !== null && ` (${count})`}

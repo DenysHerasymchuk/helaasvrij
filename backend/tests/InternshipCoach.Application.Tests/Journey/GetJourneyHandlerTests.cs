@@ -37,19 +37,15 @@ public class GetJourneyHandlerTests
 
     private void AddConfirmedItem()
     {
-        var item = ProfileItem.Create(_user.UserId, ProfileItemKind.Skill, "C#", null, Guid.NewGuid(), "C#", new CreatedAt(Now));
+        var item = ProfileItem.Create(_user.UserId, ProfileItemKind.Skill, "C#", Guid.NewGuid(), "C#", new CreatedAt(Now));
         item.SetConfirmed(true);
         _profile.Items.Add(item);
     }
 
-    private Task SetStagePeriod() =>
-        _profile.AddBasicsAsync(ProfileBasics.Create(_user.UserId, null, new DateOnly(2027, 2, 1), new DateOnly(2027, 5, 31)), default);
-
-    private async Task CompleteProfile()
+    private void CompleteProfile()
     {
         AddReadySource();
         AddConfirmedItem();
-        await SetStagePeriod();
     }
 
     private Posting AddPosting(string company)
@@ -102,34 +98,22 @@ public class GetJourneyHandlerTests
     }
 
     [Fact]
-    public async Task Source_without_confirmed_items_asks_to_confirm()
+    public async Task Source_with_only_unconfirmed_items_asks_to_read_the_sources()
     {
         AddReadySource();
-        _profile.Items.Add(ProfileItem.Create(_user.UserId, ProfileItemKind.Skill, "C#", null, Guid.NewGuid(), "C#", new CreatedAt(Now)));
+        _profile.Items.Add(ProfileItem.Create(_user.UserId, ProfileItemKind.Skill, "C#", Guid.NewGuid(), "C#", new CreatedAt(Now)));
 
         var result = await _handler.HandleAsync(default);
 
         Assert.True(result.HasSources);
         Assert.Equal(0, result.ConfirmedItemCount);
-        Assert.Equal("Confirm your profile items", result.NextAction.Label);
-    }
-
-    [Fact]
-    public async Task Confirmed_items_without_stage_period_ask_for_it()
-    {
-        AddReadySource();
-        AddConfirmedItem();
-
-        var result = await _handler.HandleAsync(default);
-
-        Assert.Equal(1, result.CurrentStep);
-        Assert.Equal("Set your stage period", result.NextAction.Label);
+        Assert.Equal("Read your sources", result.NextAction.Label);
     }
 
     [Fact]
     public async Task Complete_profile_without_postings_goes_to_find_a_posting()
     {
-        await CompleteProfile();
+        CompleteProfile();
 
         var result = await _handler.HandleAsync(default);
 
@@ -140,7 +124,7 @@ public class GetJourneyHandlerTests
     [Fact]
     public async Task Saved_posting_without_analysis_asks_to_analyse_it()
     {
-        await CompleteProfile();
+        CompleteProfile();
         var posting = AddPosting("Brightlane");
 
         var result = await _handler.HandleAsync(default);
@@ -154,7 +138,7 @@ public class GetJourneyHandlerTests
     [Fact]
     public async Task Analysed_posting_with_open_gap_asks_to_close_it_and_picks_highest_score()
     {
-        await CompleteProfile();
+        CompleteProfile();
         Analyse(AddPosting("Lowscore"), Coverage.None);
         var best = AddPosting("Brightlane");
         Analyse(best, Coverage.Partial);
@@ -170,7 +154,7 @@ public class GetJourneyHandlerTests
     [Fact]
     public async Task Ticked_gap_moves_on_to_tailoring_the_cv()
     {
-        await CompleteProfile();
+        CompleteProfile();
         var best = AddPosting("Brightlane");
         Analyse(best, Coverage.Partial);
         best.Requirements[1].MarkDone();
@@ -185,7 +169,7 @@ public class GetJourneyHandlerTests
     [Fact]
     public async Task Document_for_best_posting_asks_to_add_it_to_applications()
     {
-        await CompleteProfile();
+        CompleteProfile();
         var best = AddPosting("Brightlane");
         Analyse(best, Coverage.Strong);
         AddDocument("Cover letter - Brightlane");
@@ -200,7 +184,7 @@ public class GetJourneyHandlerTests
     [Fact]
     public async Task Saved_on_board_asks_to_mark_it_applied()
     {
-        await CompleteProfile();
+        CompleteProfile();
         var best = AddPosting("Brightlane");
         Analyse(best, Coverage.Strong);
         AddDocument("Cover letter - Brightlane");
@@ -218,7 +202,7 @@ public class GetJourneyHandlerTests
     [Fact]
     public async Task Applied_best_posting_completes_the_journey()
     {
-        await CompleteProfile();
+        CompleteProfile();
         var best = AddPosting("Brightlane");
         Analyse(best, Coverage.Strong);
         AddDocument("Cover letter - Brightlane");

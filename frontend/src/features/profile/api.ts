@@ -59,22 +59,12 @@ export interface ProfileItem {
     id: string;
     kind: ProfileItemKind;
     name: string;
-    /** CEFR level, languages only. */
-    level: string | null;
     quote: string;
     confirmed: boolean;
     evidence: Evidence[];
 }
 
-export interface ProfileBasics {
-    school: string | null;
-    /** yyyy-MM-dd */
-    stageStart: string | null;
-    stageEnd: string | null;
-}
-
 export interface Profile {
-    basics: ProfileBasics;
     items: ProfileItem[];
 }
 
@@ -92,30 +82,3 @@ export const getProfile = () => api.get<Profile>("/api/profile");
 export const extractProfile = () => api.post<ExtractResult>("/api/profile/extract");
 
 export const deleteProfileItem = (id: string) => api.del(`/api/profile/items/${id}`);
-
-export const confirmAllItems = () => api.post<{ confirmed: number }>("/api/profile/items/confirm-all");
-
-export const setItemLevel = (id: string, level: string | null) => api.put(`/api/profile/items/${id}/level`, { level });
-
-export const cefrLevels = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-
-export const saveBasics = (basics: ProfileBasics) => api.put<ProfileBasics>("/api/profile/basics", basics);
-
-/** `api` has no PATCH helper; this keeps the same JSON-only contract and error type. */
-export async function setItemConfirmed(id: string, confirmed: boolean): Promise<void> {
-    const response = await fetch(`/api/profile/items/${id}`, {
-        method: "PATCH",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmed }),
-    });
-    if (response.ok) return;
-    let title = "Something went wrong. Try again.";
-    try {
-        const problem = await response.json();
-        if (typeof problem.title === "string") title = problem.title;
-    } catch {
-        // Not JSON: keep the generic message.
-    }
-    throw new ApiError(response.status, title);
-}

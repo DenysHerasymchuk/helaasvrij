@@ -50,7 +50,7 @@ export function DataTab() {
                     <Dialog aria-label="Delete all my data" className="flex flex-col gap-4 rounded-xl bg-primary p-6 shadow-xl outline-hidden">
                         <div>
                             <h2 className="text-lg font-semibold text-primary">Delete all my data?</h2>
-                            <p className="mt-1 text-sm text-tertiary">Everything you own in Internship Coach is deleted and you are signed out. You cannot sign in with these credentials afterwards.</p>
+                            <p className="mt-1 text-sm text-tertiary">Everything you own in helaasvrij is deleted and you are signed out. You cannot sign in with these credentials afterwards.</p>
                         </div>
                         <Input label="Type DELETE to confirm" size="md" value={typed} onChange={setTyped} isInvalid={!!error} hint={error ?? undefined} autoComplete="off" />
                         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

@@ -40,9 +40,9 @@ public class RescanTests
         sources.Items.Add(source);
         var profile = new FakeProfileRepository([source]);
 
-        var fromReadme = ProfileItem.Create(UserId, ProfileItemKind.Skill, "Docker", null, readme.Id, "a REST API in C#", new CreatedAt(Clock.UtcNow));
+        var fromReadme = ProfileItem.Create(UserId, ProfileItemKind.Skill, "Docker", readme.Id, "a REST API in C#", new CreatedAt(Clock.UtcNow));
         fromReadme.SetConfirmed(true);
-        var fromSummary = ProfileItem.Create(UserId, ProfileItemKind.Project, "weather-app", null, summary.Id, "Dockerfile: no", new CreatedAt(Clock.UtcNow));
+        var fromSummary = ProfileItem.Create(UserId, ProfileItemKind.Project, "weather-app", summary.Id, "Dockerfile: no", new CreatedAt(Clock.UtcNow));
         fromSummary.SetConfirmed(true);
         profile.Items.AddRange([fromReadme, fromSummary]);
 
@@ -95,7 +95,7 @@ public class RescanTests
         Assert.Contains(docs.Values, d => d.Text.Contains("Dockerfile: yes"));
         Assert.Equal(0, result.UnverifiableEvidence);
         Assert.Equal(1, result.NewItemsToReview); // "Dockerfile" is new and unconfirmed
-        Assert.False(s.Profile.Items.Single(i => i.Name == "Dockerfile").Confirmed);
+        Assert.True(s.Profile.Items.Single(i => i.Name == "Dockerfile").Confirmed);
         Assert.StartsWith("Re-scan: Add a Dockerfile", s.Posting.Snapshots.Single().Reason);
     }
 

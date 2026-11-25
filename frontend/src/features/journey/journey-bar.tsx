@@ -12,7 +12,6 @@ export type Journey = {
     complete: boolean;
     hasSources: boolean;
     confirmedItemCount: number;
-    hasStagePeriod: boolean;
     savedPostingCount: number;
     analysedPostingCount: number;
     bestPosting: { id: string; company: string; title: string; score: number } | null;
@@ -71,7 +70,7 @@ export function JourneyBar({ className }: { className?: string }) {
 
     return (
         <nav
-            aria-label="Your path to an internship"
+            aria-label="Your path to an application"
             aria-busy={!journey}
             className={cx(
                 "flex flex-col gap-4 rounded-xl bg-primary px-4 py-4 shadow-xs ring-1 ring-secondary md:flex-row md:items-center md:justify-between md:px-5",

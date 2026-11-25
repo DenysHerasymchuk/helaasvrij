@@ -8,8 +8,6 @@ public sealed class ProfileItem : IUserOwned
 {
     public const int NameMaxLength = 200;
 
-    public static readonly IReadOnlyList<string> CefrLevels = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
     private readonly List<ProfileEvidence> _evidence = [];
 
     public Guid Id { get; private set; }
@@ -17,7 +15,6 @@ public sealed class ProfileItem : IUserOwned
     public ProfileItemKind Kind { get; private set; }
     public string Name { get; private set; } = null!;
     public string NormalizedName { get; private set; } = null!;
-    public string? Level { get; private set; }
 
     // The first quote and its document (the others are in Evidence).
     public string Quote { get; private set; } = null!;
@@ -31,7 +28,7 @@ public sealed class ProfileItem : IUserOwned
     }
 
     public static ProfileItem Create(
-        Guid userId, ProfileItemKind kind, string name, string? level, Guid sourceDocumentId, string quote, CreatedAt createdAt)
+        Guid userId, ProfileItemKind kind, string name, Guid sourceDocumentId, string quote, CreatedAt createdAt)
     {
         if (userId == Guid.Empty)
         {
@@ -50,7 +47,6 @@ public sealed class ProfileItem : IUserOwned
             UserId = userId,
             Kind = kind,
             Name = trimmed.Length > NameMaxLength ? trimmed[..NameMaxLength] : trimmed,
-            Level = NormaliseLevel(kind, level),
             CreatedAt = createdAt.Value
         };
         item.NormalizedName = Normalise(item.Name);
@@ -65,23 +61,10 @@ public sealed class ProfileItem : IUserOwned
     public static string Normalise(string name) =>
         string.Join(' ', name.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)).ToLowerInvariant();
 
-    /// <summary>CEFR level for languages only; anything else is null.</summary>
-    public static string? NormaliseLevel(ProfileItemKind kind, string? level)
-    {
-        if (kind != ProfileItemKind.Language || string.IsNullOrWhiteSpace(level))
-        {
-            return null;
-        }
-
-        var upper = level.Trim().ToUpperInvariant();
-        return CefrLevels.Contains(upper) ? upper : null;
-    }
-
     /// <summary>Adds another quote. Returns false when the same quote from the same document is already stored.</summary>
-    public bool AddEvidence(Guid sourceDocumentId, string quote, string? level)
+    public bool AddEvidence(Guid sourceDocumentId, string quote)
     {
         var evidence = ProfileEvidence.Create(Id, sourceDocumentId, quote);
-        Level ??= NormaliseLevel(Kind, level);
 
         if (_evidence.Any(e => e.SourceDocumentId == sourceDocumentId && e.Quote == evidence.Quote))
         {
@@ -93,21 +76,4 @@ public sealed class ProfileItem : IUserOwned
     }
 
     public void SetConfirmed(bool confirmed) => Confirmed = confirmed;
-
-    /// <summary>Sets or clears (null) the CEFR level the student chose. Only languages have a level.</summary>
-    public void SetLevel(string? level)
-    {
-        if (Kind != ProfileItemKind.Language)
-        {
-            throw new DomainException("Only languages have a CEFR level.");
-        }
-
-        var normalised = NormaliseLevel(Kind, level);
-        if (normalised is null && !string.IsNullOrWhiteSpace(level))
-        {
-            throw new DomainException("Choose a CEFR level from A1 to C2.");
-        }
-
-        Level = normalised;
-    }
 }

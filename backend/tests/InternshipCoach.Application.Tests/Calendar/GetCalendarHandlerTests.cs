@@ -43,7 +43,6 @@ public class GetCalendarHandlerTests
     {
         var flux = AddPosting("Flux", deadline: new DateOnly(2026, 12, 10));
         flux.SetDates(flux.Deadline, new DateTimeOffset(2026, 12, 3, 13, 0, 0, TimeSpan.Zero));
-        flux.SetStagePeriod(new DateOnly(2026, 12, 20), new DateOnly(2026, 12, 30));
         flux.Requirements[0].RecordAnalysis(Coverage.None, null, null, "Add a Dockerfile to weather-app", "weather-app", new DateOnly(2026, 12, 5), Now);
         flux.Requirements[1].RecordAnalysis(Coverage.None, null, null, "Add tests to weather-app", "weather-app", new DateOnly(2026, 12, 6), Now);
         flux.Requirements[1].MarkDone();
@@ -51,7 +50,7 @@ public class GetCalendarHandlerTests
         var events = await Handler().HandleAsync(From, To, default);
 
         Assert.Equal(
-            [CalendarEventType.Interview, CalendarEventType.GapDue, CalendarEventType.Deadline, CalendarEventType.StageStart, CalendarEventType.StageEnd],
+            [CalendarEventType.Interview, CalendarEventType.GapDue, CalendarEventType.Deadline],
             events.Select(e => e.Type));
         var interview = events[0];
         Assert.Equal("Interview at Flux", interview.Title);

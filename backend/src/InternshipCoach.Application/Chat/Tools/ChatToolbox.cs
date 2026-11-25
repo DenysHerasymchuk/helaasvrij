@@ -52,9 +52,9 @@ public sealed class ChatToolbox(
 
     public static readonly IReadOnlyList<(string Name, string Args, string Description)> ReadTools =
     [
-        ("get_profile", "{}", "confirmed profile items (skills, projects, experience, education), languages with CEFR level, school, stage period"),
+        ("get_profile", "{}", "profile items (skills, projects, experience, education) and languages"),
         ("list_github_projects", "{}", "synced GitHub repos: name, main language, commits, Dockerfile/tests/CI, last sync"),
-        ("list_postings", "{}", "saved postings: id, company, title, match score, stage on the applications board, stage-period fit"),
+        ("list_postings", "{}", "saved postings: id, company, title, match score, stage on the applications board"),
         ("get_posting", "{\"postingId\":\"<id>\"}", "one posting's requirements, coverage, evidence and open gaps"),
         ("list_gaps", "{}", "open gap actions across all postings, biggest impact first"),
         ("list_applications", "{}", "applications board: company, title, stage"),
@@ -175,19 +175,15 @@ public sealed class ChatToolbox(
 
     private async Task<ToolOutput> GetProfileAsync(CancellationToken ct)
     {
-        var basics = await profile.FindBasicsAsync(ct);
         var items = await profile.ListItemsAsync(ct);
         var confirmed = items.Where(i => i.Confirmed).ToList();
         var data = new
         {
-            school = Clip(basics?.School),
-            stagePeriod = new { start = basics?.StageStart, end = basics?.StageEnd },
-            languages = confirmed.Where(i => i.Kind == ProfileItemKind.Language).Select(i => new { name = Clip(i.Name), level = i.Level }),
+            languages = confirmed.Where(i => i.Kind == ProfileItemKind.Language).Select(i => new { name = Clip(i.Name) }),
             items = confirmed.Where(i => i.Kind != ProfileItemKind.Language)
                 .OrderBy(i => i.Kind).ThenBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
                 .Take(40)
-                .Select(i => new { kind = i.Kind.ToString().ToLowerInvariant(), name = Clip(i.Name), level = i.Level, quote = Clip(i.Quote) }),
-            unconfirmedCount = items.Count - confirmed.Count
+                .Select(i => new { kind = i.Kind.ToString().ToLowerInvariant(), name = Clip(i.Name), quote = Clip(i.Quote) })
         };
         return new ToolOutput(data, $"{confirmed.Count} confirmed items");
     }
@@ -233,7 +229,6 @@ public sealed class ChatToolbox(
     private async Task<ToolOutput> ListPostingsAsync(CancellationToken ct)
     {
         var all = await postings.ListAsync(null, null, ct);
-        var basics = await profile.FindBasicsAsync(ct);
         var board = (await applications.ListAsync(ct)).ToDictionary(c => c.Application.PostingId, c => c.Application.Stage);
         var data = all.Take(30).Select(p => new
         {
@@ -243,7 +238,6 @@ public sealed class ChatToolbox(
             city = Clip(p.City, 60),
             score = p.IsAnalysed ? p.Score() : (int?)null,
             boardStage = board.TryGetValue(p.Id, out var stage) ? stage.ToCode() : null,
-            stageFit = p.CheckStage(basics?.StageStart, basics?.StageEnd).ToString().ToLowerInvariant(),
             deadline = p.Deadline
         }).ToList();
         return new ToolOutput(new { postings = data }, $"{all.Count} saved");
@@ -252,7 +246,6 @@ public sealed class ChatToolbox(
     private async Task<ToolOutput> GetPostingAsync(IReadOnlyDictionary<string, string> args, CancellationToken ct)
     {
         var p = await FindPostingAsync(args, ct);
-        var basics = await profile.FindBasicsAsync(ct);
         var open = p.Requirements.Count(r => r.AnalysedAt is not null && r.Action is not null && !r.Done);
         var data = new
         {
@@ -263,7 +256,6 @@ public sealed class ChatToolbox(
             language = p.Language.ToString().ToLowerInvariant(),
             analysed = p.IsAnalysed,
             score = p.IsAnalysed ? p.Score() : (int?)null,
-            stageFit = p.CheckStage(basics?.StageStart, basics?.StageEnd).ToString().ToLowerInvariant(),
             deadline = p.Deadline,
             openGaps = open,
             requirements = p.Requirements.OrderBy(r => r.Position).Select(r => new
@@ -329,7 +321,7 @@ public sealed class ChatToolbox(
             complete = j.Complete,
             nextAction = new { label = Clip(j.NextAction.Label, 100), href = j.NextAction.Href },
             bestPosting = j.BestPosting is null ? null : new { id = j.BestPosting.Id, company = Clip(j.BestPosting.Company, 100), score = j.BestPosting.Score },
-            j.HasSources, j.ConfirmedItemCount, j.HasStagePeriod, j.SavedPostingCount, j.OpenGapCount, j.AppliedCount
+            j.HasSources, j.ConfirmedItemCount, j.SavedPostingCount, j.OpenGapCount, j.AppliedCount
         };
         return new ToolOutput(data, $"step {j.CurrentStep} of 4");
     }

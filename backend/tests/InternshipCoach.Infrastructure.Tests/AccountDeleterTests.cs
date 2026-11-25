@@ -37,8 +37,7 @@ public class AccountDeleterTests
         var source = Source.Create(user.Id, SourceKind.GitHub, "gh");
         var document = source.AddDocument("a/summary", "Repository: a");
         db.Sources.Add(source);
-        db.ProfileItems.Add(ProfileItem.Create(user.Id, ProfileItemKind.Project, "a", null, document.Id, "Repository: a", new CreatedAt(DateTimeOffset.UtcNow)));
-        db.ProfileBasics.Add(ProfileBasics.Create(user.Id, "School", null, null));
+        db.ProfileItems.Add(ProfileItem.Create(user.Id, ProfileItemKind.Project, "a", document.Id, "Repository: a", new CreatedAt(DateTimeOffset.UtcNow)));
         db.Sources.Add(Source.Create(user.Id, SourceKind.GitHub, "gh"));
         db.Documents.Add(Document.Create(user.Id, DocumentKind.Cv, "en", "CV", "# CV", new CreatedAt(DateTimeOffset.UtcNow)));
         var question = InterviewQuestion.Create(user.Id, posting.Id, QuestionSource.Gap, "How would you add Docker to a?", "a", null, 0, new CreatedAt(DateTimeOffset.UtcNow));

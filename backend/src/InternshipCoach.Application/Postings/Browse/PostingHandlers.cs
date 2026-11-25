@@ -22,7 +22,7 @@ public sealed class GetPostingHandler(IPostingRepository postings)
 }
 
 public sealed record UpdatePostingDatesCommand(
-    Guid Id, DateOnly? Deadline, DateTimeOffset? InterviewAt, DateOnly? StageStart, DateOnly? StageEnd);
+    Guid Id, DateOnly? Deadline, DateTimeOffset? InterviewAt);
 
 public sealed class UpdatePostingDatesHandler(IPostingRepository postings)
 {
@@ -34,7 +34,6 @@ public sealed class UpdatePostingDatesHandler(IPostingRepository postings)
             return null;
         }
 
-        posting.SetStagePeriod(command.StageStart, command.StageEnd);
         posting.SetDates(command.Deadline, command.InterviewAt);
         await postings.SaveAsync(cancellationToken);
         return posting;

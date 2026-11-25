@@ -29,7 +29,7 @@ public class ProfileRepositoryTests
             var document = source.AddDocument("a/summary", "Repository: a", """{"repo":"a","url":"https://github.com/x/a"}""");
             source.MarkReady(DateTimeOffset.UtcNow);
             db.Sources.Add(source);
-            db.ProfileItems.Add(ProfileItem.Create(user, ProfileItemKind.Project, "a", null, document.Id, "Repository: a", new CreatedAt(DateTimeOffset.UtcNow)));
+            db.ProfileItems.Add(ProfileItem.Create(user, ProfileItemKind.Project, "a", document.Id, "Repository: a", new CreatedAt(DateTimeOffset.UtcNow)));
             await db.SaveChangesAsync();
             if (user == UserA)
             {

@@ -33,12 +33,6 @@ public sealed class PostingImporter(PostingExtractor extractor, IPostingReposito
         {
             posting = Posting.Create(userId, company, title, city, language, url, text, deadline, requirements,
                 isDemo: false, new CreatedAt(clock.UtcNow));
-            var stageStart = PostingExtractor.ParseDate(extracted.StageStart);
-            var stageEnd = PostingExtractor.ParseDate(extracted.StageEnd);
-            if (stageStart is null || stageEnd is null || stageEnd >= stageStart)
-            {
-                posting.SetStagePeriod(stageStart, stageEnd);
-            }
         }
         catch (DomainException ex)
         {

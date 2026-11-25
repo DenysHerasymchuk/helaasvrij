@@ -21,9 +21,9 @@ public class CreateCvHandlerTests
     private FakeLlmTransport _transport = new();
     private FakeLlmCallLog _log = new();
 
-    private ProfileItem AddItem(ProfileItemKind kind, string name, string quote, string? level = null, bool confirmed = true, Guid? owner = null)
+    private ProfileItem AddItem(ProfileItemKind kind, string name, string quote, bool confirmed = true, Guid? owner = null)
     {
-        var item = ProfileItem.Create(owner ?? _user.Id, kind, name, level, Guid.NewGuid(), quote, Now);
+        var item = ProfileItem.Create(owner ?? _user.Id, kind, name, Guid.NewGuid(), quote, Now);
         item.SetConfirmed(confirmed);
         _profile.Items.Add(item);
         return item;
@@ -100,7 +100,7 @@ public class CreateCvHandlerTests
     public async Task Numbers_not_in_the_items_own_text_are_dropped()
     {
         var job = AddItem(ProfileItemKind.Experience, "Cashier at Colruyt", "Worked 2 years as a cashier at Colruyt.");
-        var dutch = AddItem(ProfileItemKind.Language, "Dutch", "Dutch (native)", level: "C2");
+        var dutch = AddItem(ProfileItemKind.Language, "Dutch", "Dutch (native)");
         AddItem(ProfileItemKind.Project, "api", "Built an API serving 500 users.");
 
         var result = await Run("en", Reply("Student with 10 years of experience.",
@@ -114,7 +114,7 @@ public class CreateCvHandlerTests
         Assert.DoesNotContain("5 years", content);
         Assert.DoesNotContain("500", content);
         Assert.DoesNotContain("10 years", content);
-        Assert.Contains("## Languages\n\n- Dutch (C2)\n", content);
+        Assert.Contains("## Languages\n\n- Dutch\n", content);
         Assert.Equal(3, result.DroppedCount);
     }
 

@@ -13,7 +13,6 @@ public class PostingHandlerTests
 {
     private const string Reply = """
         {"company":"Acme","title":"Stagiair","city":"Gent","language":"nl","deadline":"2026-12-20",
-         "stageStart":"2027-02-08","stageEnd":"2027-05-14",
          "requirements":[{"text":"C#","importance":"required"},{"text":"Docker","importance":"nice"}]}
         """;
 
@@ -45,8 +44,6 @@ public class PostingHandlerTests
         Assert.Equal(UserId, posting.UserId);
         Assert.Equal(PostingLanguage.Nl, posting.Language);
         Assert.Equal(new DateOnly(2026, 12, 20), posting.Deadline);
-        Assert.Equal(new DateOnly(2027, 2, 8), posting.StageStart);
-        Assert.Equal(new DateOnly(2027, 5, 14), posting.StageEnd);
         Assert.Equal([Importance.Required, Importance.Nice], posting.Requirements.Select(r => r.Importance));
     }
 
@@ -123,11 +120,11 @@ public class PostingHandlerTests
         var id = _repo.Items[0].Id;
 
         var updated = await new UpdatePostingDatesHandler(_repo)
-            .HandleAsync(new UpdatePostingDatesCommand(id, new DateOnly(2027, 1, 5), null, null, null), default);
+            .HandleAsync(new UpdatePostingDatesCommand(id, new DateOnly(2027, 1, 5), null), default);
         Assert.Equal(new DateOnly(2027, 1, 5), updated!.Deadline);
         Assert.Equal(1, _repo.Saves);
 
-        Assert.Null(await new UpdatePostingDatesHandler(_repo).HandleAsync(new UpdatePostingDatesCommand(Guid.NewGuid(), null, null, null, null), default));
+        Assert.Null(await new UpdatePostingDatesHandler(_repo).HandleAsync(new UpdatePostingDatesCommand(Guid.NewGuid(), null, null), default));
         Assert.False(await new DeletePostingHandler(_repo).HandleAsync(Guid.NewGuid(), default));
         Assert.True(await new DeletePostingHandler(_repo).HandleAsync(id, default));
         Assert.Empty(_repo.Items);

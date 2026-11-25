@@ -79,7 +79,7 @@ export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean;
                                 <p className="text-sm text-tertiary">Copy the posting from the page and paste it here instead.</p>
                             )}
                             <Field label="Posting text">
-                                <TextArea rows={9} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste the full internship posting" />
+                                <TextArea rows={9} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste the full posting" />
                             </Field>
                             <Input label="Link (optional)" size="md" placeholder="https://" value={link} onChange={setLink} />
                         </TabPanel>
@@ -90,7 +90,7 @@ export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean;
                                 placeholder="https://company.be/jobs/intern"
                                 value={link}
                                 onChange={setLink}
-                                hint="Works for pages with structured job data. LinkedIn, Student.be and JobTeaser links are not supported."
+                                hint="Works for pages with structured job data. LinkedIn and JobTeaser links are not supported."
                             />
                         </TabPanel>
                     </Tabs>

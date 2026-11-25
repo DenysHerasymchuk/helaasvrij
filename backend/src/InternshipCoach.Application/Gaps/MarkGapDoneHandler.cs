@@ -15,7 +15,7 @@ public sealed record RescanResult(
 /// <summary>
 /// Ticks a gap: re-ingests only the action's repo into the existing GitHub source (confirmed profile items and
 /// their evidence stay), reads the changed documents for new evidence, re-checks that one requirement and stores a
-/// "Re-scan: ..." score snapshot. New profile items stay unconfirmed until the student confirms them.
+/// "Re-scan: ..." score snapshot. New profile items count right away.
 /// </summary>
 public sealed class MarkGapDoneHandler(
     IPostingRepository postings, ISourceRepository sources, IProfileRepository profile, IGitHubClient github,

@@ -27,7 +27,7 @@ public class GapAnalysisTests
         source.MarkReady(Clock.UtcNow);
 
         var profile = new FakeProfileRepository([source]);
-        var item = ProfileItem.Create(UserId, ProfileItemKind.Skill, "Docker", null, doc.Id, "shipped it with Docker", new CreatedAt(Clock.UtcNow));
+        var item = ProfileItem.Create(UserId, ProfileItemKind.Skill, "Docker", doc.Id, "shipped it with Docker", new CreatedAt(Clock.UtcNow));
         item.SetConfirmed(confirm);
         profile.Items.Add(item);
 

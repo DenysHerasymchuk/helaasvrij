@@ -59,8 +59,6 @@ export function InterviewDate({ postingId, company, autoOpen = false }: Props) {
             const updated = await api.put<PostingDetail>(`/api/postings/${postingId}`, {
                 deadline: posting.deadline,
                 interviewAt,
-                stageStart: posting.stageStart,
-                stageEnd: posting.stageEnd,
             });
             if (updated) setPosting(updated);
             setOpen(false);

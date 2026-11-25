@@ -15,7 +15,8 @@ public sealed class AdzunaJobSnapshot(IConfiguration config, IClock clock, HttpC
     // Bump when Job gains fields: an older file is refetched once, then rewritten with this version.
     public const int SchemaVersion = 2;
 
-    private static readonly string[] Queries = ["stage", "internship", "stagiair"];
+    // shortcut: three fixed broad queries keep the daily quota at 3 calls; make them follow the user's search when the quota allows.
+    private static readonly string[] Queries = ["junior developer", "software engineer", "stage"];
     private static readonly SemaphoreSlim Lock = new(1, 1);
     private DateTimeOffset _lastFailedFetch = DateTimeOffset.MinValue;
 

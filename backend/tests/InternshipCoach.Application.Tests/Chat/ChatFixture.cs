@@ -79,9 +79,9 @@ internal sealed class ChatFixture
         Sources.Items.Add(source);
     }
 
-    public void AddConfirmedItem(ProfileItemKind kind, string name, string? level, string quote)
+    public void AddConfirmedItem(ProfileItemKind kind, string name, string quote)
     {
-        var item = ProfileItem.Create(User.UserId, kind, name, level, Guid.NewGuid(), quote, new CreatedAt(Now));
+        var item = ProfileItem.Create(User.UserId, kind, name, Guid.NewGuid(), quote, new CreatedAt(Now));
         item.SetConfirmed(true);
         Profile.Items.Add(item);
     }
