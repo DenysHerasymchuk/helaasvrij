@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/favicon.svg" alt="helaasvrij" height="96">
+  <img src="frontend/public/favicon.svg" alt="helaasvrij" height="160">
 </p>
 
 <p align="center">
@@ -56,9 +56,9 @@ docker compose up --build
 | API health | http://localhost:5080/api/health |
 | Swagger | http://localhost:5080/swagger |
 
-In development the API creates a demo student and four demo postings on first start. Sign in with `lotte@demo.test` / `Demo1234!` to try the app without registering.
+Register an account on the login page, or sign in with GitHub.
 
-First walk-through: Profile (add a GitHub username, paste CV text, confirm items), Postings (open a demo posting, Analyse), Gap plan (tick a gap to re-scan), Documents (CV, cover letter, recruiter message), Interview prep.
+First walk-through: Profile (add a GitHub username, paste CV text, confirm items), Postings (add a posting, Analyse), Gap plan (tick a gap to re-scan), Documents (CV, cover letter, recruiter message), Interview prep.
 
 Stop with `Ctrl+C`, or `docker compose down` (add `-v` to also delete the database).
 

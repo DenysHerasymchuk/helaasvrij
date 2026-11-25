@@ -47,18 +47,6 @@ if (args.Contains("--migrate"))
     await using var scope = app.Services.CreateAsyncScope();
     await scope.ServiceProvider.GetRequiredService<InternshipCoachDbContext>().Database.MigrateAsync();
 
-    // shortcut: fixed dev test user (lotte@demo.test / Demo1234!), Development only; remove before real users.
-    // Re-running is safe: the handler returns EmailTaken when the user already exists.
-    if (app.Environment.IsDevelopment())
-    {
-        await scope.ServiceProvider.GetRequiredService<RegisterHandler>()
-            .HandleAsync(new RegisterCommand("Lotte Peeters", "lotte@demo.test", "Demo1234!"), CancellationToken.None);
-
-        await DemoDataSeeder.SeedPostingsAsync(
-            scope.ServiceProvider.GetRequiredService<DbContextOptions<InternshipCoachDbContext>>(),
-            scope.ServiceProvider.GetRequiredService<IClock>(), "lotte@demo.test", CancellationToken.None);
-    }
-
     return;
 }
 
