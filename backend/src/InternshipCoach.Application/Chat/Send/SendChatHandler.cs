@@ -254,15 +254,15 @@ public sealed class SendChatHandler(ICurrentUser currentUser, ILlmClient llm, Ch
         }
 
         var readTools = new StringBuilder();
-        foreach (var (name, args, description) in ChatToolbox.ReadTools)
+        foreach (var tool in ChatToolbox.ReadTools)
         {
-            readTools.Append("- ").Append(name).Append(' ').Append(args).Append(": ").AppendLine(description);
+            readTools.Append("- ").Append(tool.Name).Append(' ').Append(tool.ArgsExample).Append(": ").AppendLine(tool.Description);
         }
 
         var actionTools = new StringBuilder();
-        foreach (var (name, args, description) in ChatToolbox.ActionTools)
+        foreach (var tool in ChatToolbox.ActionTools)
         {
-            actionTools.Append("- ").Append(name).Append(' ').Append(args).Append(": ").AppendLine(description);
+            actionTools.Append("- ").Append(tool.Name).Append(' ').Append(tool.ArgsExample).Append(": ").AppendLine(tool.Description);
         }
 
         return $"""

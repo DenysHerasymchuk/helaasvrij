@@ -45,29 +45,38 @@ public sealed class ChatToolbox(
     GetJourneyHandler journey,
     CreateApplicationHandler createApplication,
     UpdateApplicationHandler updateApplication,
-    AddPostingFromJobHandler saveJob)
+    AddPostingFromJobHandler saveJob,
+    PlanningTools planning)
 {
     public const int MaxText = 200;
     public const int MaxListItems = 15;
 
-    public static readonly IReadOnlyList<(string Name, string Args, string Description)> ReadTools =
+    private static readonly ToolParam PostingId = new("postingId", "id from list_postings");
+
+    private static readonly IReadOnlyList<ToolSpec> CoreReadTools =
     [
-        ("get_profile", "{}", "profile items (skills, projects, experience, education, certifications) and languages"),
-        ("list_github_projects", "{}", "synced GitHub repos: name, main language, commits, Dockerfile/tests/CI, last sync"),
-        ("list_postings", "{}", "saved postings: id, company, title, match score, stage on the applications board"),
-        ("get_posting", "{\"postingId\":\"<id>\"}", "one posting's requirements, coverage, evidence and open gaps"),
-        ("list_gaps", "{}", "open gap actions across all postings, biggest impact first"),
-        ("list_applications", "{}", "applications board: company, title, stage"),
-        ("get_journey", "{}", "current step on the path to an application and the next action"),
-        ("search_jobs", "{\"what\":\"<keywords>\",\"where\":\"<city>\"}", "Belgian internship ads from Adzuna (both args optional)")
+        ToolSpec.Read("get_profile", "profile items (skills, projects, experience, education, certifications) and languages"),
+        ToolSpec.Read("list_github_projects", "synced GitHub repos: name, main language, commits, Dockerfile/tests/CI, last sync"),
+        ToolSpec.Read("list_postings", "saved postings: id, company, title, match score, stage on the applications board"),
+        ToolSpec.Read("get_posting", "one posting's requirements, coverage, evidence and open gaps", PostingId),
+        ToolSpec.Read("list_gaps", "open gap actions across all postings, biggest impact first (with requirementId)"),
+        ToolSpec.Read("list_applications", "applications board: company, title, stage"),
+        ToolSpec.Read("get_journey", "current step on the path to an application and the next action"),
+        ToolSpec.Read("search_jobs", "Belgian internship ads from Adzuna", new ToolParam("what", "keywords", false), new ToolParam("where", "city", false))
     ];
 
-    public static readonly IReadOnlyList<(string Name, string Args, string Description)> ActionTools =
+    private static readonly IReadOnlyList<ToolSpec> CoreActionTools =
     [
-        ("set_application_stage", "{\"postingId\":\"<id>\",\"stage\":\"saved|applied|interview|offer|rejected\"}", "move a posting on the applications board"),
-        ("save_job", "{\"jobId\":\"<adzuna id>\"}", "save an Adzuna ad from search_jobs as a posting"),
-        ("add_to_applications", "{\"postingId\":\"<id>\"}", "put a saved posting on the applications board")
+        ToolSpec.Action("set_application_stage", "move a posting on the applications board",
+            PostingId, new ToolParam("stage", "stage", true, ["saved", "applied", "interview", "offer", "rejected"])),
+        ToolSpec.Action("save_job", "save an Adzuna ad from search_jobs as a posting", new ToolParam("jobId", "adzuna id")),
+        ToolSpec.Action("add_to_applications", "put a saved posting on the applications board", PostingId)
     ];
+
+    /// <summary>The catalog chat and the MCP server share: one list, one place to add a tool.</summary>
+    public static readonly IReadOnlyList<ToolSpec> ReadTools = [.. CoreReadTools, .. PlanningTools.ReadSpecs];
+
+    public static readonly IReadOnlyList<ToolSpec> ActionTools = [.. CoreActionTools, .. PlanningTools.ActionSpecs];
 
     public static bool IsReadTool(string name) => ReadTools.Any(t => t.Name == name);
 
@@ -83,6 +92,7 @@ public sealed class ChatToolbox(
         "list_applications" => await ListApplicationsAsync(ct),
         "get_journey" => await GetJourneyAsync(ct),
         "search_jobs" => await SearchJobsAsync(args, ct),
+        _ when PlanningTools.Handles(name) => await planning.RunReadAsync(name, args, ct),
         _ => throw new ChatToolException($"Unknown tool {Clip(name, 40)}.")
     };
 
@@ -110,7 +120,7 @@ public sealed class ChatToolbox(
                     $"Save {Clip(job.Title, 80)}{(string.IsNullOrWhiteSpace(job.Company) ? "" : $" at {Clip(job.Company, 60)}")} to your postings?");
             }
             default:
-                throw new ChatToolException($"{Clip(tool, 40)} is not an action the assistant may propose.");
+                return await planning.ProposeAsync(tool, args, ct);
         }
     }
 
@@ -126,6 +136,8 @@ public sealed class ChatToolbox(
         {
             switch (tool)
             {
+                case not ("set_application_stage" or "add_to_applications" or "save_job"):
+                    return await planning.ExecuteAsync(tool, args, ct);
                 case "set_application_stage":
                 {
                     var posting = await FindPostingAsync(args, ct);
@@ -282,6 +294,7 @@ public sealed class ChatToolbox(
             doneCount = gaps.Count - open.Count,
             gaps = open.Take(MaxListItems).Select(g => new
             {
+                requirementId = g.RequirementId,
                 postingId = g.PostingId,
                 company = Clip(g.Company, 100),
                 requirement = Clip(g.Requirement),
@@ -380,7 +393,7 @@ public sealed class ChatToolbox(
 
     private static string Capitalize(string code) => char.ToUpperInvariant(code[0]) + code[1..];
 
-    private static string Count(int n, string noun) => $"{n} {noun}{(n == 1 ? "" : "s")}";
+    internal static string Count(int n, string noun) => $"{n} {noun}{(n == 1 ? "" : "s")}";
 
     public static string? Clip(string? text, int max = MaxText)
     {

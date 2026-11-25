@@ -1,6 +1,11 @@
 using InternshipCoach.Application.Abstractions;
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Applications;
+using InternshipCoach.Application.Calendar;
+using InternshipCoach.Application.Documents.ListDocuments;
+using InternshipCoach.Application.Postings.Analyse;
+using InternshipCoach.Application.Profile.Extract;
+using InternshipCoach.Application.Sprints;
 using InternshipCoach.Application.Chat.Confirm;
 using InternshipCoach.Application.Chat.Send;
 using InternshipCoach.Application.Chat.Tools;
@@ -28,6 +33,7 @@ internal sealed class ChatFixture
     public FakeProfileRepository Profile { get; } = new();
     public FakeSourceRepository Sources { get; } = new();
     public FakeApplicationRepository Applications { get; }
+    public FakeSprintRepository Sprints { get; } = new();
     public FakeLlmTransport Transport { get; }
     public FakeLlmCallLog Log { get; } = new();
     public ChatToolbox Tools { get; }
@@ -41,13 +47,39 @@ internal sealed class ChatFixture
         var clock = new FakeClock(Now);
         var llm = new LlmClient(Transport, Log, clock, new LlmLimits());
         var importer = new PostingImporter(new PostingExtractor(llm), Postings, User, clock);
+        var sprintRepo = Sprints;
+        var documents = new FakeDocumentRepository();
+        var planning = new PlanningTools(
+            sprintRepo, Applications, Postings,
+            new ListSprintsHandler(sprintRepo, Applications),
+            new GetSprintReportHandler(sprintRepo, Applications, Postings),
+            new ListBacklogHandler(Postings, Applications),
+            new ListRecentActivityHandler(Applications, sprintRepo),
+            new ListApplicationEventsHandler(Applications, sprintRepo),
+            new GetCalendarHandler(Postings, Applications, User),
+            new ListDocumentsHandler(documents),
+            new AddSprintItemsHandler(sprintRepo, Applications, Postings, User, clock),
+            new RemoveSprintItemHandler(Applications, clock),
+            new StartSprintHandler(sprintRepo, User, clock),
+            new CompleteSprintHandler(sprintRepo, Applications, User, clock),
+            new UpdateApplicationHandler(Applications, clock),
+            new MarkGapDoneHandler(
+                Postings, Sources, Profile, new FakeGitHubClient(),
+                new ExtractProfileHandler(Profile, llm, User, clock),
+                new RecheckRequirementHandler(Postings, new GapEvidenceLoader(Profile), new GapAnalyser(llm, User), clock),
+                new RescanThrottle(), clock, User),
+            new UndoGapHandler(Postings),
+            new AddPostingFromPasteHandler(importer),
+            new AddPostingFromUrlHandler(new FakePageFetcher(), importer),
+            clock);
         Tools = new ChatToolbox(
             Profile, Sources, Postings, Applications, new FakeJobSnapshot(),
             new ListGapsHandler(Postings),
             new GetJourneyHandler(Sources, Profile, Postings, new FakeDocumentRepository(), Applications),
             new CreateApplicationHandler(Applications, Postings, new FakeSprintRepository(), User, clock),
             new UpdateApplicationHandler(Applications, clock),
-            new AddPostingFromJobHandler(new FakeJobSnapshot(), importer, Postings));
+            new AddPostingFromJobHandler(new FakeJobSnapshot(), importer, Postings),
+            planning);
         Handler = new SendChatHandler(User, llm, Tools);
         Confirm = new ConfirmChatActionHandler(Tools);
     }

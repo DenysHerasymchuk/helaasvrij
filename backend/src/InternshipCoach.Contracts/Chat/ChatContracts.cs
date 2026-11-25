@@ -19,3 +19,13 @@ public sealed record ConfirmChatActionRequest(string? Tool, IReadOnlyDictionary<
 
 /// <summary>NavigateTo is the page where the result shows, or null.</summary>
 public sealed record ConfirmChatActionResponse(string Message, string? NavigateTo);
+
+public sealed record ToolParamDto(string Name, string Description, bool Required, IReadOnlyList<string>? Values);
+
+/// <summary>Kind is "read" or "action". The same catalog feeds the chat assistant and the MCP server.</summary>
+public sealed record ToolDto(string Name, string Description, string Kind, IReadOnlyList<ToolParamDto> Params);
+
+public sealed record RunToolRequest(IReadOnlyDictionary<string, string>? Args);
+
+/// <summary>Read tool: <c>Data</c> is the trimmed result. Action tool: <c>Pending</c> is the proposal to confirm; nothing has changed yet.</summary>
+public sealed record RunToolResponse(string Kind, object? Data, string? Summary, ChatPendingActionDto? Pending);

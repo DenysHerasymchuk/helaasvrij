@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<RevokeApiTokenHandler>();
         services.AddScoped<SendChatHandler>();
         services.AddScoped<ChatToolbox>();
+        services.AddScoped<PlanningTools>();
         services.AddScoped<ConfirmChatActionHandler>();
         // Handlers talk to the styled client, which adds the user's writing skills to prompts that write text for them.
         services.AddScoped<LlmClient>();
