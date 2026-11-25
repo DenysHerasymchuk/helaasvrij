@@ -1,7 +1,6 @@
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { AlertCircle, Copy01, Download01, Edit05, Printer, Trash01 } from "@untitledui/icons";
-import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { InputFile } from "@/components/base/input/input-file";
 import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
@@ -28,6 +27,13 @@ type DocumentSummary = Omit<DocumentResponse, "content" | "droppedCount">;
 
 
 type DraftKind = "coverLetter" | "recruiterMessage";
+type Mode = "create" | "tailor" | "draft";
+
+const modes: { id: Mode; label: string }[] = [
+    { id: "create", label: "Create CV" },
+    { id: "tailor", label: "Tailor CV" },
+    { id: "draft", label: "Letter or message" },
+];
 
 const kindNames: Record<string, string> = { cv: "CV", coverLetter: "Cover letter", recruiterMessage: "Recruiter message" };
 const RECRUITER_MAX = 300;
@@ -129,6 +135,10 @@ export function DocumentsPage() {
     const linkedPosting = params.get("postingId") ?? "";
     const linkedKind = params.get("kind");
     const linkedMode = params.get("mode");
+    // Deep links pick the form; otherwise a linked posting means tailor, and nothing linked means create.
+    const [mode, setMode] = useState<Mode>(
+        linkedKind === "coverLetter" || linkedKind === "recruiterMessage" ? "draft" : linkedMode === "tailor" || (linkedPosting && linkedMode !== "create") ? "tailor" : "create",
+    );
     const [cvSource, setCvSource] = useState<"paste" | "upload">("paste");
     const [cvText, setCvText] = useState("");
     const [cvFile, setCvFile] = useState<File | null>(null);
@@ -189,20 +199,6 @@ export function DocumentsPage() {
     };
     useEffect(loadPostings, []);
 
-    // Scroll once the postings are in, so the panel sits where it will stay.
-    const postingsLoaded = postings !== null;
-    useEffect(() => {
-        if (!postingsLoaded) return;
-        const target =
-            linkedKind === "coverLetter" || linkedKind === "recruiterMessage"
-                ? "draft-panel"
-                : linkedMode === "create"
-                  ? "create-panel"
-                  : linkedMode === "tailor" || linkedPosting
-                    ? "tailor-panel"
-                    : null;
-        if (target) document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, [postingsLoaded, linkedKind, linkedMode, linkedPosting]);
 
     const loadProfile = () => {
         setConfirmedCount(null);
@@ -373,16 +369,31 @@ export function DocumentsPage() {
     const showCvText = cvSource === "paste" || cvText.length > 0;
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-6 md:px-8 lg:h-dvh lg:overflow-hidden">
             <style>{printCss}</style>
-            <PageHeader
-                title="Documents"
-                description="No CV yet? Create one from your confirmed profile. Already have one? Tailor it to a job posting. Both use only facts you gave us."
-            />
+            <PageHeader title="Documents" description="CV, cover letters and recruiter messages. Everything uses only facts from your profile or your own CV." />
 
-            <div className="grid items-start gap-6 lg:grid-cols-2">
-                <div className="flex flex-col gap-6">
-                    <Panel id="create-panel" title="Create my CV from my profile">
+            <div className="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)]">
+                <div className="flex min-h-0 flex-col gap-4 lg:overflow-y-auto lg:pr-1">
+                    <div role="tablist" aria-label="New document" className="grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1">
+                        {modes.map((m) => (
+                            <button
+                                key={m.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={mode === m.id}
+                                onClick={() => setMode(m.id)}
+                                className={cx(
+                                    "cursor-pointer rounded-md px-2 py-1.5 text-sm font-semibold outline-focus-ring transition focus-visible:outline-2",
+                                    mode === m.id ? "bg-primary text-secondary shadow-xs" : "text-quaternary hover:text-secondary",
+                                )}
+                            >
+                                {m.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {mode === "create" && <Panel id="create-panel" title="Create my CV from my profile">
                         {confirmedCount === null ? (
                             <p role="status" className="p-5 text-sm text-tertiary">Loading your profile...</p>
                         ) : confirmedCount === -1 ? (
@@ -395,16 +406,16 @@ export function DocumentsPage() {
                         ) : confirmedCount === 0 ? (
                             <div className="flex flex-col items-start gap-3 p-5">
                                 <p className="text-sm text-tertiary">
-                                    Your CV is built only from profile items you confirmed, and you have none yet. Add your GitHub, CV or website and confirm what is right.
+                                    Your CV is built only from your profile, and it is empty. Add your GitHub, CV or website and read your sources.
                                 </p>
-                                <Button size="sm" color="secondary" href="/profile">
+                                <Button size="sm" color="secondary" href="/settings/profile">
                                     Go to my profile
                                 </Button>
                             </div>
                         ) : (
-                            <form onSubmit={onCreate} className="flex flex-col gap-4 p-5">
+                            <form onSubmit={onCreate} className="flex flex-col gap-4 p-4">
                                 <p className="text-sm text-tertiary">
-                                    Uses your {confirmedCount} confirmed profile {confirmedCount === 1 ? "item" : "items"}. Nothing else goes into it.
+                                    Uses your {confirmedCount} profile {confirmedCount === 1 ? "item" : "items"}. Nothing else goes into it.
                                 </p>
                                 <div className="flex flex-col gap-1.5">
                                     <label htmlFor="create-language" className="text-sm font-medium text-secondary">Language</label>
@@ -433,10 +444,10 @@ export function DocumentsPage() {
                                 </div>
                             </form>
                         )}
-                    </Panel>
+                    </Panel>}
 
-                    <Panel id="tailor-panel" title="Tailor my CV to a posting">
-                        <form onSubmit={onTailor} className="flex flex-col gap-5 p-5">
+                    {mode === "tailor" && <Panel id="tailor-panel" title="Tailor my CV to a posting">
+                        <form onSubmit={onTailor} className="flex flex-col gap-4 p-4">
                             <fieldset className="flex flex-col gap-3">
                                 <legend className="mb-3 text-sm font-medium text-secondary">Your CV</legend>
                                 <RadioGroup
@@ -492,7 +503,7 @@ export function DocumentsPage() {
                                         <textarea
                                             id="cv-text"
                                             required
-                                            rows={10}
+                                            rows={6}
                                             maxLength={MAX_CHARS}
                                             value={cvText}
                                             onChange={(e) => setCvText(e.target.value)}
@@ -564,7 +575,7 @@ export function DocumentsPage() {
                                         <textarea
                                             id="posting-text"
                                             required
-                                            rows={8}
+                                            rows={5}
                                             maxLength={MAX_CHARS}
                                             value={postingText}
                                             onChange={(e) => setPostingText(e.target.value)}
@@ -601,10 +612,10 @@ export function DocumentsPage() {
                                 </Button>
                             </div>
                         </form>
-                    </Panel>
+                    </Panel>}
 
-                <Panel id="draft-panel" title="Cover letter or recruiter message">
-                    <form onSubmit={onDraft} className="flex flex-col gap-5 p-5">
+                {mode === "draft" && <Panel id="draft-panel" title="Cover letter or recruiter message">
+                    <form onSubmit={onDraft} className="flex flex-col gap-4 p-4">
                         {postingsError ? (
                             <div className="flex flex-col items-start gap-3">
                                 <p className="text-sm text-error-primary">Could not load your postings.</p>
@@ -657,10 +668,40 @@ export function DocumentsPage() {
                             </>
                         )}
                     </form>
-                </Panel>
+                </Panel>}
+
+                    <Panel title="Your documents" className="min-h-0">
+                        {listError ? (
+                            <div className="flex flex-col items-start gap-3 p-4">
+                                <p className="text-sm text-error-primary">Could not load your documents.</p>
+                                <Button size="sm" color="secondary" onPress={loadList}>
+                                    Try again
+                                </Button>
+                            </div>
+                        ) : list === null ? (
+                            <p role="status" className="p-4 text-sm text-tertiary">Loading...</p>
+                        ) : list.length === 0 ? (
+                            <p className="p-4 text-sm text-tertiary">No documents yet. Make your first one above.</p>
+                        ) : (
+                            <ul className="flex flex-col divide-y divide-secondary">
+                                {list.map((doc) => (
+                                    <li key={doc.id} className={cx("flex items-center gap-2 px-4 py-2.5", current?.id === doc.id && "bg-secondary")}>
+                                        <button type="button" onClick={() => onOpen(doc.id)} className="min-w-0 flex-1 cursor-pointer rounded-xs text-left outline-focus-ring focus-visible:outline-2" aria-label={`Open ${doc.title}`}>
+                                            <span className="block truncate text-sm font-medium text-primary">{doc.title}</span>
+                                            <span className="block text-xs text-tertiary">
+                                                {kindNames[doc.kind] ?? doc.kind}, {languageNames[doc.language] ?? doc.language}, {formatDate(doc.createdAt)}
+                                            </span>
+                                        </button>
+                                        <Button size="sm" color="tertiary" iconLeading={Trash01} onPress={() => onDelete(doc)} aria-label={`Delete ${doc.title}`} />
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </Panel>
                 </div>
 
                 <Panel
+                    className="flex min-h-0 flex-col"
                     title={current ? current.title : "Your draft"}
                     action={
                         current && !editing ? (
@@ -681,7 +722,7 @@ export function DocumentsPage() {
                         ) : undefined
                     }
                 >
-                    <div className="flex flex-col gap-4 p-5">
+                    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
                         {!current && !tailoring && !creating && (
                             <p className="text-sm text-tertiary">Your CV shows up here. Every line in it comes from your profile or your own CV.</p>
                         )}
@@ -752,38 +793,6 @@ export function DocumentsPage() {
                     </div>
                 </Panel>
             </div>
-
-            <Panel title="Your documents">
-                {listError ? (
-                    <div className="flex flex-col items-start gap-3 p-5">
-                        <p className="text-sm text-error-primary">Could not load your documents.</p>
-                        <Button size="sm" color="secondary" onPress={loadList}>
-                            Try again
-                        </Button>
-                    </div>
-                ) : list === null ? (
-                    <p role="status" className="p-5 text-sm text-tertiary">Loading...</p>
-                ) : list.length === 0 ? (
-                    <p className="p-5 text-sm text-tertiary">No documents yet. Use one of the forms above to make your first one.</p>
-                ) : (
-                    <ul className="flex flex-col divide-y divide-secondary">
-                        {list.map((doc) => (
-                            <li key={doc.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-medium text-primary">{doc.title}</p>
-                                    <p className="text-sm text-tertiary">{formatDate(doc.createdAt)}</p>
-                                </div>
-                                <Badge size="sm" color="brand">{kindNames[doc.kind] ?? doc.kind}</Badge>
-                                <Badge size="sm" color="gray">{languageNames[doc.language] ?? doc.language}</Badge>
-                                <Button size="sm" color="secondary" onPress={() => onOpen(doc.id)} aria-label={`Open ${doc.title}`}>
-                                    Open
-                                </Button>
-                                <Button size="sm" color="tertiary" iconLeading={Trash01} onPress={() => onDelete(doc)} aria-label={`Delete ${doc.title}`} />
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </Panel>
         </div>
     );
 }

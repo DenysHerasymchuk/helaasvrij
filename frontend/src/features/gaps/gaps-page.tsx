@@ -4,7 +4,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { type Coverage, type PostingSummary, formatDate } from "@/features/postings/types";
-import { fieldClass, PageHeader } from "@/core/ui";
+import { PageHeader } from "@/core/ui";
 import { cx } from "@/utils/cx";
 
 type Gap = {
@@ -35,18 +35,31 @@ type Rescan = {
 };
 
 type Notice = { kind: "success" | "error"; text: string; review?: number };
+type Status = "open" | "done" | "all";
 
 const coverageLabel: Record<Coverage, string> = { strong: "Strong", partial: "Partial", none: "Not shown" };
+const message = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong. Try again.");
+const statuses: { id: Status; label: string }[] = [
+    { id: "open", label: "Open" },
+    { id: "done", label: "Done" },
+    { id: "all", label: "All" },
+];
 
+const railButton = (active: boolean) =>
+    cx(
+        "flex w-full cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2 text-left outline-focus-ring transition focus-visible:outline-2",
+        active ? "bg-secondary ring-1 ring-secondary_alt" : "hover:bg-primary_hover",
+    );
+
+/** One screen: positions on the left, the checklist for the chosen position on the right. */
 export function GapsPage() {
     const [gaps, setGaps] = useState<Gap[] | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [notice, setNotice] = useState<Notice | null>(null);
-    const [status, setStatus] = useState<"open" | "done" | "all">("open");
+    const [status, setStatus] = useState<Status>("open");
     const [params] = useSearchParams();
     const [postingId, setPostingId] = useState(params.get("postingId") ?? "all");
-    const [groupBy, setGroupBy] = useState<"posting" | "repo">("posting");
     const [saved, setSaved] = useState<PostingSummary[] | null>(null);
     const [analysing, setAnalysing] = useState<string | null>(null);
     const [analyseError, setAnalyseError] = useState<string | null>(null);
@@ -58,7 +71,7 @@ export function GapsPage() {
             setGaps(g ?? []);
             setSaved(p ?? []);
         } catch (e) {
-            setError(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
+            setError(message(e));
         }
     }, []);
 
@@ -66,10 +79,16 @@ export function GapsPage() {
         void load();
     }, [load]);
 
-    const postings = useMemo(() => {
-        const map = new Map<string, string>();
-        for (const g of gaps ?? []) map.set(g.postingId, g.company);
-        return [...map.entries()];
+    // One entry per analysed position, with its open gap count and score.
+    const rail = useMemo(() => {
+        const map = new Map<string, { id: string; company: string; title: string; open: number; score: number }>();
+        for (const g of gaps ?? []) {
+            const entry = map.get(g.postingId) ?? { id: g.postingId, company: g.company, title: g.postingTitle, open: 0, score: g.postingScore };
+            entry.open += g.done ? 0 : 1;
+            entry.score = g.postingScore;
+            map.set(g.postingId, entry);
+        }
+        return [...map.values()];
     }, [gaps]);
 
     const visible = useMemo(
@@ -79,25 +98,23 @@ export function GapsPage() {
 
     const groups = useMemo(() => {
         const map = new Map<string, Gap[]>();
-        for (const g of visible) {
-            const key = groupBy === "posting" ? `${g.company}: ${g.postingTitle}` : (g.project ? (g.project.startsWith("new:") ? `New project: ${g.project.slice(4)}` : g.project) : "No repo");
-            map.set(key, [...(map.get(key) ?? []), g]);
-        }
+        for (const g of visible) map.set(`${g.company}: ${g.postingTitle}`, [...(map.get(`${g.company}: ${g.postingTitle}`) ?? []), g]);
         return [...map.entries()];
-    }, [visible, groupBy]);
+    }, [visible]);
 
     const pending = (saved ?? []).filter((p) => !p.analysed);
-    const analysedCount = (saved ?? []).length - pending.length;
+    const totalOpen = rail.reduce((sum, r) => sum + r.open, 0);
 
-    // Runs the gap analysis in place, so a saved posting joins the plan without leaving this page.
+    // Runs the gap analysis in place, so a saved position joins the plan without leaving this page.
     async function analyse(posting: PostingSummary) {
         setAnalysing(posting.id);
         setAnalyseError(null);
         try {
             await api.post(`/api/postings/${posting.id}/analyse`, {});
             await load();
+            setPostingId(posting.id);
         } catch (e) {
-            setAnalyseError(e instanceof ApiError ? e.message : "Something went wrong. Try again.");
+            setAnalyseError(message(e));
         } finally {
             setAnalysing(null);
         }
@@ -117,7 +134,7 @@ export function GapsPage() {
                 });
             }
         } catch (e) {
-            setNotice({ kind: "error", text: e instanceof ApiError ? e.message : "Something went wrong. Try again." });
+            setNotice({ kind: "error", text: message(e) });
         } finally {
             setBusyId(null);
         }
@@ -130,70 +147,61 @@ export function GapsPage() {
             const updated = await api.post<Gap>(`/api/gaps/${gap.requirementId}/undo`, {});
             if (updated) setGaps((current) => (current ?? []).map((g) => (g.requirementId === gap.requirementId ? updated : g)));
         } catch (e) {
-            setNotice({ kind: "error", text: e instanceof ApiError ? e.message : "Something went wrong. Try again." });
+            setNotice({ kind: "error", text: message(e) });
         } finally {
             setBusyId(null);
         }
     }
 
     return (
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-6 md:px-8 lg:h-dvh lg:overflow-hidden">
             <PageHeader
                 title="Gap plan"
-                description="Every gap from your postings in one checklist, biggest impact first. Tick one after you changed the repo and it is re-scanned."
+                description="What your positions ask that you cannot show yet, biggest impact first. Tick one after you changed the repo and it is re-scanned."
+                action={
+                    <div role="tablist" aria-label="Show" className="inline-flex gap-1 rounded-lg bg-secondary p-1">
+                        {statuses.map((s) => (
+                            <button
+                                key={s.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={status === s.id}
+                                onClick={() => setStatus(s.id)}
+                                className={cx(
+                                    "cursor-pointer rounded-md px-3 py-1.5 text-sm font-semibold outline-focus-ring transition focus-visible:outline-2",
+                                    status === s.id ? "bg-primary text-secondary shadow-xs" : "text-quaternary hover:text-secondary",
+                                )}
+                            >
+                                {s.label}
+                            </button>
+                        ))}
+                    </div>
+                }
             />
 
             {notice && (
                 <div
                     role={notice.kind === "error" ? "alert" : "status"}
-                    className={`flex items-start justify-between gap-3 rounded-lg px-4 py-3 text-sm ring-1 ring-secondary ${notice.kind === "error" ? "bg-error-primary text-error-primary" : "bg-secondary text-primary"}`}
+                    className={`flex items-start justify-between gap-3 rounded-lg px-4 py-2.5 text-sm ring-1 ring-secondary ${notice.kind === "error" ? "bg-error-primary text-error-primary" : "bg-secondary text-primary"}`}
                 >
-                    <div>
-                        <p className="font-semibold">{notice.text}</p>
+                    <p>
+                        <span className="font-semibold">{notice.text}</span>
                         {notice.review ? (
-                            <p className="mt-1 text-secondary">
+                            <>
+                                {" "}
                                 {notice.review} new item{notice.review === 1 ? "" : "s"} found in the repo.{" "}
-                                <Link to="/profile" className="font-semibold underline">
+                                <Link to="/settings/profile" className="font-semibold underline">
                                     Review on your profile
-                                </Link>{" "}
-                                (only confirmed items count).
-                            </p>
+                                </Link>
+                                .
+                            </>
                         ) : null}
-                    </div>
-                    <button type="button" onClick={() => setNotice(null)} className="shrink-0 font-semibold underline">
+                    </p>
+                    <button type="button" onClick={() => setNotice(null)} className="shrink-0 cursor-pointer font-semibold underline">
                         Dismiss
                     </button>
                 </div>
             )}
-
-            <div className="flex flex-wrap items-center gap-3">
-                <label className="flex items-center gap-2 text-sm text-secondary">
-                    Show
-                    <select className={cx(fieldClass, "w-auto text-sm")} value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
-                        <option value="open">Open</option>
-                        <option value="done">Done</option>
-                        <option value="all">All</option>
-                    </select>
-                </label>
-                <label className="flex items-center gap-2 text-sm text-secondary">
-                    Posting
-                    <select className={cx(fieldClass, "w-auto text-sm")} value={postingId} onChange={(e) => setPostingId(e.target.value)}>
-                        <option value="all">All postings</option>
-                        {postings.map(([id, company]) => (
-                            <option key={id} value={id}>
-                                {company}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <label className="flex items-center gap-2 text-sm text-secondary">
-                    Group by
-                    <select className={cx(fieldClass, "w-auto text-sm")} value={groupBy} onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}>
-                        <option value="posting">Posting</option>
-                        <option value="repo">Repo</option>
-                    </select>
-                </label>
-            </div>
 
             {error ? (
                 <div role="alert" className="flex items-center gap-3 text-sm text-error-primary">
@@ -204,119 +212,136 @@ export function GapsPage() {
                 </div>
             ) : gaps === null || saved === null ? (
                 <p className="text-md text-tertiary" aria-busy="true">
-                    Loading your gaps…
+                    Loading your gaps...
                 </p>
-            ) : analysedCount === 0 && pending.length === 0 ? (
+            ) : rail.length === 0 && pending.length === 0 ? (
                 <div className="rounded-xl bg-primary px-5 py-10 text-center shadow-xs ring-1 ring-secondary">
-                    <p className="text-md font-semibold text-primary">Analyse a posting first.</p>
-                    <p className="mt-1 text-sm text-tertiary">Its missing requirements become your to-do list here.</p>
+                    <p className="text-md font-semibold text-primary">Add a position first.</p>
+                    <p className="mt-1 text-sm text-tertiary">What it asks that you cannot show yet becomes your to-do list here.</p>
                     <div className="mt-4">
-                        <Button size="md" href="/postings">
-                            Find internships
+                        <Button size="md" href="/find">
+                            Find positions
                         </Button>
                     </div>
                 </div>
-            ) : analysedCount === 0 ? null : gaps.length === 0 || (status === "open" && gaps.every((g) => g.done)) ? (
-                <div className="rounded-xl bg-primary px-5 py-10 text-center shadow-xs ring-1 ring-secondary">
-                    <p className="text-md font-semibold text-primary">No open gaps.</p>
-                    <p className="mt-1 text-sm text-tertiary">Your analysed postings ask for nothing you have not shown yet.</p>
-                </div>
-            ) : visible.length === 0 ? (
-                <p className="text-md text-tertiary">Nothing matches these filters.</p>
             ) : (
-                groups.map(([name, rows]) => (
-                    <section key={name} className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
-                        <h2 className="border-b border-secondary px-5 py-3 text-sm font-semibold text-primary">{name}</h2>
-                        <ul className="divide-y divide-secondary">
-                            {rows.map((g) => (
-                                <li key={g.requirementId} className="flex items-start gap-3 px-5 py-4">
-                                    <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center">
-                                        {busyId === g.requirementId ? (
-                                            <span role="status" aria-label="Re-scanning" className="size-4 animate-spin rounded-full border-2 border-secondary border-t-brand-solid" />
-                                        ) : (
-                                            <input
-                                                type="checkbox"
-                                                className="size-4 cursor-pointer accent-brand-600 dark:accent-brand-400"
-                                                checked={g.done}
-                                                disabled={busyId !== null}
-                                                aria-label={g.done ? `Undo: ${g.action ?? g.requirement}` : `Mark done: ${g.action ?? g.requirement}`}
-                                                onChange={() => (g.done ? undo(g) : tick(g))}
-                                            />
-                                        )}
-                                    </div>
-                                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                                        <p className={`text-md font-medium text-primary ${g.done ? "line-through opacity-70" : ""}`}>{g.action ?? g.requirement}</p>
-                                        <p className="text-sm text-tertiary">
-                                            {g.requirement}
-                                            {g.project && (
-                                                <>
-                                                    {" "}
-                                                    · <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">{g.project.replace(/^new:/, "")}</code>
-                                                </>
-                                            )}
-                                            {" "}
-                                            ·{" "}
-                                            <Link to={`/postings/${g.postingId}`} className="font-semibold text-brand-secondary hover:underline">
-                                                {g.company}
-                                            </Link>
-                                            {g.dueDate && ` · by ${formatDate(g.dueDate)}`}
-                                        </p>
-                                        {g.project?.startsWith("new:") && <p className="text-sm text-tertiary">Add the repo to GitHub and sync your profile to raise your score.</p>}
-                                        <div className="flex flex-wrap gap-2">
-                                            <Badge type="pill-color" size="sm" color={g.importance === "required" ? "brand" : "gray"}>
-                                                {g.importance === "required" ? "Required" : "Nice to have"}
-                                            </Badge>
-                                            <Badge type="pill-color" size="sm" color={g.coverage === "strong" ? "success" : g.coverage === "partial" ? "warning" : "gray"}>
-                                                {coverageLabel[g.coverage]}
-                                            </Badge>
-                                            {!g.done && g.scoreGain > 0 && (
-                                                <Badge type="pill-color" size="sm" color="gray">
-                                                    Up to +{g.scoreGain}% ({g.company} {g.postingScore}%)
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                ))
-            )}
-
-            {pending.length > 0 && gaps !== null && (
-                <section aria-labelledby="pending-title" className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
-                    <div className="border-b border-secondary px-5 py-4">
-                        <h2 id="pending-title" className="text-md font-semibold text-primary">
-                            {analysedCount === 0 ? "Analyse a posting first." : "Saved postings not in your plan yet"}
-                        </h2>
-                        <p className="mt-0.5 text-sm text-tertiary">
-                            {analysedCount === 0 ? "Its missing requirements become your to-do list here." : "Analyse one to add its missing requirements to this list."}
-                        </p>
-                    </div>
-                    <ul className="divide-y divide-secondary">
-                        {pending.map((p) => (
-                            <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
-                                <Link to={`/postings/${p.id}`} className="min-w-0 rounded-xs outline-focus-ring hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
-                                    <span className="block truncate text-sm font-semibold text-primary">{p.company}</span>
-                                    <span className="block truncate text-sm text-tertiary">{p.title}</span>
-                                </Link>
-                                <Button size="sm" isLoading={analysing === p.id} isDisabled={analysing !== null} onPress={() => analyse(p)}>
-                                    Analyse
-                                </Button>
-                            </li>
+                <div className="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+                    <aside aria-label="Positions" className="flex min-h-0 flex-col gap-3 overflow-y-auto rounded-xl bg-primary p-2 shadow-xs ring-1 ring-secondary">
+                        <button type="button" onClick={() => setPostingId("all")} className={railButton(postingId === "all")}>
+                            <span className="text-sm font-semibold text-primary">All positions</span>
+                            <span className="text-xs text-tertiary">{totalOpen} open {totalOpen === 1 ? "gap" : "gaps"}</span>
+                        </button>
+                        {rail.map((r) => (
+                            <button key={r.id} type="button" onClick={() => setPostingId(r.id)} className={railButton(postingId === r.id)}>
+                                <span className="flex items-center justify-between gap-2">
+                                    <span className="truncate text-sm font-semibold text-primary">{r.company}</span>
+                                    <span className="shrink-0 text-xs font-semibold text-secondary">{r.score}%</span>
+                                </span>
+                                <span className="truncate text-xs text-tertiary">{r.title}</span>
+                                <span className="text-xs text-tertiary">{r.open} open</span>
+                            </button>
                         ))}
-                    </ul>
-                    {analysing && (
-                        <p role="status" className="border-t border-secondary px-5 py-3 text-sm text-tertiary">
-                            Comparing the posting with your confirmed profile. This takes up to a minute.
-                        </p>
-                    )}
-                    {analyseError && (
-                        <p role="alert" className="border-t border-secondary px-5 py-3 text-sm text-error-primary">
-                            {analyseError}
-                        </p>
-                    )}
-                </section>
+
+                        {pending.length > 0 && (
+                            <div className="mt-1 border-t border-secondary pt-3">
+                                <p className="px-3 pb-2 text-xs font-semibold text-tertiary">Not in your plan yet</p>
+                                <ul className="flex flex-col gap-1">
+                                    {pending.map((p) => (
+                                        <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-1.5">
+                                            <Link to={`/positions/${p.id}`} className="min-w-0 rounded-xs outline-focus-ring hover:underline focus-visible:outline-2">
+                                                <span className="block truncate text-sm font-medium text-primary">{p.company}</span>
+                                                <span className="block truncate text-xs text-tertiary">{p.title}</span>
+                                            </Link>
+                                            <Button size="sm" isLoading={analysing === p.id} isDisabled={analysing !== null} onPress={() => analyse(p)}>
+                                                Analyse
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                                {analysing && (
+                                    <p role="status" className="px-3 pt-2 text-xs text-tertiary">
+                                        Comparing with your profile. This takes up to a minute.
+                                    </p>
+                                )}
+                                {analyseError && (
+                                    <p role="alert" className="px-3 pt-2 text-xs text-error-primary">
+                                        {analyseError}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </aside>
+
+                    <section aria-label="Gaps" className="min-h-0 overflow-y-auto rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
+                        {visible.length === 0 ? (
+                            <p className="px-5 py-10 text-center text-sm text-tertiary">
+                                {status === "open" ? "No open gaps here. Everything this asks, you can already show." : "Nothing matches."}
+                            </p>
+                        ) : (
+                            groups.map(([name, rows]) => (
+                                <div key={name}>
+                                    {postingId === "all" && <h2 className="sticky top-0 z-10 border-b border-secondary bg-secondary px-4 py-2 text-xs font-semibold text-secondary">{name}</h2>}
+                                    <ul className="divide-y divide-secondary">
+                                        {rows.map((g) => (
+                                            <li key={g.requirementId} className="flex items-start gap-3 px-4 py-3">
+                                                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center">
+                                                    {busyId === g.requirementId ? (
+                                                        <span role="status" aria-label="Re-scanning" className="size-4 animate-spin rounded-full border-2 border-secondary border-t-brand-solid" />
+                                                    ) : (
+                                                        <input
+                                                            type="checkbox"
+                                                            className="size-4 cursor-pointer accent-brand-600 dark:accent-brand-400"
+                                                            checked={g.done}
+                                                            disabled={busyId !== null}
+                                                            aria-label={g.done ? `Undo: ${g.action ?? g.requirement}` : `Mark done: ${g.action ?? g.requirement}`}
+                                                            onChange={() => (g.done ? undo(g) : tick(g))}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className={`text-sm font-medium text-primary ${g.done ? "line-through opacity-70" : ""}`}>{g.action ?? g.requirement}</p>
+                                                    <p className="mt-0.5 text-xs text-tertiary">
+                                                        {g.requirement}
+                                                        {g.project && (
+                                                            <>
+                                                                {" "}
+                                                                · <code className="rounded bg-secondary px-1 py-0.5 font-mono">{g.project.replace(/^new:/, "")}</code>
+                                                            </>
+                                                        )}
+                                                        {postingId !== "all" ? null : (
+                                                            <>
+                                                                {" "}
+                                                                ·{" "}
+                                                                <Link to={`/positions/${g.postingId}`} className="font-semibold text-brand-secondary hover:underline">
+                                                                    {g.company}
+                                                                </Link>
+                                                            </>
+                                                        )}
+                                                        {g.dueDate && ` · by ${formatDate(g.dueDate)}`}
+                                                    </p>
+                                                    {g.project?.startsWith("new:") && <p className="mt-0.5 text-xs text-tertiary">Add the repo to GitHub and sync your profile to raise your score.</p>}
+                                                </div>
+                                                <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                                                    <Badge type="pill-color" size="sm" color={g.importance === "required" ? "brand" : "gray"}>
+                                                        {g.importance === "required" ? "Required" : "Nice"}
+                                                    </Badge>
+                                                    <Badge type="pill-color" size="sm" color={g.coverage === "strong" ? "success" : g.coverage === "partial" ? "warning" : "gray"}>
+                                                        {coverageLabel[g.coverage]}
+                                                    </Badge>
+                                                    {!g.done && g.scoreGain > 0 && (
+                                                        <Badge type="pill-color" size="sm" color="gray">
+                                                            +{g.scoreGain}%
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))
+                        )}
+                    </section>
+                </div>
             )}
         </div>
     );

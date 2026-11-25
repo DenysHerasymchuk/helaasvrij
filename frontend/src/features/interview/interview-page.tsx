@@ -159,8 +159,8 @@ function QuestionCard({
   };
 
   return (
-    <li
-      className={`flex flex-col gap-4 ${panelClass} sm:p-6`}
+    <div
+      className={`flex min-h-0 flex-col gap-4 ${panelClass} sm:p-6 lg:overflow-y-auto`}
       aria-labelledby={`q-${question.id}`}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -269,7 +269,7 @@ function QuestionCard({
           </>
         )}
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -285,6 +285,7 @@ export function InterviewPage() {
     status: number;
   } | null>(null);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const inFlight = useRef<string | null>(null);
   const postingId = params.get("postingId") ?? params.get("posting") ?? "";
   const company =
@@ -393,12 +394,36 @@ export function InterviewPage() {
 
   const questions = interview?.questions ?? [];
   const practised = questions.filter((q) => q.answers.length > 0).length;
+  const active = questions.find((q) => q.id === activeId) ?? questions[0];
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-6 md:px-8 lg:h-dvh lg:overflow-hidden">
       <PageHeader
         title="Interview prep"
         description="Practise the questions this company is likely to ask you, built from your gaps and your own work."
+        action={
+          postings && postings.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="posting" className="text-sm font-medium text-secondary">
+                Practise for
+              </label>
+              <select
+                id="posting"
+                className={`${fieldClass} sm:w-72`}
+                value={postingId}
+                disabled={busy !== null}
+                onChange={(e) => setParams({ postingId: e.target.value })}
+              >
+                {postings.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title} at {p.company}
+                    {p.id === best?.id ? ` (best match, ${best.score}%)` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : undefined
+        }
       />
 
       {postingsError ? (
@@ -418,50 +443,25 @@ export function InterviewPage() {
             Interview questions are written for one posting. Save one and come
             back here.
           </p>
-          <Button size="md" href="/postings">
-            Find postings
+          <Button size="md" href="/find">
+            Find positions
           </Button>
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="posting"
-                className="text-sm font-medium text-secondary"
+          <div aria-live="polite">
+            {busy && (
+              <p
+                role="status"
+                className={`flex items-center gap-2 text-sm text-secondary ${panelClass}`}
               >
-                Practise for
-              </label>
-              <select
-                id="posting"
-                className={fieldClass}
-                value={postingId}
-                disabled={busy !== null}
-                onChange={(e) => setParams({ postingId: e.target.value })}
-              >
-                {postings.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title} at {p.company}
-                    {p.id === best?.id ? ` (best match, ${best.score}%)` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div aria-live="polite">
-              {busy && (
-                <p
-                  role="status"
-                  className={`flex items-center gap-2 text-sm text-secondary ${panelClass}`}
-                >
-                  <RefreshCw01
-                    className="size-4 shrink-0 animate-spin text-fg-brand-primary motion-reduce:animate-none"
-                    aria-hidden
-                  />{" "}
-                  {busy}
-                </p>
-              )}
-            </div>
+                <RefreshCw01
+                  className="size-4 shrink-0 animate-spin text-fg-brand-primary motion-reduce:animate-none"
+                  aria-hidden
+                />{" "}
+                {busy}
+              </p>
+            )}
           </div>
 
           {error && !busy && (
@@ -482,14 +482,14 @@ export function InterviewPage() {
                   Try again
                 </Button>
                 {error.status === 409 && (
-                  <Button size="sm" color="tertiary" href="/profile">
+                  <Button size="sm" color="tertiary" href="/settings/profile">
                     Go to your profile
                   </Button>
                 )}
                 <Button
                   size="sm"
                   color="tertiary"
-                  href={`/postings/${postingId}`}
+                  href={`/positions/${postingId}`}
                 >
                   Open the posting
                 </Button>
@@ -515,44 +515,8 @@ export function InterviewPage() {
             </div>
           )}
 
-          {interview && !busy && questions.length > 0 && (
-            <section aria-label="Questions" className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex min-w-48 flex-1 flex-col gap-1.5">
-                  <p
-                    className="text-sm font-medium text-secondary"
-                    id="progress-label"
-                  >
-                    {practised} of {questions.length} practised
-                  </p>
-                  <div
-                    className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-tertiary"
-                    role="progressbar"
-                    aria-labelledby="progress-label"
-                    aria-valuemin={0}
-                    aria-valuemax={questions.length}
-                    aria-valuenow={practised}
-                  >
-                    <div
-                      className="h-full rounded-full bg-fg-success-primary transition-all"
-                      style={{
-                        width: `${(practised / questions.length) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-                {interview.analysed && !confirmNew && (
-                  <Button
-                    size="sm"
-                    color="secondary"
-                    iconLeading={RefreshCw01}
-                    onPress={() => setConfirmNew(true)}
-                  >
-                    New questions
-                  </Button>
-                )}
-              </div>
-
+          {interview && !busy && questions.length > 0 && active && (
+            <section aria-label="Questions" className="flex min-h-0 flex-1 flex-col gap-4">
               {confirmNew && (
                 <div
                   role="alertdialog"
@@ -581,17 +545,65 @@ export function InterviewPage() {
                 </div>
               )}
 
-              <ol className="flex flex-col gap-4">
-                {questions.map((q, i) => (
-                  <QuestionCard
-                    key={q.id}
-                    interview={interview}
-                    question={q}
-                    index={i}
-                    onAnswered={onAnswered}
-                  />
-                ))}
-              </ol>
+              <div className="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+                <aside aria-label="Question list" className={`flex min-h-0 flex-col gap-3 p-3 ${cardClass} lg:overflow-y-auto`}>
+                  <div className="flex items-center justify-between gap-3 px-1">
+                    <p className="text-sm font-medium text-secondary" id="progress-label">
+                      {practised} of {questions.length} practised
+                    </p>
+                    {interview.analysed && !confirmNew && (
+                      <Button size="sm" color="secondary" iconLeading={RefreshCw01} aria-label="Write new questions" onPress={() => setConfirmNew(true)} />
+                    )}
+                  </div>
+                  <div
+                    className="mx-1 h-2 overflow-hidden rounded-full bg-tertiary"
+                    role="progressbar"
+                    aria-labelledby="progress-label"
+                    aria-valuemin={0}
+                    aria-valuemax={questions.length}
+                    aria-valuenow={practised}
+                  >
+                    <div className="h-full rounded-full bg-fg-success-primary transition-all" style={{ width: `${(practised / questions.length) * 100}%` }} />
+                  </div>
+                  <ol className="flex flex-col gap-1">
+                    {questions.map((q, i) => (
+                      <li key={q.id}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveId(q.id)}
+                          aria-current={q.id === active.id ? "true" : undefined}
+                          className={`flex w-full cursor-pointer flex-col gap-1 rounded-lg px-3 py-2 text-left outline-focus-ring transition focus-visible:outline-2 ${
+                            q.id === active.id ? "bg-secondary ring-1 ring-secondary_alt" : "hover:bg-primary_hover"
+                          }`}
+                        >
+                          <span className="flex items-center justify-between gap-2 text-xs text-tertiary">
+                            <span>Question {i + 1}</span>
+                            <span className="flex items-center gap-1.5">
+                              <Badge size="sm" color={sourceColor[q.source]}>
+                                {sourceLabel[q.source]}
+                              </Badge>
+                              {q.answers[0] && (
+                                <Badge size="sm" color={q.answers[0].score !== null ? scoreColor(q.answers[0].score) : "success"}>
+                                  {q.answers[0].score !== null ? `${q.answers[0].score}/5` : "Done"}
+                                </Badge>
+                              )}
+                            </span>
+                          </span>
+                          <span className="line-clamp-2 text-sm font-medium text-primary">{q.text}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </aside>
+
+                <QuestionCard
+                  key={active.id}
+                  interview={interview}
+                  question={active}
+                  index={questions.indexOf(active)}
+                  onAnswered={onAnswered}
+                />
+              </div>
             </section>
           )}
         </>
