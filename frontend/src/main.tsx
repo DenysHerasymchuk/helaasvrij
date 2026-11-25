@@ -7,7 +7,11 @@ import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
 import { ProfilePage } from '@/features/profile/profile-page'
-import { SettingsPage } from '@/features/settings/settings-page'
+import { SettingsLayout } from '@/features/settings/settings-layout'
+import { PreferencesTab } from '@/features/settings/preferences-tab'
+import { NotificationsTab } from '@/features/settings/notifications-tab'
+import { AccountTab } from '@/features/settings/account-tab'
+import { DataTab } from '@/features/settings/data-tab'
 import { PostingDetailPage } from '@/features/postings/posting-detail-page'
 import { JobsPage } from '@/features/jobs/jobs-page'
 import { JobDetailPage } from '@/features/jobs/job-detail-page'
@@ -29,7 +33,17 @@ const router = createBrowserRouter([
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
       { path: '/profile', element: <ProfilePage /> },
-      { path: '/settings', element: <SettingsPage /> },
+      {
+        path: '/settings',
+        element: <SettingsLayout />,
+        children: [
+          { index: true, element: <Navigate to="preferences" replace /> },
+          { path: 'preferences', element: <PreferencesTab /> },
+          { path: 'notifications', element: <NotificationsTab /> },
+          { path: 'account', element: <AccountTab /> },
+          { path: 'data', element: <DataTab /> },
+        ],
+      },
       { path: '/postings', element: <JobsPage /> },
       { path: '/postings/saved', element: <PostingsPage /> },
       { path: '/postings/job/:jobId', element: <JobDetailPage /> },

@@ -1,15 +1,12 @@
-import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, LogOut01, MessageChatCircle, Moon01, SearchLg, Settings01, Sun, Terminal, User01 } from "@untitledui/icons";
+import { Briefcase01, CheckDone01, Columns03, File06, HomeLine, MessageChatCircle, SearchLg, User01 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
 import { NavList } from "@/components/application/app-navigation/base-components/nav-list";
 import type { NavItemType } from "@/components/application/app-navigation/config";
-import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
-import { Button } from "@/components/base/buttons/button";
-import { type CurrentUser, initialsOf, useAuth } from "@/core/auth";
-import { generateAvatarUrl } from "@/core/avatar";
+import { AccountMenu } from "@/core/account-menu";
+import { type CurrentUser, useAuth } from "@/core/auth";
 import { Logo } from "@/core/logo";
-import { useTheme } from "@/core/theme";
 import { ChatWidget } from "@/features/chat/chat-widget";
 
 // Sidebar follows the journey: build profile, find a posting, close gaps, apply and track.
@@ -34,21 +31,6 @@ const sections: { title?: string; items: NavItemType[] }[] = [
     },
 ];
 
-const footerItems: NavItemType[] = [
-    { label: "Settings", href: "/settings", icon: Settings01 },
-    { label: "Connect Claude", href: "/connect-claude", icon: Terminal },
-];
-
-function ThemeToggle() {
-    const { theme, toggle } = useTheme();
-    const dark = theme === "dark";
-    return (
-        <Button size="sm" color="tertiary" iconLeading={dark ? Sun : Moon01} onPress={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}>
-            {dark ? "Light mode" : "Dark mode"}
-        </Button>
-    );
-}
-
 // Detail pages highlight their parent item: /postings/job/x -> Find internships, /postings/<id> -> My postings.
 const navMatch = (path: string) =>
     path.startsWith("/postings/job/") ? "/postings" : /^\/postings\/(?!saved$)[^/]+$/.test(path) ? "/postings/saved" : path;
@@ -65,21 +47,8 @@ function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: Curr
                     </div>
                 ))}
             </div>
-            <div className="flex flex-col gap-4 pb-6">
-                <NavList activeUrl={activeUrl} items={footerItems} className="pt-0" />
-                <div className="px-4">
-                    <ThemeToggle />
-                </div>
-                <div className="mx-4 flex items-center gap-3 border-t border-secondary px-2 pt-5">
-                    <AvatarLabelGroup
-                        size="md"
-                        src={generateAvatarUrl(user.displayName, 80)}
-                        initials={initialsOf(user.displayName)}
-                        title={user.displayName}
-                        subtitle={user.gitHubLogin ? `@${user.gitHubLogin}` : user.email}
-                    />
-                    <Button size="sm" color="tertiary" aria-label="Sign out" iconLeading={LogOut01} onPress={onSignOut} />
-                </div>
+            <div className="border-t border-secondary pt-4 pb-6">
+                <AccountMenu user={user} onSignOut={onSignOut} />
             </div>
         </nav>
     );
