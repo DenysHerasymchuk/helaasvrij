@@ -17,4 +17,8 @@ public sealed record ApplicationMonthResponse(string Month, int Applied, int Int
 
 /// <param name="Type">added, stageChanged or sprintChanged.</param>
 /// <param name="SprintName">The sprint the card was in (the new sprint for sprintChanged); null in the backlog.</param>
+/// <summary>One line of the home page feed: what happened to which position.</summary>
+public sealed record ActivityItemResponse(
+    string Type, string? FromStage, string? ToStage, Guid PostingId, string Key, string Title, string Company, string? SprintName, DateTimeOffset At);
+
 public sealed record ApplicationEventResponse(string Type, string? FromStage, string? ToStage, Guid? SprintId, string? SprintName, DateTimeOffset At);

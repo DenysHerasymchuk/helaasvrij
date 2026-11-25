@@ -342,3 +342,27 @@ public sealed class GetSprintBurndownHandler(ISprintRepository sprints, IApplica
         return points;
     }
 }
+
+public sealed record ActivityItem(ApplicationEvent Event, Guid PostingId, string Key, string Title, string Company, string? SprintName);
+
+public sealed class ListRecentActivityHandler(IApplicationRepository applications, ISprintRepository sprints)
+{
+    public const int MaxTake = 50;
+
+    /// <summary>The latest history events across all of the user's positions, newest first.</summary>
+    public async Task<IReadOnlyList<ActivityItem>> HandleAsync(int take, CancellationToken ct)
+    {
+        var cards = (await applications.ListAsync(ct)).ToDictionary(card => card.Application.Id);
+        var names = (await sprints.ListAsync(ct)).ToDictionary(sprint => sprint.Id, sprint => sprint.Name);
+        return (await applications.ListEventsAsync(ct))
+            .Where(e => cards.ContainsKey(e.ApplicationId))
+            .OrderByDescending(e => e.At)
+            .Take(Math.Clamp(take, 1, MaxTake))
+            .Select(e =>
+            {
+                var card = cards[e.ApplicationId];
+                return new ActivityItem(e, card.Application.PostingId, card.Key, card.Title, card.Company, e.SprintId is { } id && names.TryGetValue(id, out var name) ? name : null);
+            })
+            .ToList();
+    }
+}

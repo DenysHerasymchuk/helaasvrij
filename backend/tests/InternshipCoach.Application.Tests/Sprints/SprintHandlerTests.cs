@@ -146,6 +146,25 @@ public class SprintHandlerTests
     }
 
     [Fact]
+    public async Task Recent_activity_is_newest_first_capped_and_names_the_position()
+    {
+        var sprint = await StartSprint();
+        var a = AddPosting("Alpha");
+        var b = AddPosting("Beta");
+        await Add().HandleAsync(sprint.Id, [a.Id, b.Id], default);
+        _applications.Items.Single(x => x.PostingId == a.Id).MoveTo(ApplicationStage.Applied, Now.AddHours(2));
+
+        var all = await new ListRecentActivityHandler(_applications, _sprints).HandleAsync(10, default);
+        var capped = await new ListRecentActivityHandler(_applications, _sprints).HandleAsync(2, default);
+
+        Assert.Equal(ApplicationEventType.StageChanged, all[0].Event.Type);
+        Assert.Equal("Alpha", all[0].Company);
+        Assert.Equal(3, all.Count);
+        Assert.Equal(2, capped.Count);
+        Assert.All(all.Where(i => i.Event.Type == ApplicationEventType.Added), i => Assert.Equal("Sprint 1", i.SprintName));
+    }
+
+    [Fact]
     public async Task Burndown_of_an_unknown_sprint_is_null()
     {
         Assert.Null(await new GetSprintBurndownHandler(_sprints, _applications, _clock).HandleAsync(Guid.NewGuid(), default));
