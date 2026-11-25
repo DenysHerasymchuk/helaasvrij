@@ -21,15 +21,16 @@ const unreadable = (link: string) => {
 const tabClass =
     "cursor-pointer rounded-md px-3 py-1.5 text-sm font-semibold text-quaternary outline-focus-ring transition selected:bg-active selected:text-secondary hover:text-secondary focus-visible:outline-2";
 
-export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean; onClose: () => void; onAdded: (posting: PostingDetail) => void }) {
-    const [mode, setMode] = useState<Mode>("url");
-    const [text, setText] = useState("");
-    const [link, setLink] = useState("");
+/** `initial` prefills the paste tab (the bookmarklet sends the page text and address). Read once, when the modal mounts. */
+export function AddPostingModal({ isOpen, onClose, onAdded, initial }: { isOpen: boolean; onClose: () => void; onAdded: (posting: PostingDetail) => void; initial?: { text: string; url: string } }) {
+    const [mode, setMode] = useState<Mode>(initial ? "paste" : "url");
+    const [text, setText] = useState(initial?.text ?? "");
+    const [link, setLink] = useState(initial?.url ?? "");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // The link could not be read (blocked site or a 422 from the server): move the user to the paste tab with the link kept.
-    const [pasteHint, setPasteHint] = useState<string | null>(null);
+    const [pasteHint, setPasteHint] = useState<string | null>(initial ? "Check the text from the page, then add it." : null);
 
     async function submit() {
         if (mode === "url" && unreadable(link)) {

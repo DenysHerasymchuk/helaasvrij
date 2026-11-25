@@ -14,6 +14,7 @@ import { NotificationsTab } from '@/features/settings/notifications-tab'
 import { AccountTab } from '@/features/settings/account-tab'
 import { DataTab } from '@/features/settings/data-tab'
 import { PostingDetailPage } from '@/features/postings/posting-detail-page'
+import { AddPositionPage } from '@/features/postings/add-position-page'
 import { JobsPage } from '@/features/jobs/jobs-page'
 import { JobDetailPage } from '@/features/jobs/job-detail-page'
 import { ProjectLayout } from '@/features/project/project-layout'
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
+      { path: '/add-position', element: <AddPositionPage /> },
       { path: '/profile', element: <RedirectTo to={() => '/settings/profile'} /> },
       {
         path: '/settings',

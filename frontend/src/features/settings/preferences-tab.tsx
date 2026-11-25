@@ -1,6 +1,7 @@
 import { useDensity } from "@/core/density";
 import { useTheme } from "@/core/theme";
 import { Segmented } from "./segmented";
+import { BookmarkCard } from "./bookmark-card";
 import { WritingSkillsCard } from "./writing-skills-card";
 import { SettingsCard, SettingsRow } from "./settings-row";
 import { type Language, useSettings } from "./settings-layout";
@@ -48,6 +49,7 @@ export function PreferencesTab() {
             </SettingsRow>
         </SettingsCard>
         <WritingSkillsCard />
+        <BookmarkCard />
         </div>
     );
 }
