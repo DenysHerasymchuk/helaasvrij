@@ -1,6 +1,5 @@
 import { Link } from "react-router";
 import { ErrorState, LoadingState, cardClass } from "@/core/ui";
-import { ActiveSprintCard } from "@/features/dashboard/sprint-card";
 import { stages } from "@/features/applications/types";
 import { formatDate } from "@/features/postings/types";
 import { type Position, useProject } from "./use-project";
@@ -59,8 +58,6 @@ export function SummaryPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <ActiveSprintCard />
-
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <Tile label="Positions" value={positions.length} />
                 <Tile label="In the backlog" value={inBacklog} />

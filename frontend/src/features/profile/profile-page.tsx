@@ -1,8 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { FileTrigger } from "react-aria-components";
-import { useLocation } from "react-router";
+import { Dialog, FileTrigger, Heading, Modal, ModalOverlay } from "react-aria-components";
 import { FaGithub } from "react-icons/fa";
-import { Check, File05, Globe01, RefreshCw01, Trash01, Type01 } from "@untitledui/icons";
+import { File05, Globe01, RefreshCw01, Trash01, Type01, XClose } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
@@ -11,7 +10,6 @@ import { ApiError } from "@/core/api";
 import { useAuth } from "@/core/auth";
 import { Field, TextArea } from "@/features/postings/fields";
 import { formatDateTime } from "@/features/postings/types";
-import { cx } from "@/utils/cx";
 import {
     type ExtractResult,
     type Profile,
@@ -63,41 +61,6 @@ function useRunner(after: () => Promise<void>) {
     return { busy, error, run };
 }
 
-function Step({ number, title, description, done, action, children }: {
-    number: number;
-    title: string;
-    description: string;
-    done: boolean;
-    action?: ReactNode;
-    children: ReactNode;
-}) {
-    return (
-        <section aria-labelledby={`step-${number}`} className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
-            <header className="flex flex-wrap items-start gap-x-4 gap-y-3 border-b border-secondary px-4 py-4 md:px-5">
-                <span
-                    aria-hidden="true"
-                    className={cx(
-                        "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-                        done ? "bg-success-solid text-white" : "bg-secondary text-secondary ring-1 ring-primary",
-                    )}
-                >
-                    {done ? <Check className="size-4" /> : number}
-                </span>
-                <div className="min-w-0 flex-1 basis-60">
-                    <h2 id={`step-${number}`} className="text-md font-semibold text-primary">
-                        <span className="sr-only">Step {number}: </span>
-                        {title}
-                        {done && <span className="sr-only"> (done)</span>}
-                    </h2>
-                    <p className="mt-0.5 text-sm text-tertiary">{description}</p>
-                </div>
-                {action}
-            </header>
-            <div className="px-4 py-5 md:px-5">{children}</div>
-        </section>
-    );
-}
-
 function ErrorText({ text }: { text: string | null }) {
     return text ? (
         <p role="alert" className="text-sm text-error-primary">
@@ -128,16 +91,8 @@ export function ProfilePage() {
 
     useEffect(load, [load]);
 
-    // Links like /profile#step-3 land on that step once it has rendered.
-    const { hash } = useLocation();
-    useEffect(() => {
-        if (profile && hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" });
-    }, [profile, hash]);
-
     return (
         <div className="flex w-full flex-col gap-6">
-            <p className="max-w-2xl text-md text-tertiary">Three steps: add your sources, let us read them, review what we found.</p>
-
             {loadError ? (
                 <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
                     <p className="text-sm text-error-primary">{loadError}</p>
@@ -153,37 +108,19 @@ export function ProfilePage() {
                 </div>
             ) : (
                 <>
-                    <SourcesStep sources={sources} reload={reloadAll} />
-                    <ReadStep sources={sources} profile={profile} reloadProfile={loadProfile} />
-                    <ItemsStep profile={profile} reloadProfile={loadProfile} />
+                    <GitHubCard source={sources.find((source) => source.kind === "GitHub")} reload={reloadAll} />
+                    <PdfCard sources={sources.filter((source) => source.kind === "Cv" || source.kind === "PastedText")} reload={reloadAll} />
+                    <SiteCard sources={sources.filter((source) => source.kind === "Site")} reload={reloadAll} />
+                    <ReadSources sources={sources} profile={profile} reloadProfile={loadProfile} />
                 </>
             )}
         </div>
     );
 }
 
-// ---------- Step 1: sources ----------
-
-function SourcesStep({ sources, reload }: { sources: Source[]; reload: () => Promise<void> }) {
-    return (
-        <Step
-            number={1}
-            title="Add your sources"
-            description="Add at least one. We only read what you add here; LinkedIn data comes from your own PDF export."
-            done={sources.some((source) => source.status === "Ready")}
-        >
-            <div className="flex flex-col gap-4">
-                <GitHubCard source={sources.find((source) => source.kind === "GitHub")} reload={reload} />
-                <PdfCard sources={sources.filter((source) => source.kind === "Cv" || source.kind === "PastedText")} reload={reload} />
-                <SiteCard sources={sources.filter((source) => source.kind === "Site")} reload={reload} />
-            </div>
-        </Step>
-    );
-}
-
 function SourceCard({ icon: Icon, title, status, children }: { icon: typeof Globe01; title: string; status: Source["status"] | null; children: ReactNode }) {
     return (
-        <div className="rounded-lg p-4 ring-1 ring-secondary">
+        <div className="rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">
             <div className="mb-3 flex items-center gap-3">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-fg-secondary">
                     <Icon className="size-5" />
@@ -437,17 +374,18 @@ function SiteCard({ sources, reload }: { sources: Source[]; reload: () => Promis
     );
 }
 
-// ---------- Step 2: read the sources ----------
-
-function ReadStep({ sources, profile, reloadProfile }: { sources: Source[]; profile: Profile; reloadProfile: () => Promise<void> }) {
+/** The one button: reads every source, then opens a dialog on top with what it found. */
+function ReadSources({ sources, profile, reloadProfile }: { sources: Source[]; profile: Profile; reloadProfile: () => Promise<void> }) {
+    const [open, setOpen] = useState(false);
     const [reading, setReading] = useState(false);
     const [result, setResult] = useState<ExtractResult | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const ready = sources.filter((source) => source.status === "Ready").length;
-    const blocked = sources.length === 0 ? "Add GitHub, a PDF or your site in step 1 first." : ready === 0 ? "None of your sources is ready. Fix or remove the failed ones in step 1." : null;
+    const blocked = sources.length === 0 ? "Add GitHub, a CV or your website first." : ready === 0 ? "None of your sources is ready. Fix or remove the failed ones." : null;
 
     const read = async () => {
+        setOpen(true);
         setReading(true);
         setError(null);
         setResult(null);
@@ -462,73 +400,85 @@ function ReadStep({ sources, profile, reloadProfile }: { sources: Source[]; prof
     };
 
     return (
-        <Step
-            number={2}
-            title="Read my sources"
-            description="We read your GitHub, CV and site and list the skills and projects we can prove. Remove anything that is wrong."
-            done={profile.items.length > 0}
-        >
-            <div className="flex flex-col items-start gap-3">
-                <Button size="md" isLoading={reading} isDisabled={!!blocked || reading} onPress={read}>
-                    {profile.items.length > 0 ? "Read my sources again" : "Read my sources"}
+        <div className="flex flex-col items-start gap-2">
+            <Button size="md" isLoading={reading} isDisabled={!!blocked || reading} onPress={read}>
+                Read my sources
+            </Button>
+            {blocked && <p className="text-sm text-tertiary">{blocked}</p>}
+            {!blocked && profile.items.length > 0 && !open && (
+                <Button color="link-gray" size="sm" onPress={() => setOpen(true)}>
+                    See what we found ({plural(profile.items.length, "item")})
                 </Button>
-                <div role="status" className="flex flex-col gap-1 text-sm empty:hidden">
-                    {blocked && <p className="text-tertiary">{blocked}</p>}
-                    {reading && <p className="text-secondary">Reading {plural(ready, "source")}. This takes up to a minute.</p>}
-                    {result && (
-                        <p className="text-secondary">
-                            {result.created > 0
-                                ? `Found ${plural(result.created, "new item")}. Review them in step 3.`
-                                : "No new items found. Everything we can prove is already in step 3."}
-                            {result.skippedDocuments > 0 && ` We skipped ${plural(result.skippedDocuments, "document")} to stay within limits; read again to include them.`}
-                        </p>
-                    )}
-                    {result && result.dropped > 0 && (
-                        <p className="text-warning-primary">We left out {plural(result.dropped, "claim")} because the quote was not in your source.</p>
-                    )}
-                </div>
-                <ErrorText text={error} />
-            </div>
-        </Step>
+            )}
+
+            <ModalOverlay
+                isOpen={open}
+                onOpenChange={(next) => !next && !reading && setOpen(false)}
+                isDismissable
+                className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/70 p-4 sm:items-center"
+            >
+                <Modal className="w-full max-w-2xl">
+                    <Dialog className="flex max-h-[85vh] flex-col gap-4 rounded-xl bg-primary p-6 shadow-xl outline-hidden ring-1 ring-secondary">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <Heading slot="title" className="text-lg font-semibold text-primary">
+                                    What we found
+                                </Heading>
+                                <p className="mt-1 text-sm text-tertiary">Each item quotes your own source. Your CV, letters and gap plan use all of them, so remove what is wrong.</p>
+                            </div>
+                            <Button size="sm" color="tertiary" iconLeading={XClose} aria-label="Close" onPress={() => setOpen(false)} isDisabled={reading} />
+                        </div>
+
+                        <div role="status" className="flex flex-col gap-1 text-sm empty:hidden">
+                            {reading && <p className="text-secondary">Reading {plural(ready, "source")}. This takes up to a minute.</p>}
+                            {result && (
+                                <p className="text-secondary">
+                                    {result.created > 0 ? `Found ${plural(result.created, "new item")}.` : "No new items. Everything we can prove is already listed."}
+                                    {result.skippedDocuments > 0 && ` We skipped ${plural(result.skippedDocuments, "document")} to stay within limits; read again to include them.`}
+                                </p>
+                            )}
+                            {result && result.dropped > 0 && (
+                                <p className="text-warning-primary">We left out {plural(result.dropped, "claim")} because the quote was not in your source.</p>
+                            )}
+                        </div>
+                        <ErrorText text={error} />
+
+                        <div className="-mx-2 min-h-0 flex-1 overflow-y-auto px-2">
+                            {reading ? (
+                                <div aria-hidden="true" className="h-32 animate-pulse rounded-lg bg-tertiary" />
+                            ) : (
+                                <ItemsList profile={profile} reloadProfile={reloadProfile} />
+                            )}
+                        </div>
+                    </Dialog>
+                </Modal>
+            </ModalOverlay>
+        </div>
     );
 }
 
-// ---------- Step 3: review items ----------
-
-function ItemsStep({ profile, reloadProfile }: { profile: Profile; reloadProfile: () => Promise<void> }) {
-    const { error } = useRunner(reloadProfile);
+function ItemsList({ profile, reloadProfile }: { profile: Profile; reloadProfile: () => Promise<void> }) {
+    if (profile.items.length === 0) return <p className="text-sm text-tertiary">Nothing found yet.</p>;
 
     return (
-        <Step
-            number={3}
-            title="What we found"
-            description="Each item quotes your own source. Your CV, letters and gap plan use all of them, so remove what is wrong."
-            done={profile.items.length > 0}
-        >
-            <ErrorText text={error} />
-            {profile.items.length === 0 ? (
-                <p className="text-sm text-tertiary">Nothing found yet. Read your sources in step 2.</p>
-            ) : (
-                <div className="flex flex-col gap-6">
-                    {kindOrder.map(({ kind, title }) => {
-                        const items = profile.items.filter((item) => item.kind === kind);
-                        if (items.length === 0) return null;
-                        return (
-                            <div key={kind}>
-                                <h3 className="mb-2 text-sm font-semibold text-primary">
-                                    {title} <span className="font-normal text-tertiary">({items.length})</span>
-                                </h3>
-                                <ul className="flex flex-col gap-3">
-                                    {items.map((item) => (
-                                        <ItemCard key={item.id} item={item} reload={reloadProfile} />
-                                    ))}
-                                </ul>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </Step>
+        <div className="flex flex-col gap-6">
+            {kindOrder.map(({ kind, title }) => {
+                const items = profile.items.filter((item) => item.kind === kind);
+                if (items.length === 0) return null;
+                return (
+                    <div key={kind}>
+                        <h3 className="mb-2 text-sm font-semibold text-primary">
+                            {title} <span className="font-normal text-tertiary">({items.length})</span>
+                        </h3>
+                        <ul className="flex flex-col gap-3">
+                            {items.map((item) => (
+                                <ItemCard key={item.id} item={item} reload={reloadProfile} />
+                            ))}
+                        </ul>
+                    </div>
+                );
+            })}
+        </div>
     );
 }
 

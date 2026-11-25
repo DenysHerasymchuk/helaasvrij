@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
-import { JourneyBar } from "@/features/journey/journey-bar";
 import { type Coverage, type PostingSummary, formatDate } from "@/features/postings/types";
 import { fieldClass, PageHeader } from "@/core/ui";
 import { cx } from "@/utils/cx";
@@ -143,7 +142,6 @@ export function GapsPage() {
                 title="Gap plan"
                 description="Every gap from your postings in one checklist, biggest impact first. Tick one after you changed the repo and it is re-scanned."
             />
-            <JourneyBar />
 
             {notice && (
                 <div
