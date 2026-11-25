@@ -7,10 +7,10 @@ public class ChatRoutesTests
     [Fact]
     public void Allowed_route_is_returned_and_line_stripped()
     {
-        var (reply, nav) = ChatRoutes.ExtractNavigation("Add it on the Postings page.\nNAVIGATE: /postings");
+        var (reply, nav) = ChatRoutes.ExtractNavigation("Add it on the Backlog page.\nNAVIGATE: /backlog");
 
-        Assert.Equal("/postings", nav);
-        Assert.Equal("Add it on the Postings page.", reply);
+        Assert.Equal("/backlog", nav);
+        Assert.Equal("Add it on the Backlog page.", reply);
     }
 
     [Theory]

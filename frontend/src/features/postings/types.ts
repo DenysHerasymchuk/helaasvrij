@@ -13,6 +13,9 @@ export type PostingSummary = {
     createdAt: string;
     analysed?: boolean;
     score?: number | null;
+    key: string;
+    /** Backlog only: the stage of a card that sits outside every sprint. */
+    stage?: string | null;
 };
 
 export type Coverage = "none" | "partial" | "strong";

@@ -42,10 +42,10 @@ export function BoardStatus({ postingId, byPosting, onAdded }: BoardStatusProps)
         return (
             <div className="flex flex-wrap items-center gap-2">
                 <Badge type="pill-color" size="md" color={color}>
-                    On your board: {stageLabel(application.stage)}
+                    {application.sprintId ? `In your sprint: ${stageLabel(application.stage)}` : `In your backlog: ${stageLabel(application.stage)}`}
                 </Badge>
-                <Link to="/applications" className="rounded-xs text-sm font-semibold text-brand-secondary outline-focus-ring hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
-                    Open board
+                <Link to={application.sprintId ? "/board" : "/backlog"} className="rounded-xs text-sm font-semibold text-brand-secondary outline-focus-ring hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
+                    {application.sprintId ? "Open board" : "Open backlog"}
                 </Link>
             </div>
         );
@@ -67,7 +67,7 @@ export function BoardStatus({ postingId, byPosting, onAdded }: BoardStatusProps)
     return (
         <div className="flex flex-col items-start gap-1">
             <Button size="sm" color="secondary" iconLeading={Plus} onPress={add} isLoading={adding} isDisabled={adding}>
-                Add to applications
+                Add to sprint
             </Button>
             {error && (
                 <p role="alert" className="text-sm text-error-primary">

@@ -101,7 +101,8 @@ function ApplicationCard({ card, onMove, onSaveNotes }: { card: Application; onM
         >
             <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
-                    <Link to={`/postings/${card.postingId}`} className="block truncate text-sm font-semibold text-primary outline-focus-ring hover:underline focus-visible:outline-2">
+                    {card.key && <p className="text-xs font-medium text-quaternary">{card.key}</p>}
+                    <Link to={`/positions/${card.postingId}`} className="block truncate text-sm font-semibold text-primary outline-focus-ring hover:underline focus-visible:outline-2">
                         {card.title}
                     </Link>
                     <p className="truncate text-sm text-tertiary">

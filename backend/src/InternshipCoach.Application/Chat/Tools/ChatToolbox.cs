@@ -140,7 +140,7 @@ public sealed class ChatToolbox(
                     var result = await updateApplication.HandleAsync(new UpdateApplicationCommand(id.Value, stage.ToCode(), null), ct);
                     return result.Outcome switch
                     {
-                        ApplicationOutcome.Ok => new ChatActionResult(ChatActionStatus.Ok, $"Moved {posting.Company} to {Capitalize(stage.ToCode())}.", "/applications"),
+                        ApplicationOutcome.Ok => new ChatActionResult(ChatActionStatus.Ok, $"Moved {posting.Company} to {Capitalize(stage.ToCode())}.", "/board"),
                         ApplicationOutcome.NotFound => new ChatActionResult(ChatActionStatus.NotFound, "Application not found."),
                         _ => new ChatActionResult(ChatActionStatus.Invalid, result.Error ?? "Could not move it.")
                     };
@@ -150,7 +150,7 @@ public sealed class ChatToolbox(
                     var posting = await FindPostingAsync(args, ct);
                     var result = await createApplication.HandleAsync(new CreateApplicationCommand(posting.Id), ct);
                     return result.Outcome == ApplicationOutcome.Ok
-                        ? new ChatActionResult(ChatActionStatus.Ok, $"Added {posting.Company} to applications.", "/applications")
+                        ? new ChatActionResult(ChatActionStatus.Ok, $"Added {posting.Company} to applications.", "/board")
                         : new ChatActionResult(ChatActionStatus.NotFound, "Posting not found.");
                 }
                 default: // save_job
@@ -159,7 +159,7 @@ public sealed class ChatToolbox(
                     return outcome.Posting is { } saved
                         ? new ChatActionResult(ChatActionStatus.Ok,
                             outcome.Status == PostingStatus.Existing ? $"{saved.Company} was already saved." : $"Saved {saved.Company} to your postings.",
-                            "/postings")
+                            "/backlog")
                         : new ChatActionResult(outcome.Status == PostingStatus.NotFound ? ChatActionStatus.NotFound : ChatActionStatus.Invalid,
                             outcome.Message ?? "Could not save this job.");
                 }

@@ -39,13 +39,13 @@ public class SendChatHandlerTests
     [Fact]
     public async Task Reply_with_allowed_navigation_returns_chip_target()
     {
-        var f = new ChatFixture(Reply("Open Postings and paste the link.", "/postings"));
+        var f = new ChatFixture(Reply("Open Backlog and paste the link.", "/backlog"));
 
         var result = await f.Handler.HandleAsync(Ask("Where do I add a posting?"), CancellationToken.None);
 
         Assert.Equal(SendChatStatus.Ok, result.Status);
-        Assert.Equal("/postings", result.NavigateTo);
-        Assert.Equal("Open Postings and paste the link.", result.Reply);
+        Assert.Equal("/backlog", result.NavigateTo);
+        Assert.Equal("Open Backlog and paste the link.", result.Reply);
         Assert.Empty(result.ToolTrace!);
         var request = Assert.Single(f.Transport.Requests);
         Assert.Equal(LlmModel.Smart, request.Model);
@@ -243,7 +243,7 @@ public class SendChatHandlerTests
 
         Assert.Equal(ChatActionStatus.Ok, ok.Status);
         Assert.Equal(ApplicationStage.Interview, application.Stage);
-        Assert.Equal("/applications", ok.NavigateTo);
+        Assert.Equal("/board", ok.NavigateTo);
     }
 
     [Fact]

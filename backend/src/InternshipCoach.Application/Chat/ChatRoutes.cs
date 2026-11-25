@@ -8,11 +8,12 @@ public static partial class ChatRoutes
     public static readonly IReadOnlyList<(string Name, string Route)> Pages =
     [
         ("Dashboard", "/dashboard"),
-        ("Postings", "/postings"),
+        ("Backlog", "/backlog"),
+        ("Board", "/board"),
+        ("Sprints", "/sprints"),
         ("Gap plan", "/gaps"),
         ("Documents", "/documents"),
         ("Interview prep", "/interview"),
-        ("Applications", "/applications"),
         ("Profile", "/profile"),
         ("Settings", "/settings")
     ];

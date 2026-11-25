@@ -12,6 +12,8 @@ export type Application = {
     stageChangedAt: string;
     notes: string;
     createdAt: string;
+    sprintId: string | null;
+    key: string;
 };
 
 export const stages: { id: Stage; label: string; hint: string; color: "gray" | "brand" | "warning" | "success" | "error" }[] = [

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
+import { createBrowserRouter, Navigate, RouterProvider, useLocation, useParams } from 'react-router'
 import { AppShell } from '@/core/app-shell'
 import { AuthProvider } from '@/core/auth'
 import { LoginPage } from '@/features/auth/login-page'
@@ -15,14 +15,23 @@ import { DataTab } from '@/features/settings/data-tab'
 import { PostingDetailPage } from '@/features/postings/posting-detail-page'
 import { JobsPage } from '@/features/jobs/jobs-page'
 import { JobDetailPage } from '@/features/jobs/job-detail-page'
-import { PostingsPage } from '@/features/postings/postings-page'
+import { BacklogPage } from '@/features/backlog/backlog-page'
+import { BoardPage } from '@/features/board/board-page'
+import { SprintsPage } from '@/features/sprints/sprints-page'
+import { SprintReportPage } from '@/features/sprints/sprint-report-page'
 import { DocumentsPage } from '@/features/documents/documents-page'
-import { ApplicationsPage } from '@/features/applications/applications-page'
 import { InterviewPage } from '@/features/interview/interview-page'
 import { GapsPage } from '@/features/gaps/gaps-page'
 import { ConnectClaudePage } from '@/features/mcp/connect-claude-page'
 import { CalendarPage } from '@/features/calendar/calendar-page'
 import './index.css'
+
+/** Redirect that fills the new path from the old route's params and keeps the query string. */
+function RedirectTo({ to }: { to: (params: Record<string, string | undefined>) => string }) {
+  const params = useParams()
+  const { search } = useLocation()
+  return <Navigate to={to(params) + search} replace />
+}
 
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
@@ -44,13 +53,21 @@ const router = createBrowserRouter([
           { path: 'data', element: <DataTab /> },
         ],
       },
-      { path: '/postings', element: <JobsPage /> },
-      { path: '/postings/saved', element: <PostingsPage /> },
-      { path: '/postings/job/:jobId', element: <JobDetailPage /> },
-      { path: '/postings/:id', element: <PostingDetailPage /> },
-      { path: '/jobs', element: <Navigate to="/postings" replace /> },
+      { path: '/backlog', element: <BacklogPage /> },
+      { path: '/backlog/find', element: <JobsPage /> },
+      { path: '/backlog/find/:jobId', element: <JobDetailPage /> },
+      { path: '/positions/:id', element: <PostingDetailPage /> },
+      { path: '/board', element: <BoardPage /> },
+      { path: '/sprints', element: <SprintsPage /> },
+      { path: '/sprints/:id', element: <SprintReportPage /> },
+      // Old addresses keep working.
+      { path: '/postings', element: <Navigate to="/backlog/find" replace /> },
+      { path: '/postings/saved', element: <Navigate to="/backlog" replace /> },
+      { path: '/postings/job/:jobId', element: <RedirectTo to={(p) => `/backlog/find/${encodeURIComponent(p.jobId ?? '')}`} /> },
+      { path: '/postings/:id', element: <RedirectTo to={(p) => `/positions/${p.id}`} /> },
+      { path: '/jobs', element: <Navigate to="/backlog/find" replace /> },
       { path: '/documents', element: <DocumentsPage /> },
-      { path: '/applications', element: <ApplicationsPage /> },
+      { path: '/applications', element: <Navigate to="/board" replace /> },
       { path: '/interview', element: <InterviewPage /> },
       { path: '/gaps', element: <GapsPage /> },
       { path: '/connect-claude', element: <ConnectClaudePage /> },
