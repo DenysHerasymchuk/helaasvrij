@@ -32,13 +32,9 @@ services:
       COACH_GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
       COACH_Route33__ApiKey: ${R33_API_KEY:-}
       COACH_GitHub__Token: ${GITHUB_TOKEN:-}
-      # AI fallback: when route33 fails, call the host's Claude Code CLI via scripts/claude-bridge.mjs (see README).
+      # AI fallback: when route33 fails, run the Claude Code CLI inside this container (log in once: docker compose exec api claude; the login lives in the jobs-data volume).
       COACH_Llm__Fallback: ${LLM_FALLBACK:-}
-      COACH_Llm__ClaudeCli__Mode: Bridge
-      COACH_Llm__ClaudeCli__BridgeUrl: ${CLAUDE_BRIDGE_URL:-http://host.docker.internal:8787}
-      COACH_Llm__ClaudeCli__Token: ${CLAUDE_BRIDGE_TOKEN:-}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      COACH_Llm__ClaudeCli__Mode: Local
     ports:
       - "5080:8080"
 

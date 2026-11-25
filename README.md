@@ -93,20 +93,16 @@ For the Vite dev server (port 5174) create a second OAuth App with callback `htt
 
 ### 🤖 AI fallback with Claude Code
 
-route33 is always tried first. With `LLM_FALLBACK=claude-cli` in `.env`, a failed route33 call (no key, 401/403, 429, 5xx, timeout, network error) is retried once through your own Claude Code CLI (`claude -p`, billed to your Claude subscription). Sonnet answers Smart calls, Haiku answers Cheap calls; the CLI runs with no tools. The API log says which transport answered, never the content.
+route33 is always tried first. With `LLM_FALLBACK=claude-cli` in `.env`, a failed route33 call (no key, 401/403, 429, 5xx, timeout, network error) is retried once through the Claude Code CLI (`claude -p`, billed to the Claude subscription you log in with). Sonnet answers Smart calls, Haiku answers Cheap calls; the CLI runs with no tools. The API log says which transport answered, never the content.
 
-The API container has no `claude` binary, so a small bridge on the host runs it:
+The CLI is installed in the API image. Log in once; the login lives in the `jobs-data` volume (`docker compose down -v` deletes it):
 
 ```sh
-# On the host, with `claude` installed and signed in. Pick a long random token.
-CLAUDE_BRIDGE_TOKEN=$(openssl rand -hex 24) BRIDGE_HOST=0.0.0.0 node scripts/claude-bridge.mjs
+docker compose up -d --build api
+docker compose exec api claude
 ```
 
-Put the same token in `.env` as `CLAUDE_BRIDGE_TOKEN=...`, keep `LLM_FALLBACK=claude-cli`, then `docker compose up -d --build api`.
-
-> `BRIDGE_HOST=0.0.0.0` lets any machine that can reach port 8787 use your Claude subscription if it has the token. Only do this on a trusted network, or bind to the Docker bridge instead (`BRIDGE_HOST=172.17.0.1`, the address `host.docker.internal` resolves to). Without `BRIDGE_HOST` the bridge listens on `127.0.0.1` only. It rejects requests without the token, handles one call at a time and caps request bodies at 2 MB. If the container cannot reach it, check that your firewall allows port 8787 from Docker.
-
-With `dotnet run` on the host no bridge is needed: set `COACH_Llm__Fallback=ClaudeCli` and `COACH_Llm__ClaudeCli__Mode=Local` (the default mode). Optional: `COACH_Llm__ClaudeCli__TimeoutSeconds` (default 120) and `COACH_Llm__ClaudeCli__Command` (default `claude`).
+With `dotnet run` on the host, set `COACH_Llm__Fallback=ClaudeCli` and your own `claude` is used. Optional: `COACH_Llm__ClaudeCli__TimeoutSeconds` (default 120) and `COACH_Llm__ClaudeCli__Command` (default `claude`).
 
 ### 🧪 Build and test
 
@@ -115,7 +111,6 @@ dotnet build backend/InternshipCoach.slnx
 dotnet test backend/InternshipCoach.slnx
 cd frontend && npm run build
 cd ../mcp && npm install && npm test
-node --test scripts/claude-bridge.test.mjs   # fake `claude`
 CLAUDE_CLI_SMOKE=1 dotnet test backend/InternshipCoach.slnx --filter ClaudeCliSmokeTests   # one real local call
 ```
 

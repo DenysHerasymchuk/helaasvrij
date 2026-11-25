@@ -23,7 +23,7 @@ Home `/dashboard`, Gap plan `/gaps`, Documents `/documents`, Interview prep `/in
 - Frontend: React, React Router, Tailwind v4, Vite, TypeScript, Untitled UI (`@/` = `src`). Build UI from the `untitledui` MCP components first; load the `frontend-design` skill before reshaping a page.
 - Backend: ASP.NET Core 10, Clean Architecture + DDD, EF Core + PostgreSQL schema `coach`, migrations only. Dependencies point inward (`InternshipCoach.Architecture.Tests`): Domain, Application (Command + Handler per feature), Infrastructure, Contracts, Api.
 - Auth: cookie session (email or GitHub OAuth) plus `Bearer` personal access tokens (`hv_...`, hashed, from Settings > Account) for MCP. Tokens cannot manage tokens.
-- LLM: route33 (`https://api.route33.ai`, base URL without `/v1`), optional Claude Code fallback through `scripts/claude-bridge.mjs`. DeepSeek for cheap work, Sonnet 5.5 for gap matrix and documents. Validate JSON; retry once. Budget about EUR 50: never loop LLM calls without a cap.
+- LLM: route33 (`https://api.route33.ai`, base URL without `/v1`), optional Claude Code CLI fallback (installed in the API image). DeepSeek for cheap work, Sonnet 5.5 for gap matrix and documents. Validate JSON; retry once. Budget about EUR 50: never loop LLM calls without a cap.
 - Assistant and MCP: one tool catalog (`ChatToolbox`, `PlanningTools`, `GET /api/tools`) serves the chat widget and `mcp/` (stdio server). Action tools only propose; they run after `POST /api/chat/actions/confirm`. Tool output is wrapped in `<untrusted_data>`.
 - External: GitHub REST, Adzuna (`be`), optional Zapier webhook.
 - Infra: Docker Compose (`db` postgres 17, `api` :5080, `web` :5173).
