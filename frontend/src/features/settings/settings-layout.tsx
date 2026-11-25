@@ -12,6 +12,7 @@ export const useSettings = () => useOutletContext<SettingsContext>();
 
 const tabs = [
     { to: "preferences", label: "Preferences", saves: true },
+    { to: "profile", label: "Profile", saves: false },
     { to: "notifications", label: "Notifications", saves: true },
     { to: "account", label: "Account", saves: false },
     { to: "data", label: "Data and privacy", saves: false },
@@ -60,8 +61,8 @@ export function SettingsLayout() {
     };
 
     return (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8 md:px-8">
-            <PageHeader title="Settings" description="Defaults for your matches and drafts, and control over your data." />
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+            <PageHeader title="Settings" description="Your profile sources, defaults for matches and drafts, and control over your data." />
 
             <nav aria-label="Settings sections" className="-mb-px flex gap-6 overflow-x-auto border-b border-secondary [scrollbar-width:none]">
                 {tabs.map((tab) => (

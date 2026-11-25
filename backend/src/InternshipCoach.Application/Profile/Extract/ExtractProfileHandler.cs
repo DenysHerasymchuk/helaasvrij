@@ -31,8 +31,9 @@ public sealed class ExtractProfileHandler(IProfileRepository repository, ILlmCli
         "and list what they show about the student. " +
         "Each document is given as <untrusted_data name=\"docN\"> where N is its number. " +
         "For every item return: doc (the number N of the document the quote comes from), " +
-        "kind (skill, project, experience, language or education), name (short, e.g. 'Docker', 'weather-app', " +
-        "'Intern at Acme', 'Dutch', 'Bachelor Applied Computer Science'), " +
+        "kind (skill, project, experience, language, education or certification), name (short, e.g. 'Docker', 'weather-app', " +
+        "'Intern at Acme', 'Dutch', 'Bachelor Applied Computer Science', 'AWS Certified Developer'), " +
+        "Use certification for named certificates, licences and course diplomas. " +
         "and quote. The quote must be copied character for character from that document, 3 to 300 characters, " +
         "with no changes, no ellipsis and no joining of separate passages. " +
         "Only list what a quote proves. Do not invent or infer skills that are not written down. " +
@@ -52,7 +53,7 @@ public sealed class ExtractProfileHandler(IProfileRepository repository, ILlmCli
                 "required": ["doc", "kind", "name", "quote"],
                 "properties": {
                   "doc": { "type": "integer", "minimum": 1 },
-                  "kind": { "enum": ["skill", "project", "experience", "language", "education"] },
+                  "kind": { "enum": ["skill", "project", "experience", "language", "education", "certification"] },
                   "name": { "type": "string", "minLength": 1 },
                   "quote": { "type": "string", "minLength": 1 }
                 }

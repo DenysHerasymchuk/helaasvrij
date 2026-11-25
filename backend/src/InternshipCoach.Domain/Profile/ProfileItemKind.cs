@@ -6,5 +6,6 @@ public enum ProfileItemKind
     Project = 1,
     Experience = 2,
     Language = 3,
-    Education = 4
+    Education = 4,
+    Certification = 5
 }

@@ -43,7 +43,7 @@ export async function uploadCv(file: File): Promise<Source> {
 
 // ---- Profile items, extraction and basics ----
 
-export type ProfileItemKind = "Skill" | "Project" | "Experience" | "Language" | "Education";
+export type ProfileItemKind = "Skill" | "Project" | "Experience" | "Language" | "Education" | "Certification";
 
 export interface Evidence {
     quote: string;

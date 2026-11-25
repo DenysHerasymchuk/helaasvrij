@@ -52,7 +52,7 @@ public sealed class ChatToolbox(
 
     public static readonly IReadOnlyList<(string Name, string Args, string Description)> ReadTools =
     [
-        ("get_profile", "{}", "profile items (skills, projects, experience, education) and languages"),
+        ("get_profile", "{}", "profile items (skills, projects, experience, education, certifications) and languages"),
         ("list_github_projects", "{}", "synced GitHub repos: name, main language, commits, Dockerfile/tests/CI, last sync"),
         ("list_postings", "{}", "saved postings: id, company, title, match score, stage on the applications board"),
         ("get_posting", "{\"postingId\":\"<id>\"}", "one posting's requirements, coverage, evidence and open gaps"),

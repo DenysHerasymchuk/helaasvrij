@@ -44,7 +44,7 @@ Pitch: "Drop in your links, see exactly what each Belgian position wants from yo
 | Board | `/board` | Kanban of the running sprint (Saved, Applied, Interview, Offer, Rejected) with the sprint goal, progress and "Complete sprint" (open positions go to the next sprint or back to the backlog) |
 | Sprints | `/sprints`, `/sprints/:id` | History of all sprints; report per sprint (applied, interviews, offers, rejected, average match, gaps closed) |
 | Position | `/positions/:id` | One position: key, gap matrix, requirements, dates, activity log |
-| Profile | `/profile` | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback) and extracted items with source links (remove only; items count at once) |
+| Profile (a Settings tab) | `/settings/profile` (`/profile` redirects) | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback) and extracted items (skills, projects, experience, languages, education, certifications) with source links (remove only; items count at once) |
 | Settings | `/settings` | Email alerts and strong-match threshold, default language, delete all my data, sign out |
 
 No landing page: `/` redirects to `/login`.

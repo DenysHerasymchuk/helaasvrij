@@ -9,7 +9,6 @@ import { Input } from "@/components/base/input/input";
 import { InputFile } from "@/components/base/input/input-file";
 import { ApiError } from "@/core/api";
 import { useAuth } from "@/core/auth";
-import { JourneyBar } from "@/features/journey/journey-bar";
 import { Field, TextArea } from "@/features/postings/fields";
 import { formatDateTime } from "@/features/postings/types";
 import { cx } from "@/utils/cx";
@@ -29,7 +28,6 @@ import {
     syncGitHub,
     uploadCv,
 } from "./api";
-import { PageHeader } from "@/core/ui";
 
 const message = (error: unknown) => (error instanceof ApiError ? error.message : "Something went wrong. Try again.");
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -40,6 +38,7 @@ const kindOrder: { kind: ProfileItemKind; title: string }[] = [
     { kind: "Experience", title: "Experience" },
     { kind: "Language", title: "Languages" },
     { kind: "Education", title: "Education" },
+    { kind: "Certification", title: "Certifications" },
 ];
 
 const sourceTitle = { GitHub: "GitHub", Cv: "CV or LinkedIn PDF", Site: "Website", PastedText: "Pasted text" } as const;
@@ -136,9 +135,8 @@ export function ProfilePage() {
     }, [profile, hash]);
 
     return (
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <PageHeader title="Profile" description="Three steps: add your sources, let us read them, review what we found." />
-            <JourneyBar />
+        <div className="flex w-full flex-col gap-6">
+            <p className="max-w-2xl text-md text-tertiary">Three steps: add your sources, let us read them, review what we found.</p>
 
             {loadError ? (
                 <div role="alert" className="flex flex-col items-start gap-3 rounded-xl bg-primary p-5 shadow-xs ring-1 ring-secondary">

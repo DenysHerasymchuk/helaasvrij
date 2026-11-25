@@ -23,7 +23,7 @@ export function AccountTab() {
                 <span className="text-sm text-secondary">{user.email}</span>
             </SettingsRow>
             <SettingsRow title="Sources" hint="GitHub, CV and website are managed on your profile.">
-                <Link to="/profile" className="text-sm font-semibold text-brand-secondary outline-focus-ring hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
+                <Link to="/settings/profile" className="text-sm font-semibold text-brand-secondary outline-focus-ring hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
                     Open profile
                 </Link>
             </SettingsRow>

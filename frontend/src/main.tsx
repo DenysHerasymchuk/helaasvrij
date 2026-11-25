@@ -29,11 +29,11 @@ import { ConnectClaudePage } from '@/features/mcp/connect-claude-page'
 import { CalendarPage } from '@/features/calendar/calendar-page'
 import './index.css'
 
-/** Redirect that fills the new path from the old route's params and keeps the query string. */
+/** Redirect that fills the new path from the old route's params and keeps the query string and hash. */
 function RedirectTo({ to }: { to: (params: Record<string, string | undefined>) => string }) {
   const params = useParams()
-  const { search } = useLocation()
-  return <Navigate to={to(params) + search} replace />
+  const { search, hash } = useLocation()
+  return <Navigate to={to(params) + search + hash} replace />
 }
 
 const router = createBrowserRouter([
@@ -44,13 +44,14 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/profile', element: <ProfilePage /> },
+      { path: '/profile', element: <RedirectTo to={() => '/settings/profile'} /> },
       {
         path: '/settings',
         element: <SettingsLayout />,
         children: [
           { index: true, element: <Navigate to="preferences" replace /> },
           { path: 'preferences', element: <PreferencesTab /> },
+          { path: 'profile', element: <ProfilePage /> },
           { path: 'notifications', element: <NotificationsTab /> },
           { path: 'account', element: <AccountTab /> },
           { path: 'data', element: <DataTab /> },

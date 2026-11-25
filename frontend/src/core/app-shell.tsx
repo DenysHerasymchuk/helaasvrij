@@ -1,4 +1,4 @@
-import { Briefcase01, Calendar, HomeLine, Tool02, User01 } from "@untitledui/icons";
+import { Briefcase01, Calendar, HomeLine, Tool02 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -12,7 +12,6 @@ import { ChatWidget } from "@/features/chat/chat-widget";
 // Five places for the journey; the per-posting tools live on the posting page, with "All tools" as a shortcut.
 const mainItems: NavItemType[] = [
     { label: "Home", href: "/dashboard", icon: HomeLine },
-    { label: "Profile", href: "/profile", icon: User01 },
     { label: "Job search", href: "/summary", icon: Briefcase01 },
     { label: "Calendar", href: "/calendar", icon: Calendar },
 ];

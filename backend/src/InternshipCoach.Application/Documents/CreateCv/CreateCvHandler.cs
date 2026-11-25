@@ -34,7 +34,7 @@ public sealed class CreateCvHandler(
         - Use only facts stated in the items (name, quotes). Never add employers, schools, dates, grades, numbers, tools or skills that are not there.
         - Every bullet has "itemId": the id of the one item it is based on, copied exactly. One item can give one or two bullets.
         - Skill bullets are just the skill name. Language bullets are just the language name.
-        - Project, experience and education bullets are one short line each.
+        - Project, experience, education and certification bullets are one short line each.
         - "summary" is two or three sentences, built only from the items.
         """;
 
@@ -67,6 +67,7 @@ public sealed class CreateCvHandler(
         (ProfileItemKind.Project, new() { ["nl"] = "Projecten", ["fr"] = "Projets", ["en"] = "Projects" }),
         (ProfileItemKind.Experience, new() { ["nl"] = "Ervaring", ["fr"] = "Expérience", ["en"] = "Experience" }),
         (ProfileItemKind.Education, new() { ["nl"] = "Opleiding", ["fr"] = "Formation", ["en"] = "Education" }),
+        (ProfileItemKind.Certification, new() { ["nl"] = "Certificaten", ["fr"] = "Certifications", ["en"] = "Certifications" }),
         (ProfileItemKind.Language, new() { ["nl"] = "Talen", ["fr"] = "Langues", ["en"] = "Languages" })
     ];
 
