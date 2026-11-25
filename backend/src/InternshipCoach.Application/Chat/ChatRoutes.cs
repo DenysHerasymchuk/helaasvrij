@@ -7,10 +7,14 @@ public static partial class ChatRoutes
 {
     public static readonly IReadOnlyList<(string Name, string Route)> Pages =
     [
-        ("Dashboard", "/dashboard"),
+        ("Home", "/dashboard"),
+        ("Summary", "/summary"),
+        ("List", "/list"),
         ("Backlog", "/backlog"),
         ("Board", "/board"),
         ("Sprints", "/sprints"),
+        ("Find positions", "/find"),
+        ("Calendar", "/calendar"),
         ("Gap plan", "/gaps"),
         ("Documents", "/documents"),
         ("Interview prep", "/interview"),
@@ -32,6 +36,12 @@ public static partial class ChatRoutes
         if (trimmed.Length > 1)
         {
             trimmed = trimmed.TrimEnd('/');
+        }
+
+        // One position's page: the id is checked as a GUID, and every tool still checks that the position is the student's.
+        if (PositionPage().Match(trimmed) is { Success: true } position && Guid.TryParse(position.Groups[1].Value, out var id))
+        {
+            return $"/positions/{id}";
         }
 
         foreach (var (_, allowed) in Pages)
@@ -68,6 +78,9 @@ public static partial class ChatRoutes
 
         return (string.Join('\n', kept).Trim(), target);
     }
+
+    [GeneratedRegex(@"^/positions/([0-9a-fA-F-]{36})$")]
+    private static partial Regex PositionPage();
 
     [GeneratedRegex(@"^\s*NAVIGATE\s*:\s*(.*?)\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex NavigateLine();

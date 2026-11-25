@@ -25,7 +25,8 @@ public enum ChatActionStatus
     Invalid
 }
 
-public sealed record ChatActionResult(ChatActionStatus Status, string Message, string? NavigateTo = null);
+/// <param name="Undo">The action that reverses this one, when there is one. The student starts it with one click.</param>
+public sealed record ChatActionResult(ChatActionStatus Status, string Message, string? NavigateTo = null, PendingChatAction? Undo = null);
 
 /// <summary>A tool failed in a way the model may read (unknown posting, missing argument).</summary>
 public sealed class ChatToolException(string message) : Exception(message);
@@ -142,8 +143,10 @@ public sealed class ChatToolbox(
                 {
                     var posting = await FindPostingAsync(args, ct);
                     var stage = ParseStage(args);
-                    var id = await applications.FindIdForPostingAsync(posting.Id, ct)
-                             ?? (await createApplication.HandleAsync(new CreateApplicationCommand(posting.Id), ct)).Card?.Application.Id;
+                    var id = await applications.FindIdForPostingAsync(posting.Id, ct);
+                    // Only a card that already existed has a stage to go back to.
+                    var previous = id is { } existing ? (await applications.FindAsync(existing, ct))?.Stage : null;
+                    id ??= (await createApplication.HandleAsync(new CreateApplicationCommand(posting.Id), ct)).Card?.Application.Id;
                     if (id is null)
                     {
                         return new ChatActionResult(ChatActionStatus.NotFound, "Posting not found.");
@@ -152,7 +155,11 @@ public sealed class ChatToolbox(
                     var result = await updateApplication.HandleAsync(new UpdateApplicationCommand(id.Value, stage.ToCode(), null), ct);
                     return result.Outcome switch
                     {
-                        ApplicationOutcome.Ok => new ChatActionResult(ChatActionStatus.Ok, $"Moved {posting.Company} to {Capitalize(stage.ToCode())}.", "/board"),
+                        ApplicationOutcome.Ok => new ChatActionResult(ChatActionStatus.Ok, $"Moved {posting.Company} to {Capitalize(stage.ToCode())}.", "/board",
+                            previous is { } back && back != stage
+                                ? new PendingChatAction(tool, new Dictionary<string, string> { ["postingId"] = posting.Id.ToString(), ["stage"] = back.ToCode() },
+                                    $"Move {posting.Company} back to {Capitalize(back.ToCode())}")
+                                : null),
                         ApplicationOutcome.NotFound => new ChatActionResult(ChatActionStatus.NotFound, "Application not found."),
                         _ => new ChatActionResult(ChatActionStatus.Invalid, result.Error ?? "Could not move it.")
                     };

@@ -46,6 +46,7 @@ Pitch: "Drop in your links, see exactly what each Belgian position wants from yo
 | Sprints | `/sprints`, `/sprints/:id` | History of all sprints; report per sprint (applied, interviews, offers, rejected, average match, gaps closed) |
 | Position | `/positions/:id` | One position: key, gap matrix, requirements, dates, activity log |
 | Profile (a Settings tab) | `/settings/profile` (`/profile` redirects) | Sources (GitHub, CV/LinkedIn PDF, site, paste-text fallback) and extracted items (skills, projects, experience, languages, education, certifications) with source links (remove only; items count at once) |
+| Assistant and MCP | chat button on every page, `/connect-claude` | One tool catalog (`ChatToolbox`, `PlanningTools`; `GET /api/tools`) serves the chat assistant and the MCP server: read the sprint, board, backlog, activity, calendar, gaps; propose changes that run only after a confirm (`POST /api/chat/actions/confirm`). MCP signs in with a personal access token from Settings > Account (`COACH_TOKEN`) |
 | Settings | `/settings` | Email alerts and strong-match threshold, default language, app size, writing skills (which style briefs the AI follows: Humanizer by default for documents, Humanizer and Teacher for interview questions and feedback; also Concise and Formal), delete all my data, sign out |
 
 No landing page: `/` redirects to `/login`.

@@ -1,4 +1,7 @@
+using InternshipCoach.Application.Chat;
 using InternshipCoach.Application.Chat.Confirm;
+using InternshipCoach.Application.Abstractions.Llm;
+using InternshipCoach.Application.Chat.Send;
 using InternshipCoach.Application.Chat.Tools;
 using InternshipCoach.Domain.Applications;
 
@@ -154,5 +157,49 @@ public class PlanningToolsTests
 
         Assert.Equal("2 events", activity.Summary); // Added, then StageChanged
         Assert.Equal(ApplicationStage.Applied, f.Applications.Items.Single().Stage);
+    }
+}
+
+public class ChatContextTests
+{
+    [Fact]
+    public void A_position_page_is_an_allowed_route_and_a_made_up_one_is_not()
+    {
+        var id = Guid.NewGuid();
+
+        Assert.Equal($"/positions/{id}", ChatRoutes.Normalize($"/positions/{id}/"));
+        Assert.Null(ChatRoutes.Normalize("/positions/not-a-guid"));
+        Assert.Null(ChatRoutes.Normalize($"/positions/{id}/../../admin"));
+        Assert.Equal("/find", ChatRoutes.Normalize("/find"));
+    }
+
+    [Fact]
+    public async Task The_prompt_tells_the_model_which_position_is_open()
+    {
+        var id = Guid.NewGuid();
+        var f = new ChatFixture("""{"reply":"Hi"}""");
+
+        await f.Handler.HandleAsync(new SendChatCommand([new ChatTurn(ChatRole.User, "Move this one")], $"/positions/{id}"), default);
+
+        var system = f.Transport.Requests[0].System;
+        Assert.Contains($"the page of one position, id {id}", system);
+        Assert.Contains("get_active_sprint", system);
+    }
+
+    [Fact]
+    public async Task Moving_a_card_offers_an_undo_back_to_the_old_stage()
+    {
+        var f = new ChatFixture();
+        var posting = f.AddPosting("Barco");
+        var application = f.AddToBoard(posting);
+
+        var moved = await f.Confirm.HandleAsync(new ConfirmChatActionCommand("set_application_stage",
+            new Dictionary<string, string> { ["postingId"] = posting.Id.ToString(), ["stage"] = "applied" }), default);
+
+        Assert.Equal("saved", moved.Undo!.Args["stage"]);
+        var undone = await f.Confirm.HandleAsync(new ConfirmChatActionCommand(moved.Undo.Tool, moved.Undo.Args), default);
+
+        Assert.Equal(ChatActionStatus.Ok, undone.Status);
+        Assert.Equal(ApplicationStage.Saved, application.Stage);
     }
 }

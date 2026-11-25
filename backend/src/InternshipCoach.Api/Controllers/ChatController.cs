@@ -61,7 +61,8 @@ public sealed class ChatController : ControllerBase
             var result = await handler.HandleAsync(new ConfirmChatActionCommand(request.Tool, request.Args), cancellationToken);
             return result.Status switch
             {
-                ChatActionStatus.Ok => Ok(new ConfirmChatActionResponse(result.Message, result.NavigateTo)),
+                ChatActionStatus.Ok => Ok(new ConfirmChatActionResponse(result.Message, result.NavigateTo,
+                    result.Undo is { } u ? new ChatPendingActionDto(u.Tool, u.Args, u.Summary) : null)),
                 ChatActionStatus.NotFound => Problem(statusCode: StatusCodes.Status404NotFound, title: result.Message),
                 _ => Problem(statusCode: StatusCodes.Status400BadRequest, title: result.Message)
             };

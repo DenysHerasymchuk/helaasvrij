@@ -18,7 +18,7 @@ public sealed record ChatResponse(
 public sealed record ConfirmChatActionRequest(string? Tool, IReadOnlyDictionary<string, string>? Args);
 
 /// <summary>NavigateTo is the page where the result shows, or null.</summary>
-public sealed record ConfirmChatActionResponse(string Message, string? NavigateTo);
+public sealed record ConfirmChatActionResponse(string Message, string? NavigateTo, ChatPendingActionDto? Undo = null);
 
 public sealed record ToolParamDto(string Name, string Description, bool Required, IReadOnlyList<string>? Values);
 

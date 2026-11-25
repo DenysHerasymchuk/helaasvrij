@@ -157,7 +157,8 @@ public sealed class PlanningTools(
                 var posting = await FindPostingAsync(args, ct);
                 var sprint = await sprints.FindActiveAsync(ct) ?? throw new ChatToolException("There is no running sprint.");
                 var result = await addItems.HandleAsync(sprint.Id, [posting.Id], ct);
-                return FromSprint(result.Outcome, result.Error, $"Added {posting.Key} to {sprint.Name}.", "/board");
+                return FromSprint(result.Outcome, result.Error, $"Added {posting.Key} to {sprint.Name}.", "/board",
+                    new PendingChatAction("remove_from_sprint", Only(args, "postingId"), $"Send {posting.Key} back to the backlog"));
             }
             case "remove_from_sprint":
             {
@@ -234,9 +235,9 @@ public sealed class PlanningTools(
         }
     }
 
-    private static ChatActionResult FromSprint(SprintOutcome outcome, string? error, string ok, string navigateTo) => outcome switch
+    private static ChatActionResult FromSprint(SprintOutcome outcome, string? error, string ok, string navigateTo, PendingChatAction? undo = null) => outcome switch
     {
-        SprintOutcome.Ok => new ChatActionResult(ChatActionStatus.Ok, ok, navigateTo),
+        SprintOutcome.Ok => new ChatActionResult(ChatActionStatus.Ok, ok, navigateTo, undo),
         SprintOutcome.NotFound => new ChatActionResult(ChatActionStatus.NotFound, error ?? "Not found."),
         _ => new ChatActionResult(ChatActionStatus.Invalid, error ?? "That did not work.")
     };

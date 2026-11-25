@@ -164,13 +164,13 @@ public class SendChatHandlerTests
     public async Task Rounds_are_capped_and_the_last_round_must_reply()
     {
         var f = new ChatFixture(
-            Calls(Call("get_journey")), Calls(Call("list_gaps")), Calls(Call("list_applications")), Reply("Done looking."));
+            Calls(Call("get_journey")), Calls(Call("list_gaps")), Calls(Call("list_applications")), Calls(Call("list_backlog")), Reply("Done looking."));
 
         var result = await f.Handler.HandleAsync(Ask("Status?"), CancellationToken.None);
 
         Assert.Equal("Done looking.", result.Reply);
         Assert.Equal(SendChatHandler.MaxRounds, f.Transport.Requests.Count);
-        Assert.Equal(3, result.ToolTrace!.Count);
+        Assert.Equal(4, result.ToolTrace!.Count);
         Assert.Contains("no longer available", f.Transport.Requests[^1].Turns[0].Content);
         Assert.Contains("\"required\":[\"reply\"]", f.Transport.Requests[^1].System);
     }
