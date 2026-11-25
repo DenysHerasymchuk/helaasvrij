@@ -1,0 +1,31 @@
+@import "./styles/globals.css";
+
+/* The app size: every size is in rem, so this one value scales it all. Settings > Preferences > Density changes it per device. */
+html { font-size: 15px; }
+
+/* Chart ramps in the Stamp green, validated with the dataviz palette checker (ordinal, one hue)
+   against the card surfaces: light #fffdf8 (and Paper #f6f1e7), dark #24221e.
+   In dark mode the most important step is the brightest, so the ramp order flips. */
+:root {
+    --chart-applied: #74ba92;
+    --chart-interview: #2b8a5a;
+    --chart-offer: #154f33;
+}
+
+.dark-mode {
+    --chart-applied: #2b8a5a;
+    --chart-interview: #5dae80;
+    --chart-offer: #a3d2b5;
+}
+
+/* Dashboard motion: one staggered entrance, fills on load, reveals on click. Off for reduced motion. */
+@keyframes dash-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes dash-ring { from { stroke-dasharray: 0 999; } }
+.dash-card { animation: dash-in 300ms ease-out both; }
+.dash-ring { animation: dash-ring 700ms ease-out both; }
+.dash-reveal { animation: dash-in 200ms ease-out both; }
+html.theme-fade, html.theme-fade * { transition: background-color 200ms, border-color 200ms, color 200ms !important; }
+@media (prefers-reduced-motion: reduce) {
+  .dash-card, .dash-ring, .dash-reveal { animation: none; }
+  html.theme-fade, html.theme-fade * { transition: none !important; }
+}

@@ -1,0 +1,38 @@
+{
+  "__CLASS__": "Adzuna::API::Response::JobSearchResults",
+  "count": 2,
+  "mean": 2450.5,
+  "results": [
+    {
+      "__CLASS__": "Adzuna::API::Response::Job",
+      "id": "4931028811",
+      "adref": "eyJhbGciOiJIUzI1NiJ9.fixture",
+      "title": "<strong>Stage</strong> .NET developer",
+      "description": "Voor onze afdeling in Gent zoeken we een <strong>stagiair</strong> met kennis van C# en SQL. Ervaring met Docker is een pluspunt &amp; je spreekt vlot Nederlands…",
+      "created": "2026-11-20T09:14:02Z",
+      "redirect_url": "https://www.adzuna.be/land/ad/4931028811?se=fixture&utm_medium=api&utm_source=fixture&v=fixture",
+      "company": { "__CLASS__": "Adzuna::API::Response::Company", "display_name": "Acme Software NV" },
+      "location": { "__CLASS__": "Adzuna::API::Response::Location", "display_name": "Gent, Oost-Vlaanderen", "area": ["Belgium", "Oost-Vlaanderen", "Gent"] },
+      "category": { "__CLASS__": "Adzuna::API::Response::Category", "tag": "it-jobs", "label": "IT Jobs" },
+      "salary_min": 1800,
+      "salary_max": 2400.5,
+      "salary_is_predicted": "1",
+      "contract_type": "contract",
+      "contract_time": "full_time",
+      "latitude": 51.05,
+      "longitude": 3.72
+    },
+    {
+      "__CLASS__": "Adzuna::API::Response::Job",
+      "id": "4931029999",
+      "title": "Internship marketing",
+      "description": "Short description.",
+      "created": "2026-11-18T12:00:00Z",
+      "redirect_url": "https://www.adzuna.be/land/ad/4931029999?se=fixture",
+      "company": { "__CLASS__": "Adzuna::API::Response::Company" },
+      "location": { "__CLASS__": "Adzuna::API::Response::Location", "display_name": "Brussel" },
+      "category": { "__CLASS__": "Adzuna::API::Response::Category", "tag": "pr-advertising-marketing-jobs", "label": "PR, Advertising & Marketing Jobs" },
+      "salary_is_predicted": "0"
+    }
+  ]
+}

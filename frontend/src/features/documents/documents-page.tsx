@@ -1,0 +1,812 @@
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router";
+import { AlertCircle, Copy01, Download01, Edit05, File06, FileCheck02, FilePlus02, Mail01, Printer } from "@untitledui/icons";
+import { Button } from "@/components/base/buttons/button";
+import { InputFile } from "@/components/base/input/input-file";
+import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
+import { ApiError, api } from "@/core/api";
+import type { PostingSummary } from "@/features/postings/types";
+import { getProfile } from "@/features/profile/api";
+import { ChangesView } from "./changes-view";
+import { DocumentsMenu } from "./documents-menu";
+import { cx } from "@/utils/cx";
+import { fieldClass, PageFrame, PageHeader, sectionTitleClass } from "@/core/ui";
+
+const compactField = fieldClass;
+
+type Language = "nl" | "fr" | "en";
+
+interface DocumentResponse {
+    id: string;
+    kind: string;
+    language: Language;
+    title: string;
+    content: string;
+    createdAt: string;
+    updatedAt: string;
+    droppedCount: number | null;
+}
+
+type DocumentSummary = Omit<DocumentResponse, "content" | "droppedCount">;
+
+
+type DraftKind = "coverLetter" | "recruiterMessage";
+type Mode = "create" | "tailor" | "draft";
+
+const modes: { id: Mode; label: string; icon: typeof File06 }[] = [
+    { id: "create", label: "Create CV", icon: FilePlus02 },
+    { id: "tailor", label: "Tailor CV", icon: FileCheck02 },
+    { id: "draft", label: "Draft", icon: Mail01 },
+];
+
+// The form panel is the last thing in its column, so switching tabs moves nothing and the form never needs its own scrollbar.
+const formPanel = "lg:shrink-0";
+
+const RECRUITER_MAX = 300;
+
+const MAX_CHARS = 20000;
+
+
+// Shows only the CV sheet when printing: the app shell (sidebar, header) and the rest of the page are hidden.
+const printCss = `@media print {
+  body * { visibility: hidden !important; }
+  #cv-sheet, #cv-sheet * { visibility: visible !important; color: #000 !important; background: transparent !important; }
+  #cv-sheet { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; padding: 0 !important; }
+}`;
+
+function Panel({ id, title, action, children, className }: { id?: string; title: string; action?: ReactNode; children: ReactNode; className?: string }) {
+    return (
+        <section id={id} className={cx("scroll-mt-6 rounded-xl bg-primary shadow-xs ring-1 ring-secondary", className)}>
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-4 py-3">
+                <h2 className={sectionTitleClass}>{title}</h2>
+                {action}
+            </header>
+            {children}
+        </section>
+    );
+}
+
+/** Renders the subset of markdown the CV uses: # and ## headings, - list items and paragraphs. Text only, no HTML. */
+function Markdown({ source }: { source: string }) {
+    const blocks: ReactNode[] = [];
+    let list: string[] = [];
+    const flush = () => {
+        if (list.length === 0) return;
+        blocks.push(
+            <ul key={blocks.length} className="ml-5 list-disc space-y-1 text-sm text-secondary">
+                {list.map((item, i) => (
+                    <li key={i}>{item}</li>
+                ))}
+            </ul>,
+        );
+        list = [];
+    };
+
+    for (const raw of source.split("\n")) {
+        const line = raw.trim();
+        if (line.startsWith("- ")) {
+            list.push(line.slice(2));
+            continue;
+        }
+        flush();
+        if (line.startsWith("## ")) blocks.push(<h3 key={blocks.length} className="pt-2 text-sm font-semibold text-primary">{line.slice(3)}</h3>);
+        else if (line.startsWith("# ")) blocks.push(<h2 key={blocks.length} className="text-lg font-semibold text-primary">{line.slice(2)}</h2>);
+        else if (line) blocks.push(<p key={blocks.length} className="text-sm text-secondary">{line}</p>);
+    }
+    flush();
+    return <div className="flex flex-col gap-2">{blocks}</div>;
+}
+
+/** Reads a problem title from a failed response, or falls back to a generic message. */
+async function problemTitle(response: Response, fallback: string) {
+    try {
+        const problem = await response.json();
+        if (typeof problem.title === "string") return problem.title as string;
+    } catch {
+        // Not JSON: keep the fallback.
+    }
+    return fallback;
+}
+
+/** The upload is multipart, so it bypasses the JSON-only `api` helper. Only the extracted text comes back; the file is not kept. */
+async function extractCvText(file: File): Promise<string> {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await fetch("/api/documents/cv/extract", { method: "POST", credentials: "same-origin", body: form });
+    if (response.ok) return ((await response.json()) as { text: string }).text;
+    throw new ApiError(response.status, await problemTitle(response, "Could not read this file. Try again."));
+}
+
+async function downloadDocx(id: string, title: string) {
+    const response = await fetch(`/api/documents/${id}/docx`, { credentials: "same-origin" });
+    if (!response.ok) throw new ApiError(response.status, await problemTitle(response, "Could not download. Try again."));
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${title}.docx`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+export function DocumentsPage() {
+    // Deep links from a posting: ?postingId=&mode=tailor|create or ?postingId=&kind=coverLetter|recruiterMessage.
+    const [params] = useSearchParams();
+    const linkedPosting = params.get("postingId") ?? "";
+    const linkedKind = params.get("kind");
+    const linkedMode = params.get("mode");
+    // Deep links pick the form; otherwise a linked posting means tailor, and nothing linked means create.
+    const [mode, setMode] = useState<Mode>(
+        linkedKind === "coverLetter" || linkedKind === "recruiterMessage" ? "draft" : linkedMode === "tailor" || (linkedPosting && linkedMode !== "create") ? "tailor" : "create",
+    );
+    const [cvSource, setCvSource] = useState<"paste" | "upload">("paste");
+    const [cvText, setCvText] = useState("");
+    const [cvFile, setCvFile] = useState<File | null>(null);
+    const [extracting, setExtracting] = useState(false);
+    const [extractError, setExtractError] = useState<string | null>(null);
+
+    const [postingSource, setPostingSource] = useState<"saved" | "paste">("paste");
+    const [postingText, setPostingText] = useState("");
+    const [postingId, setPostingId] = useState(linkedPosting);
+    const [postings, setPostings] = useState<PostingSummary[] | null>(null);
+    const [postingsError, setPostingsError] = useState(false);
+    const [downloading, setDownloading] = useState(false);
+    const [downloadError, setDownloadError] = useState<string | null>(null);
+    const [language, setLanguage] = useState<"" | Language>("");
+    const [tailoring, setTailoring] = useState(false);
+    const [formError, setFormError] = useState<ApiError | null>(null);
+
+    // null = loading, -1 = could not load
+    const [confirmedCount, setConfirmedCount] = useState<number | null>(null);
+    const [createLanguage, setCreateLanguage] = useState<"" | Language>("");
+    const [creating, setCreating] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
+
+    const [current, setCurrent] = useState<DocumentResponse | null>(null);
+    const [original, setOriginal] = useState<string | null>(null);
+    const [view, setView] = useState<"document" | "changes">("document");
+    const [editing, setEditing] = useState(false);
+    const [draftTitle, setDraftTitle] = useState("");
+    const [draftContent, setDraftContent] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    const [draftPostingId, setDraftPostingId] = useState(linkedPosting);
+    const [draftKind, setDraftKind] = useState<DraftKind>(linkedKind === "recruiterMessage" ? "recruiterMessage" : "coverLetter");
+    const [draftLanguage, setDraftLanguage] = useState<"" | Language>("");
+    const [drafting, setDrafting] = useState(false);
+    const [draftError, setDraftError] = useState<string | null>(null);
+
+    const [list, setList] = useState<DocumentSummary[] | null>(null);
+    const [listError, setListError] = useState(false);
+
+    const loadList = () => {
+        setListError(false);
+        api.get<DocumentSummary[]>("/api/documents")
+            .then((docs) => setList(docs ?? []))
+            .catch(() => setListError(true));
+    };
+    useEffect(loadList, []);
+
+    const loadPostings = () => {
+        setPostingsError(false);
+        setPostings(null);
+        api.get<PostingSummary[]>("/api/postings")
+            .then((items) => {
+                setPostings(items ?? []);
+                if (items && items.length > 0) setPostingSource("saved");
+            })
+            .catch(() => setPostingsError(true));
+    };
+    useEffect(loadPostings, []);
+
+
+    const loadProfile = () => {
+        setConfirmedCount(null);
+        getProfile()
+            .then((profile) => setConfirmedCount(profile?.items.filter((item) => item.confirmed).length ?? 0))
+            .catch(() => setConfirmedCount(-1));
+    };
+    useEffect(loadProfile, []);
+
+    const onCreate = async (event: FormEvent) => {
+        event.preventDefault();
+        setCreating(true);
+        setCreateError(null);
+        try {
+            const doc = await api.post<DocumentResponse>("/api/documents/cv/create", { language: createLanguage || null });
+            if (doc) {
+                show(doc);
+                loadList();
+            }
+        } catch (error) {
+            // The profile changed in another tab: show the empty state again.
+            if (error instanceof ApiError && error.status === 400 && error.message.startsWith("Confirm some profile items")) loadProfile();
+            else setCreateError(error instanceof ApiError ? error.message : "Something went wrong. Try again.");
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    const onExtract = async (file: File | null) => {
+        setCvFile(file);
+        setExtractError(null);
+        if (!file) return;
+        if (file.size > MAX_FILE_BYTES) {
+            setExtractError("The file is larger than 5 MB.");
+            return;
+        }
+        setExtracting(true);
+        try {
+            setCvText(await extractCvText(file));
+        } catch (error) {
+            setExtractError(error instanceof ApiError ? error.message : "Could not read this file. Try again.");
+        } finally {
+            setExtracting(false);
+        }
+    };
+
+    const onDownload = async () => {
+        if (!current) return;
+        setDownloading(true);
+        setDownloadError(null);
+        try {
+            await downloadDocx(current.id, current.title);
+        } catch (error) {
+            setDownloadError(error instanceof ApiError ? error.message : "Could not download. Try again.");
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const onDraft = async (event: FormEvent) => {
+        event.preventDefault();
+        if (!draftPostingId) return;
+        setDrafting(true);
+        setDraftError(null);
+        try {
+            const doc = await api.post<DocumentResponse>("/api/documents/draft", {
+                postingId: draftPostingId,
+                kind: draftKind,
+                language: draftLanguage || null,
+            });
+            if (doc) {
+                show(doc);
+                loadList();
+            }
+        } catch (error) {
+            setDraftError(error instanceof ApiError ? error.message : "Something went wrong. Try again.");
+        } finally {
+            setDrafting(false);
+        }
+    };
+
+    // `before` is the CV text a tailored document came from; it feeds the "What changed" view and is gone for any other document.
+    const show = (doc: DocumentResponse, before: string | null = null) => {
+        setCurrent(doc);
+        setOriginal(before);
+        setView("document");
+        setEditing(false);
+        setSaveError(null);
+        setDownloadError(null);
+    };
+
+    const onTailor = async (event: FormEvent) => {
+        event.preventDefault();
+        setTailoring(true);
+        setFormError(null);
+        try {
+            const posting = postingSource === "saved" ? { postingId } : { postingText };
+            const doc = await api.post<DocumentResponse>("/api/documents/cv/tailor", { cvText, ...posting, language: language || null });
+            if (doc) {
+                show(doc, cvText);
+                setView("changes");
+                loadList();
+            }
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 404 && postingSource === "saved") {
+                setFormError(new ApiError(404, "", { postingId: "This posting no longer exists. Pick another one." }));
+                setPostingId("");
+                loadPostings();
+            } else {
+                setFormError(error instanceof ApiError ? error : new ApiError(0, "Something went wrong. Try again."));
+            }
+        } finally {
+            setTailoring(false);
+        }
+    };
+
+    const onOpen = async (id: string) => {
+        try {
+            const doc = await api.get<DocumentResponse>(`/api/documents/${id}`);
+            if (doc) show(doc);
+        } catch {
+            setListError(true);
+        }
+    };
+
+    const onDelete = async (doc: DocumentSummary) => {
+        if (!window.confirm(`Delete "${doc.title}"? This cannot be undone.`)) return;
+        try {
+            await api.del(`/api/documents/${doc.id}`);
+            if (current?.id === doc.id) setCurrent(null);
+            loadList();
+        } catch {
+            setListError(true);
+        }
+    };
+
+    const onCopy = async () => {
+        if (!current) return;
+        await navigator.clipboard.writeText(current.content);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+    };
+
+    const onEdit = () => {
+        if (!current) return;
+        setDraftTitle(current.title);
+        setDraftContent(current.content);
+        setSaveError(null);
+        setEditing(true);
+    };
+
+    const onSave = async () => {
+        if (!current) return;
+        setSaving(true);
+        setSaveError(null);
+        try {
+            const doc = await api.put<DocumentResponse>(`/api/documents/${current.id}`, { title: draftTitle, content: draftContent });
+            if (doc) {
+                show({ ...doc, droppedCount: current.droppedCount }, original);
+                loadList();
+            }
+        } catch (error) {
+            setSaveError(error instanceof ApiError ? error.message : "Could not save. Try again.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const cvError = formError?.fieldErrors.cvText;
+    const postingError = formError?.fieldErrors.postingText ?? formError?.fieldErrors.postingId;
+    const generalError = formError && !cvError && !postingError ? formError.message : null;
+    const showCvText = cvSource === "paste" || cvText.length > 0;
+
+    return (
+        <PageFrame full>
+            <style>{printCss}</style>
+            <PageHeader title="Documents" description="CV, cover letters and recruiter messages, using only facts from your profile or your own CV." />
+
+            <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
+                <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto lg:pr-1">
+                    <div role="tablist" aria-label="New document" className="grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1">
+                        {modes.map((m) => (
+                            <button
+                                key={m.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={mode === m.id}
+                                onClick={() => setMode(m.id)}
+                                className={cx(
+                                    "flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-semibold outline-focus-ring transition focus-visible:outline-2",
+                                    mode === m.id ? "bg-primary text-secondary shadow-xs" : "text-quaternary hover:text-secondary",
+                                )}
+                            >
+                                <m.icon className="size-4 shrink-0" aria-hidden="true" />
+                                {m.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {mode === "create" && <Panel id="create-panel" className={formPanel} title="Create my CV from my profile">
+                        {confirmedCount === null ? (
+                            <p role="status" className="p-5 text-sm text-tertiary">Loading your profile...</p>
+                        ) : confirmedCount === -1 ? (
+                            <div role="alert" className="flex flex-wrap items-center gap-3 p-5">
+                                <p className="text-sm text-error-primary">Could not load your profile.</p>
+                                <Button size="sm" color="secondary" onPress={loadProfile}>
+                                    Try again
+                                </Button>
+                            </div>
+                        ) : confirmedCount === 0 ? (
+                            <div className="flex flex-col items-start gap-3 p-5">
+                                <p className="text-sm text-tertiary">
+                                    Your CV is built only from your profile, and it is empty. Add your GitHub, CV or website and read your sources.
+                                </p>
+                                <Button size="sm" color="secondary" href="/settings/profile">
+                                    Go to my profile
+                                </Button>
+                            </div>
+                        ) : (
+                            <form onSubmit={onCreate} className="flex flex-col gap-4 p-4">
+                                <p className="text-sm text-tertiary">
+                                    Uses your {confirmedCount} profile {confirmedCount === 1 ? "item" : "items"}. Nothing else goes into it.
+                                </p>
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="create-language" className="text-sm font-medium text-secondary">Language</label>
+                                    <select
+                                        id="create-language"
+                                        value={createLanguage}
+                                        onChange={(e) => setCreateLanguage(e.target.value as "" | Language)}
+                                        className={compactField}
+                                    >
+                                        <option value="">My default language</option>
+                                        <option value="nl">Nederlands</option>
+                                        <option value="fr">Français</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </div>
+                                {createError && (
+                                    <p role="alert" className="flex items-center gap-2 text-sm text-error-primary">
+                                        <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                        {createError}
+                                    </p>
+                                )}
+                                <div>
+                                    <Button type="submit" size="md" iconLeading={FilePlus02} isLoading={creating} isDisabled={creating || tailoring} showTextWhileLoading>
+                                        {creating ? "Writing your CV..." : createError ? "Try again" : "Create my CV"}
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+                    </Panel>}
+
+                    {mode === "tailor" && <Panel id="tailor-panel" className={formPanel} title="Tailor my CV to a posting">
+                        <form onSubmit={onTailor} className="flex flex-col gap-4 p-4">
+                            <fieldset className="flex flex-col gap-3">
+                                <legend className="mb-3 text-sm font-medium text-secondary">Your CV</legend>
+                                <RadioGroup
+                                    aria-label="How to add your CV"
+                                    value={cvSource}
+                                    onChange={(value) => setCvSource(value as "paste" | "upload")}
+                                    className="flex-row flex-wrap gap-x-6 gap-y-2"
+                                >
+                                    <RadioButton value="paste" label="Paste text" />
+                                    <RadioButton value="upload" label="Upload PDF or Word" />
+                                </RadioGroup>
+
+                                {cvSource === "upload" && (
+                                    <div className="flex flex-col gap-2">
+                                        <InputFile
+                                            size="sm"
+                                            label="CV file"
+                                            hint="PDF or .docx, up to 5 MB. We read the text and do not keep the file."
+                                            acceptedFileTypes={[".pdf", ".docx"]}
+                                            buttonText="Choose file"
+                                            isLoading={extracting}
+                                            isDisabled={extracting}
+                                            isInvalid={!!extractError}
+                                            onChange={(files) => onExtract(files?.[0] ?? null)}
+                                        />
+                                        {extracting && <p role="status" className="text-sm text-tertiary">Reading your file...</p>}
+                                        {extractError && (
+                                            <div role="alert" className="flex flex-wrap items-center gap-3">
+                                                <p className="flex items-center gap-2 text-sm text-error-primary">
+                                                    <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                                    {extractError}
+                                                </p>
+                                                {cvFile && cvFile.size <= MAX_FILE_BYTES && (
+                                                    <Button size="sm" color="secondary" onPress={() => onExtract(cvFile)}>
+                                                        Try again
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {showCvText && (
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="cv-text" className={cvSource === "upload" ? "text-sm font-medium text-secondary" : "sr-only"}>
+                                            {cvSource === "upload" ? "Text from your file" : "CV text"}
+                                        </label>
+                                        {cvSource === "upload" && (
+                                            <p id="cv-text-hint" className="text-sm text-tertiary">
+                                                Check this text and fix anything that came out wrong. Only this text is used.
+                                            </p>
+                                        )}
+                                        <textarea
+                                            id="cv-text"
+                                            required
+                                            rows={4}
+                                            maxLength={MAX_CHARS}
+                                            value={cvText}
+                                            onChange={(e) => setCvText(e.target.value)}
+                                            placeholder="Paste your CV as plain text"
+                                            aria-invalid={!!cvError}
+                                            aria-describedby={cx(cvSource === "upload" && "cv-text-hint", cvError && "cv-text-error") || undefined}
+                                            className={compactField}
+                                        />
+                                    </div>
+                                )}
+                                {cvError && <p id="cv-text-error" className="text-sm text-error-primary">{cvError}</p>}
+                            </fieldset>
+
+                            <fieldset className="flex flex-col gap-3">
+                                <legend className="mb-3 text-sm font-medium text-secondary">Job posting</legend>
+                                <RadioGroup
+                                    aria-label="Which job posting"
+                                    value={postingSource}
+                                    onChange={(value) => setPostingSource(value as "saved" | "paste")}
+                                    className="flex-row flex-wrap gap-x-6 gap-y-2"
+                                >
+                                    <RadioButton value="saved" label="One of my postings" />
+                                    <RadioButton value="paste" label="Paste text" />
+                                </RadioGroup>
+
+                                {postingSource === "saved" &&
+                                    (postingsError ? (
+                                        <div role="alert" className="flex flex-wrap items-center gap-3">
+                                            <p className="text-sm text-error-primary">Could not load your postings.</p>
+                                            <Button size="sm" color="secondary" onPress={loadPostings}>
+                                                Try again
+                                            </Button>
+                                        </div>
+                                    ) : postings === null ? (
+                                        <p role="status" className="text-sm text-tertiary">Loading your postings...</p>
+                                    ) : postings.length === 0 ? (
+                                        <p className="text-sm text-tertiary">
+                                            You have no saved postings yet. Save one on the{" "}
+                                            <Link to="/postings" className="font-semibold text-brand-secondary underline-offset-2 hover:underline focus-visible:underline">
+                                                Postings
+                                            </Link>{" "}
+                                            page, or paste the text instead.
+                                        </p>
+                                    ) : (
+                                        <div className="flex flex-col gap-1.5">
+                                            <label htmlFor="posting-id" className="sr-only">Saved posting</label>
+                                            <select
+                                                id="posting-id"
+                                                required
+                                                value={postingId}
+                                                onChange={(e) => setPostingId(e.target.value)}
+                                                aria-invalid={!!postingError}
+                                                aria-describedby={postingError ? "posting-error" : undefined}
+                                                className={compactField}
+                                            >
+                                                <option value="">Choose a posting</option>
+                                                {postings.map((p) => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.city ? `${p.title}, ${p.company} (${p.city})` : `${p.title}, ${p.company}`}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+
+                                {postingSource === "paste" && (
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="posting-text" className="sr-only">Job posting text</label>
+                                        <textarea
+                                            id="posting-text"
+                                            required
+                                            rows={4}
+                                            maxLength={MAX_CHARS}
+                                            value={postingText}
+                                            onChange={(e) => setPostingText(e.target.value)}
+                                            placeholder="Paste the full job posting"
+                                            aria-invalid={!!postingError}
+                                            aria-describedby={postingError ? "posting-error" : undefined}
+                                            className={compactField}
+                                        />
+                                    </div>
+                                )}
+                                {postingError && <p id="posting-error" className="text-sm text-error-primary">{postingError}</p>}
+                            </fieldset>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label htmlFor="cv-language" className="text-sm font-medium text-secondary">Language</label>
+                                <select id="cv-language" value={language} onChange={(e) => setLanguage(e.target.value as "" | Language)} className={compactField}>
+                                    <option value="">Same as posting</option>
+                                    <option value="nl">Nederlands</option>
+                                    <option value="fr">Français</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+
+                            {generalError && (
+                                <p role="alert" className="flex items-center gap-2 text-sm text-error-primary">
+                                    <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                    {generalError}
+                                </p>
+                            )}
+
+                            <div>
+                                <Button type="submit" size="md" iconLeading={FileCheck02} isLoading={tailoring} isDisabled={tailoring || extracting || creating} showTextWhileLoading>
+                                    {tailoring ? "Tailoring your CV..." : "Tailor CV"}
+                                </Button>
+                            </div>
+                        </form>
+                    </Panel>}
+
+                {mode === "draft" && <Panel id="draft-panel" className={formPanel} title="Cover letter or recruiter message">
+                    <form onSubmit={onDraft} className="flex flex-col gap-4 p-4">
+                        {postingsError ? (
+                            <div className="flex flex-col items-start gap-3">
+                                <p className="text-sm text-error-primary">Could not load your postings.</p>
+                                <Button size="sm" color="secondary" onPress={loadPostings}>Try again</Button>
+                            </div>
+                        ) : postings === null ? (
+                            <p role="status" className="text-sm text-tertiary">Loading...</p>
+                        ) : postings.length === 0 ? (
+                            <p className="text-sm text-tertiary">Add a posting first. Drafts are written for one of your postings.</p>
+                        ) : (
+                            <>
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="draft-posting" className="text-sm font-medium text-secondary">Posting</label>
+                                    <select id="draft-posting" required value={draftPostingId} onChange={(e) => setDraftPostingId(e.target.value)} className={compactField}>
+                                        <option value="">Choose a posting</option>
+                                        {postings.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.company} - {p.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="draft-kind" className="text-sm font-medium text-secondary">Type</label>
+                                        <select id="draft-kind" value={draftKind} onChange={(e) => setDraftKind(e.target.value as DraftKind)} className={compactField}>
+                                            <option value="coverLetter">Cover letter</option>
+                                            <option value="recruiterMessage">Recruiter message (max {RECRUITER_MAX} characters)</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="draft-language" className="text-sm font-medium text-secondary">Language</label>
+                                        <select id="draft-language" value={draftLanguage} onChange={(e) => setDraftLanguage(e.target.value as "" | Language)} className={compactField}>
+                                            <option value="">Same as posting</option>
+                                            <option value="nl">Nederlands</option>
+                                            <option value="fr">Français</option>
+                                            <option value="en">English</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                {draftError && (
+                                    <p role="alert" className="flex items-center gap-2 text-sm text-error-primary">
+                                        <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                        {draftError}
+                                    </p>
+                                )}
+                                <div>
+                                    <Button type="submit" size="md" iconLeading={Mail01} isLoading={drafting} isDisabled={drafting || !draftPostingId} showTextWhileLoading>
+                                        {drafting ? "Writing your draft..." : "Write draft"}
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </form>
+                </Panel>}
+
+                </div>
+
+                <Panel
+                    className="flex min-h-0 flex-col"
+                    title={current ? current.title : "Your draft"}
+                    action={
+                        <div className="flex flex-wrap gap-2">
+                            {current && !editing && (
+                                <>
+                                    <Button size="sm" color="secondary" iconLeading={Copy01} onPress={onCopy}>
+                                        {copied ? "Copied" : "Copy"}
+                                    </Button>
+                                    <Button size="sm" color="secondary" iconLeading={Edit05} onPress={onEdit}>
+                                        Edit
+                                    </Button>
+                                    <Button size="sm" color="secondary" iconLeading={Download01} onPress={onDownload} isLoading={downloading} isDisabled={downloading} showTextWhileLoading>
+                                        Word (.docx)
+                                    </Button>
+                                    <Button size="sm" color="secondary" iconLeading={Printer} onPress={() => window.print()}>
+                                        PDF
+                                    </Button>
+                                </>
+                            )}
+                            <DocumentsMenu
+                                list={list}
+                                error={listError}
+                                currentId={current?.id ?? null}
+                                onOpen={onOpen}
+                                onDelete={onDelete}
+                                onRetry={loadList}
+                            />
+                        </div>
+                    }
+                >
+                    {current && !editing && original !== null && (
+                        <div role="tablist" aria-label="Preview" className="mx-4 mt-3 inline-flex gap-1 self-start rounded-lg bg-secondary p-1">
+                            {(["document", "changes"] as const).map((v) => (
+                                <button
+                                    key={v}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={view === v}
+                                    onClick={() => setView(v)}
+                                    className={cx(
+                                        "cursor-pointer rounded-md px-3 py-1 text-sm font-semibold outline-focus-ring transition focus-visible:outline-2",
+                                        view === v ? "bg-primary text-secondary shadow-xs" : "text-quaternary hover:text-secondary",
+                                    )}
+                                >
+                                    {v === "document" ? "Tailored CV" : "What changed"}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+                        {!current && !tailoring && !creating && (
+                            <div className="flex flex-col items-center gap-2 py-16 text-center">
+                                <File06 className="size-10 text-fg-quaternary" aria-hidden="true" />
+                                <p className="text-sm text-tertiary">Your document shows up here. Every line in it comes from your profile or your own CV.</p>
+                            </div>
+                        )}
+                        {!current && (tailoring || creating) && (
+                            <p role="status" className="text-sm text-tertiary">
+                                {creating ? "Writing your CV from your profile." : "Rewriting your CV for this posting."} This takes up to a minute.
+                            </p>
+                        )}
+
+                        {current?.kind === "recruiterMessage" && !editing && (
+                            <p className={cx("text-sm", current.content.length > RECRUITER_MAX ? "text-error-primary" : "text-tertiary")}>
+                                {current.content.length}/{RECRUITER_MAX} characters. Copy it and send it yourself.
+                            </p>
+                        )}
+
+                        {downloadError && !editing && (
+                            <div role="alert" className="flex flex-wrap items-center gap-3">
+                                <p className="text-sm text-error-primary">{downloadError}</p>
+                                <Button size="sm" color="secondary" onPress={onDownload}>
+                                    Try again
+                                </Button>
+                            </div>
+                        )}
+
+                        {current && !!current.droppedCount && (
+                            <p className="rounded-lg bg-warning-primary px-3 py-2 text-sm text-warning-primary">
+                                {current.droppedCount} {current.droppedCount === 1 ? "line was" : "lines were"} removed because they could not be matched to your profile or CV.
+                            </p>
+                        )}
+
+                        {current && editing && (
+                            <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="edit-title" className="text-sm font-medium text-secondary">Title</label>
+                                    <input id="edit-title" value={draftTitle} maxLength={200} onChange={(e) => setDraftTitle(e.target.value)} className={compactField} />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label htmlFor="edit-content" className="text-sm font-medium text-secondary">Content (markdown)</label>
+                                    <textarea
+                                        id="edit-content"
+                                        rows={current.kind === "recruiterMessage" ? 6 : 18}
+                                        maxLength={current.kind === "recruiterMessage" ? RECRUITER_MAX : undefined}
+                                        value={draftContent}
+                                        onChange={(e) => setDraftContent(e.target.value)}
+                                        className={cx(fieldClass, "font-mono text-sm")}
+                                    />
+                                    {current.kind === "recruiterMessage" && (
+                                        <p className="text-sm text-tertiary">{draftContent.length}/{RECRUITER_MAX} characters</p>
+                                    )}
+                                </div>
+                                {saveError && <p role="alert" className="text-sm text-error-primary">{saveError}</p>}
+                                <div className="flex gap-2">
+                                    <Button size="sm" onPress={onSave} isLoading={saving} isDisabled={saving} showTextWhileLoading>
+                                        Save
+                                    </Button>
+                                    <Button size="sm" color="secondary" onPress={() => setEditing(false)} isDisabled={saving}>
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {current && !editing && original !== null && view === "changes" && <ChangesView before={original} after={current.content} />}
+
+                        {current && !editing && (original === null || view === "document") && (
+                            <article id="cv-sheet" className="rounded-lg bg-primary p-5 ring-1 ring-secondary">
+                                <Markdown source={current.content} />
+                            </article>
+                        )}
+                    </div>
+                </Panel>
+            </div>
+        </PageFrame>
+    );
+}
