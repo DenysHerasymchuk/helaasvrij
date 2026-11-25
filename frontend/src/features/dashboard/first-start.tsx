@@ -4,7 +4,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { InputFile } from "@/components/base/input/input-file";
 import { ApiError } from "@/core/api";
-import { cardClass } from "@/core/ui";
+import { cardClass, itemsInCard } from "@/core/ui";
 import type { Journey } from "@/features/journey/journey-bar";
 import { type Source, extractProfile, syncGitHub, uploadCv } from "@/features/profile/api";
 import { cx } from "@/utils/cx";
@@ -111,7 +111,7 @@ export function FirstStart({ journey, reload, onSkip }: { journey: Journey; relo
                 <p className="mt-1 text-sm text-tertiary">We read your work, you confirm what is true, then we compare it with a real posting.</p>
             </header>
 
-            <ol className="divide-y divide-secondary">
+            <ol className={itemsInCard}>
                 <Step n={1} title="Add your GitHub or CV" done={hasSource} current={!hasSource}>
                     {!hasSource && (
                         <>

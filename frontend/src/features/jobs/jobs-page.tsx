@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { AdzunaLink, CompanyLogo, type Job, JobFacts } from "./job-meta";
-import { fieldClass, PageHeader } from "@/core/ui";
+import { fieldClass, itemsOnPage, PageHeader } from "@/core/ui";
 
 
 export function JobsPage() {
@@ -61,7 +61,7 @@ export function JobsPage() {
             {jobs && jobs.length === 0 && <p className="text-md text-tertiary">No postings found. Try another role or city.</p>}
 
             {jobs && jobs.length > 0 && (
-                <ul className="flex flex-col divide-y divide-secondary rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
+                <ul className={itemsOnPage}>
                     {jobs.map((j) => (
                         <li key={j.id} className="relative flex gap-4 px-5 py-4 hover:bg-primary_hover">
                             <CompanyLogo company={j.company} />

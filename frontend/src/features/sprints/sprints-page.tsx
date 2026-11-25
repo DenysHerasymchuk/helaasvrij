@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Plus } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { ErrorState, LoadingState, cardClass } from "@/core/ui";
+import { ErrorState, LoadingState, cardClass, itemsOnPage } from "@/core/ui";
 import { formatDate } from "@/features/postings/types";
 import { StartSprintModal } from "./start-sprint-modal";
 import { type Sprint, daysLeftLabel } from "./types";
@@ -66,7 +66,7 @@ export function SprintsPage() {
                     </Button>
                 </section>
             ) : (
-                <ul className={`${cardClass} flex flex-col divide-y divide-secondary overflow-hidden`}>
+                <ul className={itemsOnPage}>
                     {sprints.map((s) => (
                         <SprintRow key={s.id} sprint={s} />
                     ))}

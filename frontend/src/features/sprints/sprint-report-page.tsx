@@ -4,7 +4,7 @@ import { ArrowLeft } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { api } from "@/core/api";
-import { ErrorState, LoadingState, cardClass, pageTitleClass } from "@/core/ui";
+import { ErrorState, LoadingState, cardClass, itemsOnPage, pageTitleClass } from "@/core/ui";
 import { stages } from "@/features/applications/types";
 import { formatDate } from "@/features/postings/types";
 import { CompleteSprintModal } from "./complete-sprint-modal";
@@ -89,7 +89,7 @@ export function SprintReportPage() {
                     {report.items.length === 0 ? (
                         <p className={`${cardClass} p-6 text-md text-tertiary`}>No positions were in this sprint.</p>
                     ) : (
-                        <ul className={`${cardClass} flex flex-col divide-y divide-secondary overflow-hidden`}>
+                        <ul className={itemsOnPage}>
                             {report.items.map((item) => {
                                 const stage = stages.find((s) => s.id === item.stage);
                                 return (

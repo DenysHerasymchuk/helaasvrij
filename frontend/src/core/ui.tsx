@@ -9,6 +9,13 @@ export const fieldClass =
 /** Standard surface for cards and panels. */
 export const cardClass = "rounded-xl bg-primary shadow-xs ring-1 ring-secondary";
 
+/** A list of items inside a card: every item is its own bordered box, with a gap, never rows that touch. */
+export const itemsInCard = "flex flex-col gap-2 p-3 [&>li]:overflow-hidden [&>li]:rounded-lg [&>li]:ring-1 [&>li]:ring-secondary";
+
+/** A list of items on the page itself: separate cards with a gap between them. */
+export const itemsOnPage =
+    "flex flex-col gap-2 [&>li]:overflow-hidden [&>li]:rounded-lg [&>li]:bg-primary [&>li]:shadow-xs [&>li]:ring-1 [&>li]:ring-secondary";
+
 /** Page title style; detail pages with a richer header use it directly. */
 export const pageTitleClass = "font-display text-display-xs font-semibold tracking-tight text-balance text-primary md:text-display-sm";
 

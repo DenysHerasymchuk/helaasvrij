@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
+import { itemsInCard } from "@/core/ui";
 import { ScoreRing } from "@/features/dashboard/score-ring";
 import { type Coverage, type PostingDetail, type PostingRequirement, formatDate } from "./types";
 
@@ -108,7 +109,7 @@ export function GapMatrix({ posting }: { posting: PostingDetail }) {
     return (
         <section className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
             <h2 className="border-b border-secondary px-5 py-4 text-md font-semibold text-primary">Gap matrix</h2>
-            <ul className="divide-y divide-secondary">
+            <ul className={itemsInCard}>
                 {posting.requirements.map((r) => (
                     <GapRow key={r.id} requirement={r} />
                 ))}

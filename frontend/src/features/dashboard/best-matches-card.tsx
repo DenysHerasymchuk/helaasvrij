@@ -1,4 +1,5 @@
 import { ChevronRight } from "@untitledui/icons";
+import { itemsInCard } from "@/core/ui";
 import { Link } from "react-router";
 import { cx } from "@/utils/cx";
 import { fmt, ranked } from "./dashboard-data";
@@ -18,7 +19,7 @@ export function BestMatchesCard({ postings }: { postings: DashboardPosting[] }) 
             {postings.length === 0 ? (
                 <p className="px-5 py-6 text-sm text-tertiary">No postings yet. Add one from Postings.</p>
             ) : (
-            <ul className="flex flex-col divide-y divide-secondary">
+            <ul className={itemsInCard}>
                 {ranked(postings).slice(0, 3).map((p) => (
                     <li key={p.id}>
                         <Link to="/postings" className={cx(rowLink, "gap-5 py-4")}>

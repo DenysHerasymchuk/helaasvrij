@@ -1,4 +1,5 @@
 import { Calendar } from "@untitledui/icons";
+import { itemsInCard } from "@/core/ui";
 import { fmt, nextDeadline, nextInterview, timeFmt } from "./dashboard-data";
 import { Panel } from "./panel";
 import type { DashboardPosting } from "./use-dashboard";
@@ -12,7 +13,7 @@ export function ComingUpCard({ postings }: { postings: DashboardPosting[] }) {
             {!interview && !deadline ? (
                 <p className="px-5 py-6 text-sm text-tertiary">Nothing coming up. Add a deadline to a posting.</p>
             ) : (
-                <ul className="flex flex-col divide-y divide-secondary">
+                <ul className={itemsInCard}>
                     {interview && (
                         <li className="flex gap-3 px-5 py-4">
                             <Calendar className="mt-0.5 size-5 shrink-0 text-fg-brand-secondary" aria-hidden="true" />

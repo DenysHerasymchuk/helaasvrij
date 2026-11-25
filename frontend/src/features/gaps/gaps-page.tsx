@@ -4,7 +4,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { type Coverage, type PostingSummary, formatDate } from "@/features/postings/types";
-import { PageHeader } from "@/core/ui";
+import { itemsInCard, PageHeader } from "@/core/ui";
 import { cx } from "@/utils/cx";
 
 type Gap = {
@@ -285,7 +285,7 @@ export function GapsPage() {
                             groups.map(([name, rows]) => (
                                 <div key={name}>
                                     {postingId === "all" && <h2 className="sticky top-0 z-10 border-b border-secondary bg-secondary px-4 py-2 text-xs font-semibold text-secondary">{name}</h2>}
-                                    <ul className="divide-y divide-secondary">
+                                    <ul className={itemsInCard}>
                                         {rows.map((g) => (
                                             <li key={g.requirementId} className="flex items-start gap-3 px-4 py-3">
                                                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center">

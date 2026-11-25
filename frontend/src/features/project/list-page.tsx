@@ -60,8 +60,8 @@ export function ListPage() {
 
             <div className={`${cardClass} overflow-hidden`}>
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[760px] border-collapse">
-                        <thead className="border-b border-secondary bg-secondary">
+                    <table className="w-full min-w-[760px] border-separate border-spacing-y-2 px-2">
+                        <thead>
                             <tr>
                                 <th scope="col" className={th}>Key</th>
                                 <th scope="col" className={th}>Position</th>
@@ -73,9 +73,12 @@ export function ListPage() {
                                 <th scope="col" className={th}>Added</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-secondary">
+                        <tbody>
                             {shown.map((p) => (
-                                <tr key={p.id} className="hover:bg-primary_hover">
+                                <tr
+                                    key={p.id}
+                                    className="[&>td]:border-y [&>td]:border-secondary [&>td]:bg-primary [&>td:first-child]:rounded-l-lg [&>td:first-child]:border-l [&>td:last-child]:rounded-r-lg [&>td:last-child]:border-r hover:[&>td]:bg-primary_hover"
+                                >
                                     <td className={`${td} font-medium text-quaternary`}>{p.key}</td>
                                     <td className={`${td} max-w-72 truncate`}>
                                         <Link to={`/positions/${p.id}`} className="font-semibold text-primary outline-focus-ring hover:underline focus-visible:outline-2">

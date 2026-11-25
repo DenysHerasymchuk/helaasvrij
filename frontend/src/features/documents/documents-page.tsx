@@ -1,12 +1,14 @@
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { AlertCircle, Copy01, Download01, Edit05, File06, FileCheck02, FilePlus02, Mail01, Printer, Trash01 } from "@untitledui/icons";
+import { AlertCircle, Copy01, Download01, Edit05, File06, FileCheck02, FilePlus02, Mail01, Printer } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { InputFile } from "@/components/base/input/input-file";
 import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
 import { ApiError, api } from "@/core/api";
 import type { PostingSummary } from "@/features/postings/types";
 import { getProfile } from "@/features/profile/api";
+import { ChangesView } from "./changes-view";
+import { DocumentsMenu } from "./documents-menu";
 import { cx } from "@/utils/cx";
 import { fieldClass } from "@/core/ui";
 
@@ -38,13 +40,11 @@ const modes: { id: Mode; label: string; icon: typeof File06 }[] = [
     { id: "draft", label: "Draft", icon: Mail01 },
 ];
 
-// Every form panel has the same height, so switching tabs never moves what sits below it.
-const formPanel = "lg:h-[32rem] lg:shrink-0 lg:overflow-y-auto";
+// The form panel is the last thing in its column, so switching tabs moves nothing and the form never needs its own scrollbar.
+const formPanel = "lg:shrink-0";
 
-const kindNames: Record<string, string> = { cv: "CV", coverLetter: "Cover letter", recruiterMessage: "Recruiter message" };
 const RECRUITER_MAX = 300;
 
-const languageNames: Record<Language, string> = { nl: "Nederlands", fr: "Français", en: "English" };
 const MAX_CHARS = 20000;
 
 
@@ -131,10 +131,6 @@ async function downloadDocx(id: string, title: string) {
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-function formatDate(iso: string) {
-    return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(iso));
-}
-
 export function DocumentsPage() {
     // Deep links from a posting: ?postingId=&mode=tailor|create or ?postingId=&kind=coverLetter|recruiterMessage.
     const [params] = useSearchParams();
@@ -169,6 +165,8 @@ export function DocumentsPage() {
     const [createError, setCreateError] = useState<string | null>(null);
 
     const [current, setCurrent] = useState<DocumentResponse | null>(null);
+    const [original, setOriginal] = useState<string | null>(null);
+    const [view, setView] = useState<"document" | "changes">("document");
     const [editing, setEditing] = useState(false);
     const [draftTitle, setDraftTitle] = useState("");
     const [draftContent, setDraftContent] = useState("");
@@ -286,8 +284,11 @@ export function DocumentsPage() {
         }
     };
 
-    const show = (doc: DocumentResponse) => {
+    // `before` is the CV text a tailored document came from; it feeds the "What changed" view and is gone for any other document.
+    const show = (doc: DocumentResponse, before: string | null = null) => {
         setCurrent(doc);
+        setOriginal(before);
+        setView("document");
         setEditing(false);
         setSaveError(null);
         setDownloadError(null);
@@ -301,7 +302,8 @@ export function DocumentsPage() {
             const posting = postingSource === "saved" ? { postingId } : { postingText };
             const doc = await api.post<DocumentResponse>("/api/documents/cv/tailor", { cvText, ...posting, language: language || null });
             if (doc) {
-                show(doc);
+                show(doc, cvText);
+                setView("changes");
                 loadList();
             }
         } catch (error) {
@@ -359,7 +361,7 @@ export function DocumentsPage() {
         try {
             const doc = await api.put<DocumentResponse>(`/api/documents/${current.id}`, { title: draftTitle, content: draftContent });
             if (doc) {
-                show({ ...doc, droppedCount: current.droppedCount });
+                show({ ...doc, droppedCount: current.droppedCount }, original);
                 loadList();
             }
         } catch (error) {
@@ -680,59 +682,59 @@ export function DocumentsPage() {
                     </form>
                 </Panel>}
 
-                    <Panel title="Your documents" className="min-h-28 lg:flex-1 lg:overflow-y-auto">
-                        {listError ? (
-                            <div className="flex flex-col items-start gap-3 p-4">
-                                <p className="text-sm text-error-primary">Could not load your documents.</p>
-                                <Button size="sm" color="secondary" onPress={loadList}>
-                                    Try again
-                                </Button>
-                            </div>
-                        ) : list === null ? (
-                            <p role="status" className="p-4 text-sm text-tertiary">Loading...</p>
-                        ) : list.length === 0 ? (
-                            <p className="p-4 text-sm text-tertiary">No documents yet. Make your first one above.</p>
-                        ) : (
-                            <ul className="flex flex-col divide-y divide-secondary">
-                                {list.map((doc) => (
-                                    <li key={doc.id} className={cx("flex items-center gap-2 px-4 py-2.5", current?.id === doc.id && "bg-secondary")}>
-                                        <File06 className="size-5 shrink-0 text-fg-quaternary" aria-hidden="true" />
-                                        <button type="button" onClick={() => onOpen(doc.id)} className="min-w-0 flex-1 cursor-pointer rounded-xs text-left outline-focus-ring focus-visible:outline-2" aria-label={`Open ${doc.title}`}>
-                                            <span className="block truncate text-sm font-medium text-primary">{doc.title}</span>
-                                            <span className="block text-xs text-tertiary">
-                                                {kindNames[doc.kind] ?? doc.kind}, {languageNames[doc.language] ?? doc.language}, {formatDate(doc.createdAt)}
-                                            </span>
-                                        </button>
-                                        <Button size="sm" color="tertiary" iconLeading={Trash01} onPress={() => onDelete(doc)} aria-label={`Delete ${doc.title}`} />
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </Panel>
                 </div>
 
                 <Panel
                     className="flex min-h-0 flex-col"
                     title={current ? current.title : "Your draft"}
                     action={
-                        current && !editing ? (
-                            <div className="flex flex-wrap gap-2">
-                                <Button size="sm" color="secondary" iconLeading={Copy01} onPress={onCopy}>
-                                    {copied ? "Copied" : "Copy"}
-                                </Button>
-                                <Button size="sm" color="secondary" iconLeading={Edit05} onPress={onEdit}>
-                                    Edit
-                                </Button>
-                                <Button size="sm" color="secondary" iconLeading={Download01} onPress={onDownload} isLoading={downloading} isDisabled={downloading} showTextWhileLoading>
-                                    Download Word (.docx)
-                                </Button>
-                                <Button size="sm" color="secondary" iconLeading={Printer} onPress={() => window.print()}>
-                                    Print / Save as PDF
-                                </Button>
-                            </div>
-                        ) : undefined
+                        <div className="flex flex-wrap gap-2">
+                            {current && !editing && (
+                                <>
+                                    <Button size="sm" color="secondary" iconLeading={Copy01} onPress={onCopy}>
+                                        {copied ? "Copied" : "Copy"}
+                                    </Button>
+                                    <Button size="sm" color="secondary" iconLeading={Edit05} onPress={onEdit}>
+                                        Edit
+                                    </Button>
+                                    <Button size="sm" color="secondary" iconLeading={Download01} onPress={onDownload} isLoading={downloading} isDisabled={downloading} showTextWhileLoading>
+                                        Word (.docx)
+                                    </Button>
+                                    <Button size="sm" color="secondary" iconLeading={Printer} onPress={() => window.print()}>
+                                        PDF
+                                    </Button>
+                                </>
+                            )}
+                            <DocumentsMenu
+                                list={list}
+                                error={listError}
+                                currentId={current?.id ?? null}
+                                onOpen={onOpen}
+                                onDelete={onDelete}
+                                onRetry={loadList}
+                            />
+                        </div>
                     }
                 >
+                    {current && !editing && original !== null && (
+                        <div role="tablist" aria-label="Preview" className="mx-4 mt-3 inline-flex gap-1 self-start rounded-lg bg-secondary p-1">
+                            {(["document", "changes"] as const).map((v) => (
+                                <button
+                                    key={v}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={view === v}
+                                    onClick={() => setView(v)}
+                                    className={cx(
+                                        "cursor-pointer rounded-md px-3 py-1 text-sm font-semibold outline-focus-ring transition focus-visible:outline-2",
+                                        view === v ? "bg-primary text-secondary shadow-xs" : "text-quaternary hover:text-secondary",
+                                    )}
+                                >
+                                    {v === "document" ? "Tailored CV" : "What changed"}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
                         {!current && !tailoring && !creating && (
                             <div className="flex flex-col items-center gap-2 py-16 text-center">
@@ -799,7 +801,9 @@ export function DocumentsPage() {
                             </div>
                         )}
 
-                        {current && !editing && (
+                        {current && !editing && original !== null && view === "changes" && <ChangesView before={original} after={current.content} />}
+
+                        {current && !editing && (original === null || view === "document") && (
                             <article id="cv-sheet" className="rounded-lg bg-primary p-5 ring-1 ring-secondary">
                                 <Markdown source={current.content} />
                             </article>

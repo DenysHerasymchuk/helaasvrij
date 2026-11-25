@@ -1,4 +1,5 @@
 import { CheckCircle, FileCheck02, Globe01 } from "@untitledui/icons";
+import { itemsInCard } from "@/core/ui";
 import { FaGithub } from "react-icons/fa6";
 import { Button } from "@/components/base/buttons/button";
 import { HeaderLink, Panel } from "./panel";
@@ -7,7 +8,7 @@ import type { DashboardSource } from "./use-dashboard";
 export function SourcesCard({ sources }: { sources: DashboardSource[] }) {
     return (
         <Panel title="Your sources" description="We read these to check what you can prove." order={2} action={<HeaderLink href="/profile">Manage</HeaderLink>}>
-            <ul className="flex flex-col divide-y divide-secondary">
+            <ul className={itemsInCard}>
                 {sources.map((s) => {
                     const Icon = s.kind === "GitHub" ? FaGithub : s.kind === "CV" ? FileCheck02 : Globe01;
                     return (

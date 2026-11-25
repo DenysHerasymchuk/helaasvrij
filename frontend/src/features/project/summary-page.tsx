@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ErrorState, LoadingState, cardClass } from "@/core/ui";
+import { ErrorState, LoadingState, cardClass, itemsInCard } from "@/core/ui";
 import { stages } from "@/features/applications/types";
 import { formatDate } from "@/features/postings/types";
 import { type Position, useProject } from "./use-project";
@@ -84,7 +84,7 @@ export function SummaryPage() {
                     {due.length === 0 ? (
                         <p className="px-5 py-4 text-sm text-tertiary">No deadlines ahead. Add one on a position.</p>
                     ) : (
-                        <ul className="flex flex-col divide-y divide-secondary">
+                        <ul className={itemsInCard}>
                             {due.map((p) => (
                                 <PositionLink key={p.id} p={p} trailing={formatDate(p.deadline!)} />
                             ))}
@@ -96,7 +96,7 @@ export function SummaryPage() {
                     {best.length === 0 ? (
                         <p className="px-5 py-4 text-sm text-tertiary">Check a position against your profile to see its match here.</p>
                     ) : (
-                        <ul className="flex flex-col divide-y divide-secondary">
+                        <ul className={itemsInCard}>
                             {best.map((p) => (
                                 <PositionLink key={p.id} p={p} trailing={`${p.score}%`} />
                             ))}

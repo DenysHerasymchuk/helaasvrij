@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { itemsInCard } from "@/core/ui";
 import { cx } from "@/utils/cx";
 import { fmt, nextSteps } from "./dashboard-data";
 import { HeaderLink, Panel, rowLink } from "./panel";
@@ -17,7 +18,7 @@ export function NextStepsCard({ postings }: { postings: DashboardPosting[] }) {
             {steps.length === 0 ? (
                 <p className="px-5 py-6 text-sm text-tertiary">No open gaps. Analyse a posting to get a plan.</p>
             ) : (
-            <ol className="flex flex-col divide-y divide-secondary">
+            <ol className={itemsInCard}>
                 {steps.map((a) => (
                     <li key={a.id}>
                         <Link to="/gaps" className={cx(rowLink, "items-start gap-4")}>

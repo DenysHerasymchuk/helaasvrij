@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Plus, SearchLg } from "@untitledui/icons";
+import { DotsGrid, Plus, SearchLg } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
@@ -24,7 +24,10 @@ function Score({ p }: { p?: PostingSummary }) {
     );
 }
 
-function Row({ id, keyText, title, company, deadline, posting, stage, leading, trailing }: {
+const DRAG_TYPE = "application/x-position";
+type Dragged = { id: string; from: "backlog" | "sprint" };
+
+function Row({ id, keyText, title, company, deadline, posting, stage, leading, trailing, from }: {
     id: string;
     keyText?: string;
     title: string;
@@ -34,10 +37,20 @@ function Row({ id, keyText, title, company, deadline, posting, stage, leading, t
     stage?: string | null;
     leading?: React.ReactNode;
     trailing?: React.ReactNode;
+    /** Where the row lives; a row can be dragged to the other list. */
+    from: Dragged["from"];
 }) {
     const s = stageOf(stage);
     return (
-        <li className="flex items-center gap-3 px-4 py-3 md:px-5">
+        <li
+            draggable
+            onDragStart={(e) => {
+                e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ id, from } satisfies Dragged));
+                e.dataTransfer.effectAllowed = "move";
+            }}
+            className="flex cursor-grab items-center gap-3 rounded-lg bg-primary px-3 py-3 shadow-xs ring-1 ring-secondary active:cursor-grabbing md:px-4"
+        >
+            <DotsGrid className="size-4 shrink-0 text-fg-quaternary" aria-hidden="true" />
             {leading}
             <Link to={`/positions/${id}`} className="flex min-w-0 flex-1 flex-col gap-1 rounded-xs outline-focus-ring focus-visible:outline-2 md:flex-row md:items-center md:gap-4">
                 <span className="w-16 shrink-0 text-xs font-medium text-quaternary">{keyText}</span>
@@ -136,6 +149,40 @@ export function BacklogPage() {
         }
     }
 
+    // Drag a row between the sprint and the backlog. Only the running sprint takes positions.
+    const [over, setOver] = useState<"sprint" | "backlog" | null>(null);
+    async function addIds(ids: string[]) {
+        if (!active) return;
+        setNotice(null);
+        try {
+            await api.post(`/api/sprints/${active.id}/items`, { postingIds: ids });
+            await Promise.all([reload(), load()]);
+        } catch (e) {
+            setNotice(errorMessage(e));
+        }
+    }
+    const zone = (target: "sprint" | "backlog", accept: Dragged["from"], onDrop: (id: string) => void) => ({
+        onDragOver: (e: React.DragEvent) => {
+            if (e.dataTransfer.types.includes(DRAG_TYPE)) {
+                e.preventDefault();
+                setOver(target);
+            }
+        },
+        onDragLeave: (e: React.DragEvent) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(null);
+        },
+        onDrop: (e: React.DragEvent) => {
+            e.preventDefault();
+            setOver(null);
+            const raw = e.dataTransfer.getData(DRAG_TYPE);
+            if (!raw) return;
+            const dragged = JSON.parse(raw) as Dragged;
+            if (dragged.from === accept) onDrop(dragged.id);
+        },
+    });
+    const zoneClass = (target: "sprint" | "backlog") =>
+        `-m-2 rounded-xl p-2 transition ${over === target ? "bg-brand-primary ring-2 ring-brand" : ""}`;
+
     const sorted = useMemo(() => [...(inSprint ?? [])].sort((a, b) => stages.findIndex((s) => s.id === a.stage) - stages.findIndex((s) => s.id === b.stage)), [inSprint]);
     const loading = sprints === null || inSprint === null || backlog === null;
 
@@ -166,7 +213,7 @@ export function BacklogPage() {
             ) : (
                 <>
                     {active ? (
-                        <div className="flex flex-col gap-3">
+                        <div className={`flex flex-col gap-3 ${zoneClass("sprint")}`} {...zone("sprint", "backlog", (id) => addIds([id]))}>
                             <SprintBand
                                 sprint={active}
                                 action={
@@ -176,11 +223,14 @@ export function BacklogPage() {
                                 }
                             />
                             {sorted.length === 0 ? (
-                                <p className="text-md text-tertiary">Nothing in this sprint yet. Tick positions below and add them.</p>
+                                <p className="rounded-lg border border-dashed border-secondary px-4 py-6 text-center text-md text-tertiary">
+                                    Drag a position here, or tick positions below and add them.
+                                </p>
                             ) : (
-                                <ul className={`${cardClass} flex flex-col divide-y divide-secondary`}>
+                                <ul className="flex flex-col gap-2">
                                     {sorted.map((a) => (
                                         <Row
+                                            from="sprint"
                                             key={a.id}
                                             id={a.postingId}
                                             keyText={a.key}
@@ -211,7 +261,7 @@ export function BacklogPage() {
                         </section>
                     )}
 
-                    <section aria-label="Backlog" className="flex flex-col gap-3">
+                    <section aria-label="Backlog" className={`flex flex-col gap-3 ${zoneClass("backlog")}`} {...zone("backlog", "sprint", (id) => removeFromSprint(id))}>
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <h2 className="text-lg font-semibold text-primary">
                                 Backlog <span className="text-tertiary">({backlog.length})</span>
@@ -232,9 +282,10 @@ export function BacklogPage() {
                                 )}
                             </div>
                         ) : (
-                            <ul className={`${cardClass} flex flex-col divide-y divide-secondary`}>
+                            <ul className="flex flex-col gap-2">
                                 {backlog.map((p) => (
                                     <Row
+                                        from="backlog"
                                         key={p.id}
                                         id={p.id}
                                         keyText={p.key}
