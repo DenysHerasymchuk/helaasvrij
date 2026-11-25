@@ -9,20 +9,34 @@ import type { PostingDetail } from "./types";
 
 type Mode = "paste" | "url";
 
+// Sites whose terms forbid reading their pages (the server refuses them too): skip the request and ask for the text.
+const unreadable = (link: string) => {
+    try {
+        return /(^|\.)(linkedin\.com|lnkd\.in|student\.be|jobteaser\.com)$/.test(new URL(link.trim()).hostname.toLowerCase());
+    } catch {
+        return false;
+    }
+};
+
 const tabClass =
     "cursor-pointer rounded-md px-3 py-1.5 text-sm font-semibold text-quaternary outline-focus-ring transition selected:bg-active selected:text-secondary hover:text-secondary focus-visible:outline-2";
 
 export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean; onClose: () => void; onAdded: (posting: PostingDetail) => void }) {
-    const [mode, setMode] = useState<Mode>("paste");
+    const [mode, setMode] = useState<Mode>("url");
     const [text, setText] = useState("");
     const [link, setLink] = useState("");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // A 422 from the URL flow means "we could not read it": move the user to the paste tab.
-    const [pasteHint, setPasteHint] = useState(false);
+    // The link could not be read (blocked site or a 422 from the server): move the user to the paste tab with the link kept.
+    const [pasteHint, setPasteHint] = useState<string | null>(null);
 
     async function submit() {
+        if (mode === "url" && unreadable(link)) {
+            setMode("paste");
+            setPasteHint("This site does not let us read its pages. Copy the job text from the page and paste it here. We keep the link.");
+            return;
+        }
         setBusy(true);
         setError(null);
         try {
@@ -36,7 +50,7 @@ export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean;
             setError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
             if (mode === "url" && err instanceof ApiError && err.status === 422) {
                 setMode("paste");
-                setPasteHint(true);
+                setPasteHint("We could not read that page (it may need a sign-in). Copy the job text from the page and paste it here. We keep the link.");
             }
         } finally {
             setBusy(false);
@@ -54,6 +68,13 @@ export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean;
         >
             <Modal className="w-full max-w-xl">
                 <Dialog className="flex flex-col gap-5 rounded-xl bg-primary p-6 shadow-xl outline-hidden ring-1 ring-secondary">
+                    <form
+                        className="contents"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            if (canSubmit && !busy) void submit();
+                        }}
+                    >
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <Heading slot="title" className="text-lg font-semibold text-primary">
@@ -66,18 +87,16 @@ export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean;
 
                     <Tabs selectedKey={mode} onSelectionChange={(key) => { setMode(key as Mode); setError(null); }}>
                         <TabList aria-label="How to add" className="mb-4 inline-flex gap-1 rounded-lg bg-secondary p-1">
+                            <Tab id="url" className={tabClass}>
+                                Paste a link
+                            </Tab>
                             <Tab id="paste" className={tabClass}>
                                 Paste text
-                            </Tab>
-                            <Tab id="url" className={tabClass}>
-                                From URL
                             </Tab>
                         </TabList>
 
                         <TabPanel id="paste" className="flex flex-col gap-4 outline-hidden">
-                            {pasteHint && (
-                                <p className="text-sm text-tertiary">Copy the posting from the page and paste it here instead.</p>
-                            )}
+                            {pasteHint && <p className="text-sm text-tertiary">{pasteHint}</p>}
                             <Field label="Posting text">
                                 <TextArea rows={9} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste the full posting" />
                             </Field>
@@ -85,12 +104,12 @@ export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean;
                         </TabPanel>
                         <TabPanel id="url" className="flex flex-col gap-4 outline-hidden">
                             <Input
-                                label="Posting link"
+                                label="Job link"
                                 size="md"
-                                placeholder="https://company.be/jobs/intern"
+                                placeholder="https://www.linkedin.com/jobs/view/... or https://be.indeed.com/viewjob?jk=..."
                                 value={link}
                                 onChange={setLink}
-                                hint="Works for pages with structured job data. LinkedIn and JobTeaser links are not supported."
+                                hint="Works for company pages and most job boards. LinkedIn and Indeed block automatic reading, so there we ask you to paste the job text and keep the link."
                             />
                         </TabPanel>
                     </Tabs>
@@ -105,10 +124,11 @@ export function AddPostingModal({ isOpen, onClose, onAdded }: { isOpen: boolean;
                         <Button color="secondary" size="md" onPress={onClose} isDisabled={busy}>
                             Cancel
                         </Button>
-                        <Button size="md" onPress={submit} isLoading={busy} isDisabled={!canSubmit}>
+                        <Button size="md" type="submit" isLoading={busy} isDisabled={!canSubmit}>
                             Add posting
                         </Button>
                     </div>
+                    </form>
                 </Dialog>
             </Modal>
         </ModalOverlay>
