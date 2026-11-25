@@ -8,7 +8,10 @@ import { ApiError, api } from "@/core/api";
 import type { PostingSummary } from "@/features/postings/types";
 import { getProfile } from "@/features/profile/api";
 import { cx } from "@/utils/cx";
-import { fieldClass, PageHeader } from "@/core/ui";
+import { fieldClass } from "@/core/ui";
+
+// Denser form fields for this page: smaller type, less padding.
+const compactField = cx(fieldClass, "py-1.5! text-sm!");
 
 type Language = "nl" | "fr" | "en";
 
@@ -32,7 +35,7 @@ type Mode = "create" | "tailor" | "draft";
 const modes: { id: Mode; label: string }[] = [
     { id: "create", label: "Create CV" },
     { id: "tailor", label: "Tailor CV" },
-    { id: "draft", label: "Letter or message" },
+    { id: "draft", label: "Draft" },
 ];
 
 const kindNames: Record<string, string> = { cv: "CV", coverLetter: "Cover letter", recruiterMessage: "Recruiter message" };
@@ -52,8 +55,8 @@ const printCss = `@media print {
 function Panel({ id, title, action, children, className }: { id?: string; title: string; action?: ReactNode; children: ReactNode; className?: string }) {
     return (
         <section id={id} className={cx("scroll-mt-6 rounded-xl bg-primary shadow-xs ring-1 ring-secondary", className)}>
-            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-5 py-4">
-                <h2 className="text-md font-semibold text-primary">{title}</h2>
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-4 py-2.5">
+                <h2 className="text-sm font-semibold text-primary">{title}</h2>
                 {action}
             </header>
             {children}
@@ -84,8 +87,8 @@ function Markdown({ source }: { source: string }) {
             continue;
         }
         flush();
-        if (line.startsWith("## ")) blocks.push(<h3 key={blocks.length} className="pt-3 text-md font-semibold text-primary">{line.slice(3)}</h3>);
-        else if (line.startsWith("# ")) blocks.push(<h2 key={blocks.length} className="text-xl font-semibold text-primary">{line.slice(2)}</h2>);
+        if (line.startsWith("## ")) blocks.push(<h3 key={blocks.length} className="pt-2 text-sm font-semibold text-primary">{line.slice(3)}</h3>);
+        else if (line.startsWith("# ")) blocks.push(<h2 key={blocks.length} className="text-lg font-semibold text-primary">{line.slice(2)}</h2>);
         else if (line) blocks.push(<p key={blocks.length} className="text-sm text-secondary">{line}</p>);
     }
     flush();
@@ -369,12 +372,15 @@ export function DocumentsPage() {
     const showCvText = cvSource === "paste" || cvText.length > 0;
 
     return (
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-4 py-6 md:px-8 lg:h-dvh lg:overflow-hidden">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-4 py-4 md:px-6 lg:h-dvh lg:overflow-hidden">
             <style>{printCss}</style>
-            <PageHeader title="Documents" description="CV, cover letters and recruiter messages. Everything uses only facts from your profile or your own CV." />
+            <header>
+                <h1 className="font-display text-lg font-semibold tracking-tight text-primary">Documents</h1>
+                <p className="text-xs text-tertiary">CV, cover letters and recruiter messages, using only facts from your profile or your own CV.</p>
+            </header>
 
-            <div className="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)]">
-                <div className="flex min-h-0 flex-col gap-4 lg:overflow-y-auto lg:pr-1">
+            <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+                <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto lg:pr-1">
                     <div role="tablist" aria-label="New document" className="grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1">
                         {modes.map((m) => (
                             <button
@@ -384,7 +390,7 @@ export function DocumentsPage() {
                                 aria-selected={mode === m.id}
                                 onClick={() => setMode(m.id)}
                                 className={cx(
-                                    "cursor-pointer rounded-md px-2 py-1.5 text-sm font-semibold outline-focus-ring transition focus-visible:outline-2",
+                                    "cursor-pointer rounded-md px-2 py-1 text-xs font-semibold outline-focus-ring transition focus-visible:outline-2",
                                     mode === m.id ? "bg-primary text-secondary shadow-xs" : "text-quaternary hover:text-secondary",
                                 )}
                             >
@@ -413,17 +419,17 @@ export function DocumentsPage() {
                                 </Button>
                             </div>
                         ) : (
-                            <form onSubmit={onCreate} className="flex flex-col gap-4 p-4">
+                            <form onSubmit={onCreate} className="flex flex-col gap-3 p-3">
                                 <p className="text-sm text-tertiary">
                                     Uses your {confirmedCount} profile {confirmedCount === 1 ? "item" : "items"}. Nothing else goes into it.
                                 </p>
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="create-language" className="text-sm font-medium text-secondary">Language</label>
+                                    <label htmlFor="create-language" className="text-xs font-medium text-secondary">Language</label>
                                     <select
                                         id="create-language"
                                         value={createLanguage}
                                         onChange={(e) => setCreateLanguage(e.target.value as "" | Language)}
-                                        className={fieldClass}
+                                        className={compactField}
                                     >
                                         <option value="">My default language</option>
                                         <option value="nl">Nederlands</option>
@@ -438,7 +444,7 @@ export function DocumentsPage() {
                                     </p>
                                 )}
                                 <div>
-                                    <Button type="submit" size="md" isLoading={creating} isDisabled={creating || tailoring} showTextWhileLoading>
+                                    <Button type="submit" size="sm" isLoading={creating} isDisabled={creating || tailoring} showTextWhileLoading>
                                         {creating ? "Writing your CV..." : createError ? "Try again" : "Create my CV"}
                                     </Button>
                                 </div>
@@ -447,9 +453,9 @@ export function DocumentsPage() {
                     </Panel>}
 
                     {mode === "tailor" && <Panel id="tailor-panel" title="Tailor my CV to a posting">
-                        <form onSubmit={onTailor} className="flex flex-col gap-4 p-4">
+                        <form onSubmit={onTailor} className="flex flex-col gap-3 p-3">
                             <fieldset className="flex flex-col gap-3">
-                                <legend className="mb-3 text-sm font-medium text-secondary">Your CV</legend>
+                                <legend className="mb-3 text-xs font-medium text-secondary">Your CV</legend>
                                 <RadioGroup
                                     aria-label="How to add your CV"
                                     value={cvSource}
@@ -463,7 +469,7 @@ export function DocumentsPage() {
                                 {cvSource === "upload" && (
                                     <div className="flex flex-col gap-2">
                                         <InputFile
-                                            size="md"
+                                            size="sm"
                                             label="CV file"
                                             hint="PDF or .docx, up to 5 MB. We read the text and do not keep the file."
                                             acceptedFileTypes={[".pdf", ".docx"]}
@@ -492,7 +498,7 @@ export function DocumentsPage() {
 
                                 {showCvText && (
                                     <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="cv-text" className={cvSource === "upload" ? "text-sm font-medium text-secondary" : "sr-only"}>
+                                        <label htmlFor="cv-text" className={cvSource === "upload" ? "text-xs font-medium text-secondary" : "sr-only"}>
                                             {cvSource === "upload" ? "Text from your file" : "CV text"}
                                         </label>
                                         {cvSource === "upload" && (
@@ -510,7 +516,7 @@ export function DocumentsPage() {
                                             placeholder="Paste your CV as plain text"
                                             aria-invalid={!!cvError}
                                             aria-describedby={cx(cvSource === "upload" && "cv-text-hint", cvError && "cv-text-error") || undefined}
-                                            className={fieldClass}
+                                            className={compactField}
                                         />
                                     </div>
                                 )}
@@ -518,7 +524,7 @@ export function DocumentsPage() {
                             </fieldset>
 
                             <fieldset className="flex flex-col gap-3">
-                                <legend className="mb-3 text-sm font-medium text-secondary">Job posting</legend>
+                                <legend className="mb-3 text-xs font-medium text-secondary">Job posting</legend>
                                 <RadioGroup
                                     aria-label="Which job posting"
                                     value={postingSource}
@@ -557,7 +563,7 @@ export function DocumentsPage() {
                                                 onChange={(e) => setPostingId(e.target.value)}
                                                 aria-invalid={!!postingError}
                                                 aria-describedby={postingError ? "posting-error" : undefined}
-                                                className={fieldClass}
+                                                className={compactField}
                                             >
                                                 <option value="">Choose a posting</option>
                                                 {postings.map((p) => (
@@ -582,7 +588,7 @@ export function DocumentsPage() {
                                             placeholder="Paste the full job posting"
                                             aria-invalid={!!postingError}
                                             aria-describedby={postingError ? "posting-error" : undefined}
-                                            className={fieldClass}
+                                            className={compactField}
                                         />
                                     </div>
                                 )}
@@ -590,8 +596,8 @@ export function DocumentsPage() {
                             </fieldset>
 
                             <div className="flex flex-col gap-1.5">
-                                <label htmlFor="cv-language" className="text-sm font-medium text-secondary">Language</label>
-                                <select id="cv-language" value={language} onChange={(e) => setLanguage(e.target.value as "" | Language)} className={fieldClass}>
+                                <label htmlFor="cv-language" className="text-xs font-medium text-secondary">Language</label>
+                                <select id="cv-language" value={language} onChange={(e) => setLanguage(e.target.value as "" | Language)} className={compactField}>
                                     <option value="">Same as posting</option>
                                     <option value="nl">Nederlands</option>
                                     <option value="fr">Français</option>
@@ -607,7 +613,7 @@ export function DocumentsPage() {
                             )}
 
                             <div>
-                                <Button type="submit" size="md" isLoading={tailoring} isDisabled={tailoring || extracting || creating} showTextWhileLoading>
+                                <Button type="submit" size="sm" isLoading={tailoring} isDisabled={tailoring || extracting || creating} showTextWhileLoading>
                                     {tailoring ? "Tailoring your CV..." : "Tailor CV"}
                                 </Button>
                             </div>
@@ -615,7 +621,7 @@ export function DocumentsPage() {
                     </Panel>}
 
                 {mode === "draft" && <Panel id="draft-panel" title="Cover letter or recruiter message">
-                    <form onSubmit={onDraft} className="flex flex-col gap-4 p-4">
+                    <form onSubmit={onDraft} className="flex flex-col gap-3 p-3">
                         {postingsError ? (
                             <div className="flex flex-col items-start gap-3">
                                 <p className="text-sm text-error-primary">Could not load your postings.</p>
@@ -628,8 +634,8 @@ export function DocumentsPage() {
                         ) : (
                             <>
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="draft-posting" className="text-sm font-medium text-secondary">Posting</label>
-                                    <select id="draft-posting" required value={draftPostingId} onChange={(e) => setDraftPostingId(e.target.value)} className={fieldClass}>
+                                    <label htmlFor="draft-posting" className="text-xs font-medium text-secondary">Posting</label>
+                                    <select id="draft-posting" required value={draftPostingId} onChange={(e) => setDraftPostingId(e.target.value)} className={compactField}>
                                         <option value="">Choose a posting</option>
                                         {postings.map((p) => (
                                             <option key={p.id} value={p.id}>{p.company} - {p.title}</option>
@@ -638,15 +644,15 @@ export function DocumentsPage() {
                                 </div>
                                 <div className="grid gap-5 sm:grid-cols-2">
                                     <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="draft-kind" className="text-sm font-medium text-secondary">Type</label>
-                                        <select id="draft-kind" value={draftKind} onChange={(e) => setDraftKind(e.target.value as DraftKind)} className={fieldClass}>
+                                        <label htmlFor="draft-kind" className="text-xs font-medium text-secondary">Type</label>
+                                        <select id="draft-kind" value={draftKind} onChange={(e) => setDraftKind(e.target.value as DraftKind)} className={compactField}>
                                             <option value="coverLetter">Cover letter</option>
                                             <option value="recruiterMessage">Recruiter message (max {RECRUITER_MAX} characters)</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="draft-language" className="text-sm font-medium text-secondary">Language</label>
-                                        <select id="draft-language" value={draftLanguage} onChange={(e) => setDraftLanguage(e.target.value as "" | Language)} className={fieldClass}>
+                                        <label htmlFor="draft-language" className="text-xs font-medium text-secondary">Language</label>
+                                        <select id="draft-language" value={draftLanguage} onChange={(e) => setDraftLanguage(e.target.value as "" | Language)} className={compactField}>
                                             <option value="">Same as posting</option>
                                             <option value="nl">Nederlands</option>
                                             <option value="fr">Français</option>
@@ -661,7 +667,7 @@ export function DocumentsPage() {
                                     </p>
                                 )}
                                 <div>
-                                    <Button type="submit" size="md" isLoading={drafting} isDisabled={drafting || !draftPostingId} showTextWhileLoading>
+                                    <Button type="submit" size="sm" isLoading={drafting} isDisabled={drafting || !draftPostingId} showTextWhileLoading>
                                         {drafting ? "Writing your draft..." : "Write draft"}
                                     </Button>
                                 </div>
@@ -722,7 +728,7 @@ export function DocumentsPage() {
                         ) : undefined
                     }
                 >
-                    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
+                    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
                         {!current && !tailoring && !creating && (
                             <p className="text-sm text-tertiary">Your CV shows up here. Every line in it comes from your profile or your own CV.</p>
                         )}
@@ -756,11 +762,11 @@ export function DocumentsPage() {
                         {current && editing && (
                             <div className="flex flex-col gap-4">
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="edit-title" className="text-sm font-medium text-secondary">Title</label>
-                                    <input id="edit-title" value={draftTitle} maxLength={200} onChange={(e) => setDraftTitle(e.target.value)} className={fieldClass} />
+                                    <label htmlFor="edit-title" className="text-xs font-medium text-secondary">Title</label>
+                                    <input id="edit-title" value={draftTitle} maxLength={200} onChange={(e) => setDraftTitle(e.target.value)} className={compactField} />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="edit-content" className="text-sm font-medium text-secondary">Content (markdown)</label>
+                                    <label htmlFor="edit-content" className="text-xs font-medium text-secondary">Content (markdown)</label>
                                     <textarea
                                         id="edit-content"
                                         rows={current.kind === "recruiterMessage" ? 6 : 18}
@@ -775,10 +781,10 @@ export function DocumentsPage() {
                                 </div>
                                 {saveError && <p role="alert" className="text-sm text-error-primary">{saveError}</p>}
                                 <div className="flex gap-2">
-                                    <Button size="md" onPress={onSave} isLoading={saving} isDisabled={saving} showTextWhileLoading>
+                                    <Button size="sm" onPress={onSave} isLoading={saving} isDisabled={saving} showTextWhileLoading>
                                         Save
                                     </Button>
-                                    <Button size="md" color="secondary" onPress={() => setEditing(false)} isDisabled={saving}>
+                                    <Button size="sm" color="secondary" onPress={() => setEditing(false)} isDisabled={saving}>
                                         Cancel
                                     </Button>
                                 </div>
@@ -786,7 +792,7 @@ export function DocumentsPage() {
                         )}
 
                         {current && !editing && (
-                            <article id="cv-sheet" className="rounded-lg bg-primary p-6 ring-1 ring-secondary">
+                            <article id="cv-sheet" className="rounded-lg bg-primary p-5 ring-1 ring-secondary">
                                 <Markdown source={current.content} />
                             </article>
                         )}
