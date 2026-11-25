@@ -15,6 +15,10 @@ public sealed class UserSettingsConfiguration : IEntityTypeConfiguration<UserSet
         builder.Property(settings => settings.DefaultLanguage).HasColumnName("default_language").HasMaxLength(2).IsRequired();
         builder.Property(settings => settings.StrongMatchThreshold).HasColumnName("strong_match_threshold");
         builder.Property(settings => settings.EmailAlerts).HasColumnName("email_alerts");
+        builder.Property(settings => settings.DocumentSkills).HasColumnName("document_skills").HasMaxLength(120).HasDefaultValue("humanizer").IsRequired();
+        builder.Property(settings => settings.InterviewSkills).HasColumnName("interview_skills").HasMaxLength(120).HasDefaultValue("humanizer,teacher").IsRequired();
+        builder.Ignore(settings => settings.DocumentSkillIds);
+        builder.Ignore(settings => settings.InterviewSkillIds);
 
         builder.HasIndex(settings => settings.UserId).IsUnique();
     }

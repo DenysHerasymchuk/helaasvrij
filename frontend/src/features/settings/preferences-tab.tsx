@@ -1,6 +1,7 @@
 import { useDensity } from "@/core/density";
 import { useTheme } from "@/core/theme";
 import { Segmented } from "./segmented";
+import { WritingSkillsCard } from "./writing-skills-card";
 import { SettingsCard, SettingsRow } from "./settings-row";
 import { type Language, useSettings } from "./settings-layout";
 
@@ -16,6 +17,7 @@ export function PreferencesTab() {
     const { density, choose } = useDensity();
 
     return (
+        <div className="flex flex-col gap-6">
         <SettingsCard>
             <SettingsRow title="Default language" hint="Used for new documents when a posting does not set a language.">
                 <Segmented label="Default language" value={draft.defaultLanguage} options={languages} onChange={(defaultLanguage) => update({ defaultLanguage })} />
@@ -45,5 +47,7 @@ export function PreferencesTab() {
                 />
             </SettingsRow>
         </SettingsCard>
+        <WritingSkillsCard />
+        </div>
     );
 }

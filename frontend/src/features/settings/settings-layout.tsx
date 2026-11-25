@@ -6,7 +6,15 @@ import { ErrorState, PageHeader } from "@/core/ui";
 import { cx } from "@/utils/cx";
 
 export type Language = "nl" | "fr" | "en";
-export type Settings = { defaultLanguage: Language; strongMatchThreshold: number; emailAlerts: boolean };
+export type Settings = {
+    defaultLanguage: Language;
+    strongMatchThreshold: number;
+    emailAlerts: boolean;
+    /** Writing skill ids the AI uses for CVs, letters and messages. */
+    documentSkills: string[];
+    /** Writing skill ids the AI uses for interview questions and feedback. */
+    interviewSkills: string[];
+};
 export type SettingsContext = { draft: Settings; update: (change: Partial<Settings>) => void };
 export const useSettings = () => useOutletContext<SettingsContext>();
 

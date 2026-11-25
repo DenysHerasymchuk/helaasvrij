@@ -57,7 +57,9 @@ public static class DependencyInjection
         services.AddScoped<SendChatHandler>();
         services.AddScoped<ChatToolbox>();
         services.AddScoped<ConfirmChatActionHandler>();
-        services.AddScoped<ILlmClient, LlmClient>();
+        // Handlers talk to the styled client, which adds the user's writing skills to prompts that write text for them.
+        services.AddScoped<LlmClient>();
+        services.AddScoped<ILlmClient, StyledLlmClient>();
         services.AddScoped<SyncGitHubHandler>();
         services.AddScoped<UploadCvHandler>();
         services.AddScoped<AddTextHandler>();

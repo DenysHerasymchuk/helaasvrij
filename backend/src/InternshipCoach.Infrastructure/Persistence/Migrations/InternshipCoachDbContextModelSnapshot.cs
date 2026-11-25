@@ -730,9 +730,25 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(2)")
                         .HasColumnName("default_language");
 
+                    b.Property<string>("DocumentSkills")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasDefaultValue("humanizer")
+                        .HasColumnName("document_skills");
+
                     b.Property<bool>("EmailAlerts")
                         .HasColumnType("boolean")
                         .HasColumnName("email_alerts");
+
+                    b.Property<string>("InterviewSkills")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasDefaultValue("humanizer,teacher")
+                        .HasColumnName("interview_skills");
 
                     b.Property<int>("StrongMatchThreshold")
                         .HasColumnType("integer")

@@ -1,6 +1,7 @@
 using InternshipCoach.Application.Settings;
 using InternshipCoach.Application.Settings.Get;
 using InternshipCoach.Application.Settings.Update;
+using InternshipCoach.Application.Writing;
 using InternshipCoach.Contracts.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +23,8 @@ public sealed class SettingsController : ControllerBase
         UpdateSettingsRequest request, [FromServices] UpdateSettingsHandler handler, CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
-            new UpdateSettingsCommand(request.DefaultLanguage, request.StrongMatchThreshold, request.EmailAlerts), cancellationToken);
+            new UpdateSettingsCommand(request.DefaultLanguage, request.StrongMatchThreshold, request.EmailAlerts, request.DocumentSkills, request.InterviewSkills),
+            cancellationToken);
 
         if (!result.Succeeded)
         {
@@ -33,6 +35,11 @@ public sealed class SettingsController : ControllerBase
         return Ok(ToResponse(result));
     }
 
+    /// <summary>The writing skills a user can switch on per area.</summary>
+    [HttpGet("writing-skills")]
+    public IReadOnlyList<WritingSkillResponse> WritingSkillCatalog() =>
+        WritingSkills.All.Select(s => new WritingSkillResponse(s.Id, s.Name, s.Description)).ToList();
+
     private static SettingsResponse ToResponse(SettingsResult result) =>
-        new(result.DefaultLanguage, result.StrongMatchThreshold, result.EmailAlerts);
+        new(result.DefaultLanguage, result.StrongMatchThreshold, result.EmailAlerts, result.DocumentSkills ?? [], result.InterviewSkills ?? []);
 }

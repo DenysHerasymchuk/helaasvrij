@@ -18,9 +18,32 @@ public sealed class UserSettings : IUserOwned
     public int StrongMatchThreshold { get; private set; } = DefaultStrongMatchThreshold;
     public bool EmailAlerts { get; private set; }
 
+    // Writing skills the AI uses per area, as comma separated ids. The catalog lives in the Application layer.
+    public string DocumentSkills { get; private set; } = "humanizer";
+    public string InterviewSkills { get; private set; } = "humanizer,teacher";
+
+    public IReadOnlyList<string> DocumentSkillIds => Split(DocumentSkills);
+    public IReadOnlyList<string> InterviewSkillIds => Split(InterviewSkills);
+
     private UserSettings()
     {
     }
+
+    /// <summary>Null leaves an area as it is; an empty list means no skills there.</summary>
+    public void SetWritingSkills(IReadOnlyList<string>? documents, IReadOnlyList<string>? interview)
+    {
+        if (documents is not null)
+        {
+            DocumentSkills = string.Join(',', documents.Distinct());
+        }
+
+        if (interview is not null)
+        {
+            InterviewSkills = string.Join(',', interview.Distinct());
+        }
+    }
+
+    private static IReadOnlyList<string> Split(string value) => value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     public static UserSettings Create(Guid userId, string? defaultLanguage, int strongMatchThreshold, bool emailAlerts)
     {
