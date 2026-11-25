@@ -1,4 +1,4 @@
-import { Calendar, Columns03, HomeLine, SearchLg, Tool02 } from "@untitledui/icons";
+import { Calendar, Columns03, File06, HomeLine, MessageChatCircle, SearchLg, Target04 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -17,18 +17,10 @@ const mainItems: NavItemType[] = [
     { label: "Calendar", href: "/calendar", icon: Calendar },
 ];
 
-// The href only marks the group so NavList opens it when a child is active; collapsed otherwise.
 const toolItems: NavItemType[] = [
-    {
-        label: "All tools",
-        href: "#all-tools",
-        icon: Tool02,
-        items: [
-            { label: "Gap plan", href: "/gaps" },
-            { label: "Documents", href: "/documents" },
-            { label: "Interview prep", href: "/interview" },
-        ],
-    },
+    { label: "Gap plan", href: "/gaps", icon: Target04 },
+    { label: "Documents", href: "/documents", icon: File06 },
+    { label: "Interview prep", href: "/interview", icon: MessageChatCircle },
 ];
 
 // Every tab of the board, and the position pages, highlight "Board"; the search pages highlight "Find positions".

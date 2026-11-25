@@ -62,8 +62,6 @@ export function BoardPage() {
 
     return (
         <div className="flex w-full flex-col gap-6">
-            <p className="text-md text-tertiary">Drag a card to a new column, or use Move to. Every move is saved in the position's activity.</p>
-
             {notice && (
                 <p role="alert" className="rounded-lg bg-error-primary px-4 py-3 text-sm text-error-primary ring-1 ring-error_subtle">
                     {notice}

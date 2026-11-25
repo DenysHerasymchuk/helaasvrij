@@ -19,11 +19,9 @@ const kinds: Record<EventType, { label: string; icon: typeof AlarmClock; dot: st
 
 const legend: EventType[] = ["interview", "deadline", "gapDue"];
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const UPCOMING_DAYS = 14;
 
 const monthFmt = new Intl.DateTimeFormat("en-BE", { month: "long", year: "numeric", timeZone: "UTC" });
 const dayFmt = new Intl.DateTimeFormat("en-BE", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
-const shortDayFmt = new Intl.DateTimeFormat("en-BE", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const utc = (date: string) => new Date(`${date}T00:00:00Z`);
 
 /** The 42 days (six Monday-first weeks) shown for a "yyyy-MM" month. */
@@ -68,7 +66,6 @@ export function CalendarPage() {
     const [selected, setSelected] = useState(today);
     const days = useMemo(() => gridDays(month), [month]);
     const grid = useEvents(days[0], days[41]);
-    const upcoming = useEvents(today, addDays(today, UPCOMING_DAYS - 1));
 
     const byDay = useMemo(() => {
         const map = new Map<string, CalendarEvent[]>();
@@ -139,51 +136,21 @@ export function CalendarPage() {
                         </ul>
                     </section>
 
-                    <section aria-labelledby="day-title" className="rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary md:p-5">
-                        <h2 id="day-title" className="text-md font-semibold text-primary">
-                            {selected === today ? "Today, " : ""}
-                            {dayFmt.format(utc(selected))}
-                        </h2>
-                        {grid.events === null ? (
-                            <p className="mt-2 text-sm text-tertiary">Loading...</p>
-                        ) : (byDay.get(selected) ?? []).length === 0 ? (
-                            <p className="mt-2 text-sm text-tertiary">Nothing on this day.</p>
-                        ) : (
-                            <EventList events={byDay.get(selected)!} />
-                        )}
-                    </section>
                 </div>
 
-                <aside aria-labelledby="upcoming-title" className="order-1 self-start rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary md:p-5 lg:order-2">
-                    <h2 id="upcoming-title" className="text-md font-semibold text-primary">
-                        Upcoming
+                <aside aria-labelledby="day-title" className="order-1 self-start rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary md:p-5 lg:order-2">
+                    <h2 id="day-title" className="text-md font-semibold text-primary">
+                        {selected === today ? "Today, " : ""}
+                        {dayFmt.format(utc(selected))}
                     </h2>
-                    <p className="text-sm text-tertiary">The next {UPCOMING_DAYS} days</p>
-                    {upcoming.error ? (
-                        <div className="mt-3 flex flex-col items-start gap-3">
-                            <p role="alert" className="text-sm text-error-primary">
-                                {upcoming.error}
-                            </p>
-                            <Button size="sm" color="secondary" onPress={upcoming.load}>
-                                Try again
-                            </Button>
-                        </div>
-                    ) : upcoming.events === null ? (
-                        <p role="status" className="mt-3 text-sm text-tertiary">
+                    {grid.events === null ? (
+                        <p role="status" className="mt-2 text-sm text-tertiary">
                             Loading...
                         </p>
+                    ) : (byDay.get(selected) ?? []).length === 0 ? (
+                        <p className="mt-2 text-sm text-tertiary">Nothing on this day.</p>
                     ) : (
-                        <>
-                            {!upcoming.events.some((e) => e.type === "interview") && (
-                                <div className="mt-3 flex flex-col items-start gap-2 rounded-lg bg-secondary p-3">
-                                    <p className="text-sm text-secondary">No interviews yet. When you move an application to Interview, add the date here.</p>
-                                    <Button size="sm" color="secondary" href="/applications">
-                                        Open applications
-                                    </Button>
-                                </div>
-                            )}
-                            {upcoming.events.length > 0 && <UpcomingList events={upcoming.events} today={today} onPick={select} />}
-                        </>
+                        <EventList events={byDay.get(selected)!} />
                     )}
                 </aside>
             </div>
@@ -330,30 +297,3 @@ function EventRow({ event }: { event: CalendarEvent }) {
     );
 }
 
-function UpcomingList({ events, today, onPick }: { events: CalendarEvent[]; today: string; onPick: (date: string) => void }) {
-    const groups = new Map<string, CalendarEvent[]>();
-    for (const e of events) groups.set(e.date, [...(groups.get(e.date) ?? []), e]);
-    const tomorrow = addDays(today, 1);
-
-    return (
-        <ol className="mt-3 flex flex-col gap-4">
-            {[...groups].map(([date, list]) => (
-                <li key={date}>
-                    <button
-                        type="button"
-                        onClick={() => onPick(date)}
-                        className="rounded-xs text-sm font-medium text-secondary outline-focus-ring hover:underline focus-visible:outline-2"
-                        aria-label={`Show ${dayFmt.format(utc(date))} in the month`}
-                    >
-                        {date === today ? "Today" : date === tomorrow ? "Tomorrow" : shortDayFmt.format(utc(date))}
-                    </button>
-                    <ul className="mt-2 flex flex-col gap-2">
-                        {list.map((e, i) => (
-                            <EventRow key={`${e.type}-${e.postingId}-${i}`} event={e} />
-                        ))}
-                    </ul>
-                </li>
-            ))}
-        </ol>
-    );
-}
