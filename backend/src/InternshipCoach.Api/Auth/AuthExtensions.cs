@@ -23,7 +23,11 @@ public static class AuthExtensions
             {
                 ConfigureCookie(options, "coach.auth", environment);
                 options.ExpireTimeSpan = RememberMeLifetime;
+                // A request that carries an Authorization header is judged by the personal access token, not the cookie.
+                options.ForwardDefaultSelector = context =>
+                    context.Request.Headers.ContainsKey("Authorization") ? AuthSchemes.Bearer : null;
             })
+            .AddScheme<AuthenticationSchemeOptions, BearerTokenHandler>(AuthSchemes.Bearer, _ => { })
             .AddCookie(AuthSchemes.External, options =>
             {
                 // Short-lived holder for the GitHub identity between the callback and our own sign-in.
@@ -58,7 +62,10 @@ public static class AuthExtensions
             });
         }
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+            options.AddPolicy(AuthSchemes.SessionOnlyPolicy, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireAssertion(context => context.User.Identity?.AuthenticationType != AuthSchemes.Bearer)));
         return services;
     }
 

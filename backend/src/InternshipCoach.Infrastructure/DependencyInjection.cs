@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IInterviewRepository, InterviewRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
         services.AddScoped<ISprintRepository, SprintRepository>();
+        services.AddScoped<IApiTokenRepository, ApiTokenRepository>();
 
         var route33 = configuration.GetSection(Route33Options.SectionName).Get<Route33Options>() ?? new Route33Options();
         if (string.IsNullOrWhiteSpace(route33.BaseUrl))

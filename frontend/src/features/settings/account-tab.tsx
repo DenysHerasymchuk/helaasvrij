@@ -3,12 +3,14 @@ import { AvatarLabelGroup } from "@/components/base/avatar/avatar-label-group";
 import { initialsOf, useAuth } from "@/core/auth";
 import { generateAvatarUrl } from "@/core/avatar";
 import { SettingsCard, SettingsRow } from "./settings-row";
+import { TokensCard } from "./tokens-card";
 
 export function AccountTab() {
     const { user } = useAuth();
     if (!user) return null;
 
     return (
+        <div className="flex flex-col gap-4">
         <SettingsCard>
             <SettingsRow title="Signed in as">
                 <AvatarLabelGroup
@@ -28,5 +30,7 @@ export function AccountTab() {
                 </Link>
             </SettingsRow>
         </SettingsCard>
+        <TokensCard />
+        </div>
     );
 }

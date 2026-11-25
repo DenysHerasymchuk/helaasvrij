@@ -11,6 +11,7 @@ using InternshipCoach.Application.Auth.Me;
 using InternshipCoach.Application.Auth.Register;
 using InternshipCoach.Application.Account.Delete;
 using InternshipCoach.Application.Settings.Get;
+using InternshipCoach.Application.Tokens;
 using InternshipCoach.Application.Settings.Update;
 using InternshipCoach.Application.Profile.Extract;
 using InternshipCoach.Application.Profile.Get;
@@ -54,6 +55,9 @@ public static class DependencyInjection
         services.AddScoped<GetSettingsHandler>();
         services.AddScoped<UpdateSettingsHandler>();
         services.AddScoped<DeleteAccountHandler>();
+        services.AddScoped<CreateApiTokenHandler>();
+        services.AddScoped<ListApiTokensHandler>();
+        services.AddScoped<RevokeApiTokenHandler>();
         services.AddScoped<SendChatHandler>();
         services.AddScoped<ChatToolbox>();
         services.AddScoped<ConfirmChatActionHandler>();

@@ -8,6 +8,7 @@ using InternshipCoach.Domain.Postings;
 using InternshipCoach.Domain.Profile;
 using InternshipCoach.Domain.Sources;
 using InternshipCoach.Domain.Sprints;
+using InternshipCoach.Domain.Tokens;
 using InternshipCoach.Domain.Settings;
 using InternshipCoach.Domain.Users;
 using InternshipCoach.Infrastructure.Persistence;
@@ -36,6 +37,7 @@ public class AccountDeleterTests
         db.Postings.Add(posting);
         var sprint = Sprint.Start(user.Id, "Sprint 1", "Apply", new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 15), new CreatedAt(DateTimeOffset.UtcNow));
         db.Sprints.Add(sprint);
+        db.ApiTokens.Add(ApiToken.Create(user.Id, "MCP", new CreatedAt(DateTimeOffset.UtcNow), out _));
         db.Applications.Add(JobApplication.Create(user.Id, posting.Id, new CreatedAt(DateTimeOffset.UtcNow), sprint.Id));
         var source = Source.Create(user.Id, SourceKind.GitHub, "gh");
         var document = source.AddDocument("a/summary", "Repository: a");

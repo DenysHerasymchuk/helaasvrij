@@ -9,6 +9,7 @@ using InternshipCoach.Domain.Settings;
 using InternshipCoach.Domain.Profile;
 using InternshipCoach.Domain.Sources;
 using InternshipCoach.Domain.Sprints;
+using InternshipCoach.Domain.Tokens;
 using InternshipCoach.Domain.Postings;
 using InternshipCoach.Domain.Users;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
@@ -67,6 +68,8 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
     public DbSet<ApplicationEvent> ApplicationEvents => Set<ApplicationEvent>();
 
     public DbSet<Sprint> Sprints => Set<Sprint>();
+
+    public DbSet<ApiToken> ApiTokens => Set<ApiToken>();
 
     public DbSet<ScoreSnapshot> ScoreSnapshots => Set<ScoreSnapshot>();
 
