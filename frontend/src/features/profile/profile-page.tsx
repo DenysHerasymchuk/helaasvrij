@@ -108,9 +108,11 @@ export function ProfilePage() {
                 </div>
             ) : (
                 <>
-                    <GitHubCard source={sources.find((source) => source.kind === "GitHub")} reload={reloadAll} />
+                    <div className="grid items-start gap-6 md:grid-cols-2">
+                        <GitHubCard source={sources.find((source) => source.kind === "GitHub")} reload={reloadAll} />
+                        <SiteCard sources={sources.filter((source) => source.kind === "Site")} reload={reloadAll} />
+                    </div>
                     <PdfCard sources={sources.filter((source) => source.kind === "Cv" || source.kind === "PastedText")} reload={reloadAll} />
-                    <SiteCard sources={sources.filter((source) => source.kind === "Site")} reload={reloadAll} />
                     <ReadSources sources={sources} profile={profile} reloadProfile={loadProfile} />
                 </>
             )}
