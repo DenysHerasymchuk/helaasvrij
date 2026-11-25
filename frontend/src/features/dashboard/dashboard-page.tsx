@@ -1,8 +1,9 @@
-import { File06, FileCheck02, MessageChatCircle, Plus } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { useAuth } from "@/core/auth";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { useJourney } from "@/features/journey/journey-bar";
+import { MenuTab } from "./menu-tab";
 import { ActiveSprintCard } from "./sprint-card";
 import { FirstStart, isBrandNew, readSkipped } from "./first-start";
 import { ApplicationsBarChart } from "./applications-chart";
@@ -24,7 +25,16 @@ function greeting(now = new Date()) {
     return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 }
 
+const sections = [
+    { id: "overview", label: "Overview" },
+    { id: "insights", label: "Insights" },
+    { id: "menu", label: "Menu" },
+    { id: "sources", label: "Sources" },
+];
+
 export function DashboardPage() {
+    const [params, setParams] = useSearchParams();
+    const tab = sections.some((s) => s.id === params.get("tab")) ? params.get("tab") : "overview";
     const { user } = useAuth();
     const firstName = user?.displayName.split(/\s+/)[0] ?? "";
     const hello = greeting();
@@ -60,43 +70,33 @@ export function DashboardPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
             <div className="flex flex-col gap-4">
                 <PageHeader title={`${hello}, ${firstName}`} />
-                <ActiveSprintCard />
-                <nav aria-label="Quick actions" className="flex flex-wrap gap-3">
-                    <Button size="md" href="/backlog" iconLeading={Plus}>
-                        Add position
-                    </Button>
-                    <Button size="md" color="secondary" href="/documents" iconLeading={FileCheck02}>
-                        Tailor CV
-                    </Button>
-                    <Button size="md" color="secondary" href="/documents" iconLeading={File06}>
-                        Prepare documents
-                    </Button>
-                    <Button size="md" color="secondary" href="/interview" iconLeading={MessageChatCircle}>
-                        Practice interview
-                    </Button>
+                <nav aria-label="Home sections" className="flex gap-6 overflow-x-auto border-b border-secondary [scrollbar-width:none]">
+                    {sections.map((s) => (
+                        <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setParams(s.id === "overview" ? {} : { tab: s.id }, { replace: true })}
+                            aria-current={tab === s.id ? "page" : undefined}
+                            className={`-mb-px shrink-0 cursor-pointer border-b-2 pb-3 text-sm font-semibold whitespace-nowrap outline-focus-ring focus-visible:rounded-sm focus-visible:outline-2 ${
+                                tab === s.id ? "border-fg-brand-primary_alt text-brand-secondary" : "border-transparent text-quaternary hover:border-fg-quaternary hover:text-secondary"
+                            }`}
+                        >
+                            {s.label}
+                        </button>
+                    ))}
                 </nav>
             </div>
 
-            {error ? (
+            {tab === "menu" ? (
+                <MenuTab />
+            ) : error ? (
                 <ErrorState message={error} onRetry={reload} />
             ) : !data ? (
                 <LoadingState>Loading your dashboard...</LoadingState>
-            ) : nothingYet(data) ? (
-                <div className="grid gap-6 md:grid-cols-2">
-                    <SourcesCard sources={data.sources} />
-                    <section className="dash-card flex flex-col items-start justify-center gap-3 rounded-xl bg-primary p-6 shadow-xs ring-1 ring-secondary">
-                        <h2 className="text-md font-semibold text-primary">Start with your profile</h2>
-                        <p className="text-sm text-tertiary">
-                            Add your GitHub or a CV. We pull your skills and projects from it, with a link to where each one came from. Then you can
-                            match it against real postings.
-                        </p>
-                        <Button size="md" href="/profile">
-                            Add your GitHub or CV
-                        </Button>
-                    </section>
-                </div>
-            ) : (
-                <>
+            ) : tab === "sources" ? (
+                <SourcesCard sources={data.sources} />
+            ) : tab === "insights" ? (
+                <div className="flex flex-col gap-6">
                     <Panel
                         title="Applications"
                         description="Sent per month, and how many led to an interview or an offer."
@@ -109,17 +109,30 @@ export function DashboardPage() {
                             <p className="px-5 py-6 text-sm text-tertiary">No applications yet. Start a sprint and move positions across the board.</p>
                         )}
                     </Panel>
-
-                    <div className="grid gap-6 md:grid-cols-2">
-                        <SourcesCard sources={data.sources} />
+                    <BestMatchesCard postings={data.postings} />
+                </div>
+            ) : nothingYet(data) ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                    <SourcesCard sources={data.sources} />
+                    <section className="dash-card flex flex-col items-start justify-center gap-3 rounded-xl bg-primary p-6 shadow-xs ring-1 ring-secondary">
+                        <h2 className="text-md font-semibold text-primary">Start with your profile</h2>
+                        <p className="text-sm text-tertiary">
+                            Add your GitHub or a CV. We pull your skills and projects from it, with a link to where each one came from. Then you can
+                            match it against real postings.
+                        </p>
+                        <Button size="md" href="/settings/profile">
+                            Add your GitHub or CV
+                        </Button>
+                    </section>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-6">
+                    <ActiveSprintCard />
+                    <div className="grid gap-6 lg:grid-cols-2">
                         <ComingUpCard postings={data.postings} />
-                    </div>
-
-                    <div className="grid gap-6 lg:grid-cols-5">
-                        <BestMatchesCard postings={data.postings} />
                         <NextStepsCard postings={data.postings} />
                     </div>
-                </>
+                </div>
             )}
         </div>
     );
