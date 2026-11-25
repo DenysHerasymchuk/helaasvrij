@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { AlertCircle, Copy01, Download01, Edit05, Printer, Trash01 } from "@untitledui/icons";
+import { AlertCircle, Copy01, Download01, Edit05, File06, FileCheck02, FilePlus02, Mail01, Printer, Trash01 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { InputFile } from "@/components/base/input/input-file";
 import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
@@ -11,7 +11,7 @@ import { cx } from "@/utils/cx";
 import { fieldClass } from "@/core/ui";
 
 // Denser form fields for this page: smaller type, less padding.
-const compactField = cx(fieldClass, "py-1.5! text-sm!");
+const compactField = cx(fieldClass, "py-1.5!");
 
 type Language = "nl" | "fr" | "en";
 
@@ -32,11 +32,14 @@ type DocumentSummary = Omit<DocumentResponse, "content" | "droppedCount">;
 type DraftKind = "coverLetter" | "recruiterMessage";
 type Mode = "create" | "tailor" | "draft";
 
-const modes: { id: Mode; label: string }[] = [
-    { id: "create", label: "Create CV" },
-    { id: "tailor", label: "Tailor CV" },
-    { id: "draft", label: "Draft" },
+const modes: { id: Mode; label: string; icon: typeof File06 }[] = [
+    { id: "create", label: "Create CV", icon: FilePlus02 },
+    { id: "tailor", label: "Tailor CV", icon: FileCheck02 },
+    { id: "draft", label: "Draft", icon: Mail01 },
 ];
+
+// Every form panel has the same height, so switching tabs never moves what sits below it.
+const formPanel = "lg:h-[32rem] lg:shrink-0 lg:overflow-y-auto";
 
 const kindNames: Record<string, string> = { cv: "CV", coverLetter: "Cover letter", recruiterMessage: "Recruiter message" };
 const RECRUITER_MAX = 300;
@@ -55,8 +58,8 @@ const printCss = `@media print {
 function Panel({ id, title, action, children, className }: { id?: string; title: string; action?: ReactNode; children: ReactNode; className?: string }) {
     return (
         <section id={id} className={cx("scroll-mt-6 rounded-xl bg-primary shadow-xs ring-1 ring-secondary", className)}>
-            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-4 py-2.5">
-                <h2 className="text-sm font-semibold text-primary">{title}</h2>
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-4 py-3">
+                <h2 className="text-md font-semibold text-primary">{title}</h2>
                 {action}
             </header>
             {children}
@@ -375,11 +378,11 @@ export function DocumentsPage() {
         <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-4 py-4 md:px-6 lg:h-dvh lg:overflow-hidden">
             <style>{printCss}</style>
             <header>
-                <h1 className="font-display text-lg font-semibold tracking-tight text-primary">Documents</h1>
-                <p className="text-xs text-tertiary">CV, cover letters and recruiter messages, using only facts from your profile or your own CV.</p>
+                <h1 className="font-display text-xl font-semibold tracking-tight text-primary">Documents</h1>
+                <p className="text-sm text-tertiary">CV, cover letters and recruiter messages, using only facts from your profile or your own CV.</p>
             </header>
 
-            <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+            <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
                 <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto lg:pr-1">
                     <div role="tablist" aria-label="New document" className="grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1">
                         {modes.map((m) => (
@@ -390,16 +393,17 @@ export function DocumentsPage() {
                                 aria-selected={mode === m.id}
                                 onClick={() => setMode(m.id)}
                                 className={cx(
-                                    "cursor-pointer rounded-md px-2 py-1 text-xs font-semibold outline-focus-ring transition focus-visible:outline-2",
+                                    "flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-semibold outline-focus-ring transition focus-visible:outline-2",
                                     mode === m.id ? "bg-primary text-secondary shadow-xs" : "text-quaternary hover:text-secondary",
                                 )}
                             >
+                                <m.icon className="size-4 shrink-0" aria-hidden="true" />
                                 {m.label}
                             </button>
                         ))}
                     </div>
 
-                    {mode === "create" && <Panel id="create-panel" title="Create my CV from my profile">
+                    {mode === "create" && <Panel id="create-panel" className={formPanel} title="Create my CV from my profile">
                         {confirmedCount === null ? (
                             <p role="status" className="p-5 text-sm text-tertiary">Loading your profile...</p>
                         ) : confirmedCount === -1 ? (
@@ -419,12 +423,12 @@ export function DocumentsPage() {
                                 </Button>
                             </div>
                         ) : (
-                            <form onSubmit={onCreate} className="flex flex-col gap-3 p-3">
+                            <form onSubmit={onCreate} className="flex flex-col gap-4 p-4">
                                 <p className="text-sm text-tertiary">
                                     Uses your {confirmedCount} profile {confirmedCount === 1 ? "item" : "items"}. Nothing else goes into it.
                                 </p>
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="create-language" className="text-xs font-medium text-secondary">Language</label>
+                                    <label htmlFor="create-language" className="text-sm font-medium text-secondary">Language</label>
                                     <select
                                         id="create-language"
                                         value={createLanguage}
@@ -444,7 +448,7 @@ export function DocumentsPage() {
                                     </p>
                                 )}
                                 <div>
-                                    <Button type="submit" size="sm" isLoading={creating} isDisabled={creating || tailoring} showTextWhileLoading>
+                                    <Button type="submit" size="md" iconLeading={FilePlus02} isLoading={creating} isDisabled={creating || tailoring} showTextWhileLoading>
                                         {creating ? "Writing your CV..." : createError ? "Try again" : "Create my CV"}
                                     </Button>
                                 </div>
@@ -452,10 +456,10 @@ export function DocumentsPage() {
                         )}
                     </Panel>}
 
-                    {mode === "tailor" && <Panel id="tailor-panel" title="Tailor my CV to a posting">
-                        <form onSubmit={onTailor} className="flex flex-col gap-3 p-3">
+                    {mode === "tailor" && <Panel id="tailor-panel" className={formPanel} title="Tailor my CV to a posting">
+                        <form onSubmit={onTailor} className="flex flex-col gap-4 p-4">
                             <fieldset className="flex flex-col gap-3">
-                                <legend className="mb-3 text-xs font-medium text-secondary">Your CV</legend>
+                                <legend className="mb-3 text-sm font-medium text-secondary">Your CV</legend>
                                 <RadioGroup
                                     aria-label="How to add your CV"
                                     value={cvSource}
@@ -498,7 +502,7 @@ export function DocumentsPage() {
 
                                 {showCvText && (
                                     <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="cv-text" className={cvSource === "upload" ? "text-xs font-medium text-secondary" : "sr-only"}>
+                                        <label htmlFor="cv-text" className={cvSource === "upload" ? "text-sm font-medium text-secondary" : "sr-only"}>
                                             {cvSource === "upload" ? "Text from your file" : "CV text"}
                                         </label>
                                         {cvSource === "upload" && (
@@ -524,7 +528,7 @@ export function DocumentsPage() {
                             </fieldset>
 
                             <fieldset className="flex flex-col gap-3">
-                                <legend className="mb-3 text-xs font-medium text-secondary">Job posting</legend>
+                                <legend className="mb-3 text-sm font-medium text-secondary">Job posting</legend>
                                 <RadioGroup
                                     aria-label="Which job posting"
                                     value={postingSource}
@@ -596,7 +600,7 @@ export function DocumentsPage() {
                             </fieldset>
 
                             <div className="flex flex-col gap-1.5">
-                                <label htmlFor="cv-language" className="text-xs font-medium text-secondary">Language</label>
+                                <label htmlFor="cv-language" className="text-sm font-medium text-secondary">Language</label>
                                 <select id="cv-language" value={language} onChange={(e) => setLanguage(e.target.value as "" | Language)} className={compactField}>
                                     <option value="">Same as posting</option>
                                     <option value="nl">Nederlands</option>
@@ -613,15 +617,15 @@ export function DocumentsPage() {
                             )}
 
                             <div>
-                                <Button type="submit" size="sm" isLoading={tailoring} isDisabled={tailoring || extracting || creating} showTextWhileLoading>
+                                <Button type="submit" size="md" iconLeading={FileCheck02} isLoading={tailoring} isDisabled={tailoring || extracting || creating} showTextWhileLoading>
                                     {tailoring ? "Tailoring your CV..." : "Tailor CV"}
                                 </Button>
                             </div>
                         </form>
                     </Panel>}
 
-                {mode === "draft" && <Panel id="draft-panel" title="Cover letter or recruiter message">
-                    <form onSubmit={onDraft} className="flex flex-col gap-3 p-3">
+                {mode === "draft" && <Panel id="draft-panel" className={formPanel} title="Cover letter or recruiter message">
+                    <form onSubmit={onDraft} className="flex flex-col gap-4 p-4">
                         {postingsError ? (
                             <div className="flex flex-col items-start gap-3">
                                 <p className="text-sm text-error-primary">Could not load your postings.</p>
@@ -634,7 +638,7 @@ export function DocumentsPage() {
                         ) : (
                             <>
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="draft-posting" className="text-xs font-medium text-secondary">Posting</label>
+                                    <label htmlFor="draft-posting" className="text-sm font-medium text-secondary">Posting</label>
                                     <select id="draft-posting" required value={draftPostingId} onChange={(e) => setDraftPostingId(e.target.value)} className={compactField}>
                                         <option value="">Choose a posting</option>
                                         {postings.map((p) => (
@@ -644,14 +648,14 @@ export function DocumentsPage() {
                                 </div>
                                 <div className="grid gap-5 sm:grid-cols-2">
                                     <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="draft-kind" className="text-xs font-medium text-secondary">Type</label>
+                                        <label htmlFor="draft-kind" className="text-sm font-medium text-secondary">Type</label>
                                         <select id="draft-kind" value={draftKind} onChange={(e) => setDraftKind(e.target.value as DraftKind)} className={compactField}>
                                             <option value="coverLetter">Cover letter</option>
                                             <option value="recruiterMessage">Recruiter message (max {RECRUITER_MAX} characters)</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="draft-language" className="text-xs font-medium text-secondary">Language</label>
+                                        <label htmlFor="draft-language" className="text-sm font-medium text-secondary">Language</label>
                                         <select id="draft-language" value={draftLanguage} onChange={(e) => setDraftLanguage(e.target.value as "" | Language)} className={compactField}>
                                             <option value="">Same as posting</option>
                                             <option value="nl">Nederlands</option>
@@ -667,7 +671,7 @@ export function DocumentsPage() {
                                     </p>
                                 )}
                                 <div>
-                                    <Button type="submit" size="sm" isLoading={drafting} isDisabled={drafting || !draftPostingId} showTextWhileLoading>
+                                    <Button type="submit" size="md" iconLeading={Mail01} isLoading={drafting} isDisabled={drafting || !draftPostingId} showTextWhileLoading>
                                         {drafting ? "Writing your draft..." : "Write draft"}
                                     </Button>
                                 </div>
@@ -676,7 +680,7 @@ export function DocumentsPage() {
                     </form>
                 </Panel>}
 
-                    <Panel title="Your documents" className="min-h-0">
+                    <Panel title="Your documents" className="min-h-28 lg:flex-1 lg:overflow-y-auto">
                         {listError ? (
                             <div className="flex flex-col items-start gap-3 p-4">
                                 <p className="text-sm text-error-primary">Could not load your documents.</p>
@@ -692,6 +696,7 @@ export function DocumentsPage() {
                             <ul className="flex flex-col divide-y divide-secondary">
                                 {list.map((doc) => (
                                     <li key={doc.id} className={cx("flex items-center gap-2 px-4 py-2.5", current?.id === doc.id && "bg-secondary")}>
+                                        <File06 className="size-5 shrink-0 text-fg-quaternary" aria-hidden="true" />
                                         <button type="button" onClick={() => onOpen(doc.id)} className="min-w-0 flex-1 cursor-pointer rounded-xs text-left outline-focus-ring focus-visible:outline-2" aria-label={`Open ${doc.title}`}>
                                             <span className="block truncate text-sm font-medium text-primary">{doc.title}</span>
                                             <span className="block text-xs text-tertiary">
@@ -730,7 +735,10 @@ export function DocumentsPage() {
                 >
                     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
                         {!current && !tailoring && !creating && (
-                            <p className="text-sm text-tertiary">Your CV shows up here. Every line in it comes from your profile or your own CV.</p>
+                            <div className="flex flex-col items-center gap-2 py-16 text-center">
+                                <File06 className="size-10 text-fg-quaternary" aria-hidden="true" />
+                                <p className="text-sm text-tertiary">Your document shows up here. Every line in it comes from your profile or your own CV.</p>
+                            </div>
                         )}
                         {!current && (tailoring || creating) && (
                             <p role="status" className="text-sm text-tertiary">
@@ -762,11 +770,11 @@ export function DocumentsPage() {
                         {current && editing && (
                             <div className="flex flex-col gap-4">
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="edit-title" className="text-xs font-medium text-secondary">Title</label>
+                                    <label htmlFor="edit-title" className="text-sm font-medium text-secondary">Title</label>
                                     <input id="edit-title" value={draftTitle} maxLength={200} onChange={(e) => setDraftTitle(e.target.value)} className={compactField} />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="edit-content" className="text-xs font-medium text-secondary">Content (markdown)</label>
+                                    <label htmlFor="edit-content" className="text-sm font-medium text-secondary">Content (markdown)</label>
                                     <textarea
                                         id="edit-content"
                                         rows={current.kind === "recruiterMessage" ? 6 : 18}
