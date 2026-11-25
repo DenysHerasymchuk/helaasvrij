@@ -1,4 +1,5 @@
 using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Application.Sprints;
 using InternshipCoach.Application.Abstractions.Llm;
 using InternshipCoach.Application.Documents.ExportDocx;
 using InternshipCoach.Application.Documents.ExtractCvText;
@@ -46,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IInterviewRepository, InterviewRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
+        services.AddScoped<ISprintRepository, SprintRepository>();
 
         var route33 = configuration.GetSection(Route33Options.SectionName).Get<Route33Options>() ?? new Route33Options();
         if (string.IsNullOrWhiteSpace(route33.BaseUrl))

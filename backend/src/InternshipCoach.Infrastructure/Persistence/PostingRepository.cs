@@ -8,6 +8,8 @@ public sealed class PostingRepository(InternshipCoachDbContext db) : IPostingRep
 {
     public async Task AddAsync(Posting posting, CancellationToken cancellationToken)
     {
+        // The user filter scopes this to the signed-in user's postings, so numbers run per user.
+        posting.AssignNumber((await db.Postings.MaxAsync(p => (int?)p.Number, cancellationToken) ?? 0) + 1);
         db.Postings.Add(posting);
         await db.SaveChangesAsync(cancellationToken);
     }

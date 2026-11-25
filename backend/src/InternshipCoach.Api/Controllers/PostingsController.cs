@@ -22,7 +22,7 @@ public sealed class PostingsController : ControllerBase
         [FromQuery] string? language, [FromQuery] string? q, [FromServices] ListPostingsHandler handler, CancellationToken ct)
     {
         var postings = await handler.HandleAsync(new ListPostingsQuery(language, q), ct);
-        return Ok(postings.Select(ToSummary).ToList());
+        return Ok(postings.Select(p => ToSummary(p)).ToList());
     }
 
     [HttpGet("{id:guid}")]
@@ -157,9 +157,9 @@ public sealed class PostingsController : ControllerBase
         };
     }
 
-    private static PostingSummaryResponse ToSummary(Posting p) =>
+    internal static PostingSummaryResponse ToSummary(Posting p, string? stage = null) =>
         new(p.Id, p.Company, p.Title, p.City, p.Language.ToCode(), p.Deadline, p.InterviewAt, p.IsDemo,
-            p.Requirements.Count, p.CreatedAt.Value, p.IsAnalysed, p.IsAnalysed ? p.Score() : null);
+            p.Requirements.Count, p.CreatedAt.Value, p.IsAnalysed, p.IsAnalysed ? p.Score() : null, p.Key, stage);
 
     private static PostingDetailResponse ToDetail(Posting p, IReadOnlyDictionary<Guid, DocumentRef>? sources, bool fromDemoCache = false) =>
         new(p.Id, p.Company, p.Title, p.City, p.Language.ToCode(), p.Url, p.RawText, p.Deadline, p.InterviewAt, p.IsDemo,
@@ -169,7 +169,8 @@ public sealed class PostingsController : ControllerBase
                     r.Id, r.Text, r.Importance.ToString().ToLowerInvariant(), r.Coverage.ToString().ToLowerInvariant(),
                     r.EvidenceQuote, EvidenceSource(r, sources), r.Action, r.ActionProject, r.DueDate, r.Done, r.AnalysedAt)).ToList(),
             new GapAnalysisResponse(
-                p.IsAnalysed, p.Score(), p.IsAnalysed && p.NoClearFit(), p.Requirements.Max(r => r.AnalysedAt), fromDemoCache));
+                p.IsAnalysed, p.Score(), p.IsAnalysed && p.NoClearFit(), p.Requirements.Max(r => r.AnalysedAt), fromDemoCache),
+            p.Key);
 
     private static EvidenceSourceResponse? EvidenceSource(Requirement r, IReadOnlyDictionary<Guid, DocumentRef>? sources) =>
         r.EvidenceSourceDocumentId is { } id && sources is not null && sources.TryGetValue(id, out var d)

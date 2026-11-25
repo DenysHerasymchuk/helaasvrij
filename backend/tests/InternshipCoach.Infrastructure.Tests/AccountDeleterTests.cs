@@ -7,6 +7,7 @@ using InternshipCoach.Domain.Llm;
 using InternshipCoach.Domain.Postings;
 using InternshipCoach.Domain.Profile;
 using InternshipCoach.Domain.Sources;
+using InternshipCoach.Domain.Sprints;
 using InternshipCoach.Domain.Settings;
 using InternshipCoach.Domain.Users;
 using InternshipCoach.Infrastructure.Persistence;
@@ -33,7 +34,9 @@ public class AccountDeleterTests
             [("Knows Docker", Importance.Required)], false, new CreatedAt(DateTimeOffset.UtcNow));
         posting.RecordSnapshot("analyse", DateTimeOffset.UtcNow);
         db.Postings.Add(posting);
-        db.Applications.Add(JobApplication.Create(user.Id, posting.Id, new CreatedAt(DateTimeOffset.UtcNow)));
+        var sprint = Sprint.Start(user.Id, "Sprint 1", "Apply", new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 15), new CreatedAt(DateTimeOffset.UtcNow));
+        db.Sprints.Add(sprint);
+        db.Applications.Add(JobApplication.Create(user.Id, posting.Id, new CreatedAt(DateTimeOffset.UtcNow), sprint.Id));
         var source = Source.Create(user.Id, SourceKind.GitHub, "gh");
         var document = source.AddDocument("a/summary", "Repository: a");
         db.Sources.Add(source);

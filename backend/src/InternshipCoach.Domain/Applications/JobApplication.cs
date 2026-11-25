@@ -52,11 +52,19 @@ public sealed class JobApplication : IUserOwned
     public string Notes { get; private set; } = string.Empty;
     public CreatedAt CreatedAt { get; private set; } = null!;
 
+    /// <summary>The sprint this application is worked in; null while it sits in the backlog.</summary>
+    public Guid? SprintId { get; private set; }
+
+    private readonly List<ApplicationEvent> _events = [];
+
+    /// <summary>History, oldest first once loaded. Only events added in this session are present unless the repository includes them.</summary>
+    public IReadOnlyCollection<ApplicationEvent> Events => _events;
+
     private JobApplication()
     {
     }
 
-    public static JobApplication Create(Guid userId, Guid postingId, CreatedAt createdAt)
+    public static JobApplication Create(Guid userId, Guid postingId, CreatedAt createdAt, Guid? sprintId = null)
     {
         if (userId == Guid.Empty)
         {
@@ -68,15 +76,31 @@ public sealed class JobApplication : IUserOwned
             throw new DomainException("Posting id is required.");
         }
 
-        return new JobApplication
+        var application = new JobApplication
         {
             Id = Guid.NewGuid(),
             UserId = userId,
             PostingId = postingId,
             Stage = ApplicationStage.Saved,
             StageChangedAt = (createdAt ?? throw new DomainException("Creation time is required.")).Value,
-            CreatedAt = createdAt
+            CreatedAt = createdAt,
+            SprintId = sprintId
         };
+        application._events.Add(ApplicationEvent.Create(
+            application.Id, ApplicationEventType.Added, null, ApplicationStage.Saved, sprintId, createdAt.Value));
+        return application;
+    }
+
+    /// <summary>Puts the application in a sprint, or back in the backlog (null). Does nothing when it is already there.</summary>
+    public void AssignToSprint(Guid? sprintId, DateTimeOffset now)
+    {
+        if (sprintId == SprintId)
+        {
+            return;
+        }
+
+        SprintId = sprintId;
+        _events.Add(ApplicationEvent.Create(Id, ApplicationEventType.SprintChanged, null, Stage, sprintId, now));
     }
 
     /// <summary>Moves to another stage. Reaching Applied, Interview or Offer records the first time the student applied.</summary>
@@ -92,8 +116,10 @@ public sealed class JobApplication : IUserOwned
             return;
         }
 
+        var from = Stage;
         Stage = stage;
         StageChangedAt = now.ToUniversalTime();
+        _events.Add(ApplicationEvent.Create(Id, ApplicationEventType.StageChanged, from, stage, SprintId, StageChangedAt));
         if (AppliedAt is null && stage is ApplicationStage.Applied or ApplicationStage.Interview or ApplicationStage.Offer)
         {
             AppliedAt = StageChangedAt;

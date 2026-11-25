@@ -45,7 +45,7 @@ internal sealed class ChatFixture
             Profile, Sources, Postings, Applications, new FakeJobSnapshot(),
             new ListGapsHandler(Postings),
             new GetJourneyHandler(Sources, Profile, Postings, new FakeDocumentRepository(), Applications),
-            new CreateApplicationHandler(Applications, Postings, User, clock),
+            new CreateApplicationHandler(Applications, Postings, new FakeSprintRepository(), User, clock),
             new UpdateApplicationHandler(Applications, clock),
             new AddPostingFromJobHandler(new FakeJobSnapshot(), importer, Postings));
         Handler = new SendChatHandler(User, llm, Tools);

@@ -12,6 +12,7 @@ public class ApplicationHandlerTests
     private static readonly DateTimeOffset Now = new(2026, 11, 24, 10, 0, 0, TimeSpan.Zero);
 
     private readonly FakePostingRepository _postings = new();
+    private readonly FakeSprintRepository _sprints = new();
     private readonly FakeApplicationRepository _applications;
     private readonly FakeClock _clock = new(Now);
 
@@ -27,7 +28,7 @@ public class ApplicationHandlerTests
         return posting;
     }
 
-    private CreateApplicationHandler Create() => new(_applications, _postings, new FakeCurrentUser(UserId), _clock);
+    private CreateApplicationHandler Create() => new(_applications, _postings, _sprints, new FakeCurrentUser(UserId), _clock);
 
     private UpdateApplicationHandler Update() => new(_applications, _clock);
 

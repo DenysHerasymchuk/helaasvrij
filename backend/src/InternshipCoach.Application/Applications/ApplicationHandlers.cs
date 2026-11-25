@@ -1,4 +1,5 @@
 using InternshipCoach.Application.Abstractions;
+using InternshipCoach.Application.Sprints;
 using InternshipCoach.Domain.Applications;
 using InternshipCoach.Domain.Common;
 
@@ -6,7 +7,12 @@ namespace InternshipCoach.Application.Applications;
 
 public sealed class ListApplicationsHandler(IApplicationRepository applications)
 {
-    public Task<IReadOnlyList<ApplicationCard>> HandleAsync(CancellationToken ct) => applications.ListAsync(ct);
+    /// <summary>All cards, or only the ones in one sprint (the board).</summary>
+    public async Task<IReadOnlyList<ApplicationCard>> HandleAsync(Guid? sprintId, CancellationToken ct)
+    {
+        var cards = await applications.ListAsync(ct);
+        return sprintId is { } id ? cards.Where(card => card.Application.SprintId == id).ToList() : cards;
+    }
 }
 
 public enum ApplicationOutcome
@@ -21,7 +27,7 @@ public sealed record ApplicationResult(ApplicationOutcome Outcome, ApplicationCa
 public sealed record CreateApplicationCommand(Guid PostingId);
 
 public sealed class CreateApplicationHandler(
-    IApplicationRepository applications, IPostingRepository postings, ICurrentUser currentUser, IClock clock)
+    IApplicationRepository applications, IPostingRepository postings, ISprintRepository sprints, ICurrentUser currentUser, IClock clock)
 {
     public async Task<ApplicationResult> HandleAsync(CreateApplicationCommand command, CancellationToken ct)
     {
@@ -37,7 +43,9 @@ public sealed class CreateApplicationHandler(
             return new ApplicationResult(ApplicationOutcome.Ok, await applications.GetCardAsync(existing, ct));
         }
 
-        var application = JobApplication.Create(currentUser.UserId, command.PostingId, new CreatedAt(clock.UtcNow));
+        // Adding to the board puts the position in the running sprint; with no sprint it waits in the backlog.
+        var sprintId = (await sprints.FindActiveAsync(ct))?.Id;
+        var application = JobApplication.Create(currentUser.UserId, command.PostingId, new CreatedAt(clock.UtcNow), sprintId);
         await applications.AddAsync(application, ct);
         return new ApplicationResult(ApplicationOutcome.Ok, await applications.GetCardAsync(application.Id, ct));
     }
@@ -99,7 +107,7 @@ public sealed class GetApplicationStatsHandler(IApplicationRepository applicatio
 
     /// <summary>
     /// Oldest month first, empty months included. Applied counts applications by the month the student applied;
-    /// interview and offer count applications now in that stage by the month they got there.
+    /// interview and offer count applications by the month the history log says they reached that stage.
     /// </summary>
     public async Task<IReadOnlyList<ApplicationMonth>> HandleAsync(int? months, CancellationToken ct)
     {
@@ -107,6 +115,7 @@ public sealed class GetApplicationStatsHandler(IApplicationRepository applicatio
         var now = clock.UtcNow;
         var first = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-(count - 1));
         var cards = await applications.ListAsync(ct);
+        var events = await applications.ListEventsAsync(ct);
 
         var result = new List<ApplicationMonth>(count);
         for (var i = 0; i < count; i++)
@@ -118,8 +127,12 @@ public sealed class GetApplicationStatsHandler(IApplicationRepository applicatio
             result.Add(new ApplicationMonth(
                 start.ToString("MMM", System.Globalization.CultureInfo.InvariantCulture),
                 cards.Count(c => In(c.Application.AppliedAt)),
-                cards.Count(c => c.Application.Stage == ApplicationStage.Interview && In(c.Application.StageChangedAt)),
-                cards.Count(c => c.Application.Stage == ApplicationStage.Offer && In(c.Application.StageChangedAt))));
+                Reached(ApplicationStage.Interview),
+                Reached(ApplicationStage.Offer)));
+
+            int Reached(ApplicationStage stage) =>
+                events.Where(e => e.Type == ApplicationEventType.StageChanged && e.ToStage == stage && In(e.At))
+                    .Select(e => e.ApplicationId).Distinct().Count();
         }
 
         return result;

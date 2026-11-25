@@ -26,9 +26,9 @@ public sealed record GenericAnswerResponse(string Text, DateTimeOffset CapturedA
 public sealed record PostingSummaryResponse(
     Guid Id, string Company, string Title, string City, string Language, DateOnly? Deadline, DateTimeOffset? InterviewAt,
     bool IsDemo, int RequirementCount, DateTimeOffset CreatedAt,
-    bool Analysed = false, int? Score = null);
+    bool Analysed = false, int? Score = null, string Key = "", string? Stage = null);
 
 public sealed record PostingDetailResponse(
     Guid Id, string Company, string Title, string City, string Language, string? Url, string RawText, DateOnly? Deadline,
     DateTimeOffset? InterviewAt, bool IsDemo, DateTimeOffset CreatedAt, IReadOnlyList<RequirementResponse> Requirements,
-    GapAnalysisResponse Analysis);
+    GapAnalysisResponse Analysis, string Key = "");

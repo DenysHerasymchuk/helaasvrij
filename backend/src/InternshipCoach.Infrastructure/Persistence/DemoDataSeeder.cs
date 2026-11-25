@@ -100,6 +100,7 @@ public static class DemoDataSeeder
     private static async Task SeedDemoPostingsAsync(InternshipCoachDbContext db, Guid userId, DateTimeOffset now, CancellationToken ct)
     {
         var existing = await db.Postings.Where(p => p.IsDemo).ToListAsync(ct);
+        var nextNumber = (await db.Postings.MaxAsync(p => (int?)p.Number, ct) ?? 0) + 1;
         foreach (var demo in Demos)
         {
             var posting = existing.FirstOrDefault(p => p.Company == demo.Company);
@@ -107,6 +108,7 @@ public static class DemoDataSeeder
             {
                 posting = Posting.Create(userId, demo.Company, demo.Title, demo.City, demo.Language, null, demo.Text,
                     demo.Deadline, demo.Requirements, isDemo: true, new CreatedAt(now));
+                posting.AssignNumber(nextNumber++);
                 db.Postings.Add(posting);
             }
 

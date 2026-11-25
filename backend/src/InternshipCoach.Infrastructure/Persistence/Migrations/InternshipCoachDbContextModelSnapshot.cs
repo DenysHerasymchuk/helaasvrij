@@ -23,6 +23,49 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("InternshipCoach.Domain.Applications.ApplicationEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<string>("FromStage")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("from_stage");
+
+                    b.Property<Guid?>("SprintId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sprint_id");
+
+                    b.Property<string>("ToStage")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("to_stage");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SprintId");
+
+                    b.HasIndex("ApplicationId", "At");
+
+                    b.ToTable("application_events", "coach");
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Applications.JobApplication", b =>
                 {
                     b.Property<Guid>("Id")
@@ -47,6 +90,10 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("posting_id");
 
+                    b.Property<Guid?>("SprintId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sprint_id");
+
                     b.Property<string>("Stage")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -64,6 +111,8 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PostingId");
+
+                    b.HasIndex("SprintId");
 
                     b.HasIndex("UserId", "PostingId")
                         .IsUnique();
@@ -442,6 +491,10 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(2)")
                         .HasColumnName("language");
 
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
                     b.Property<string>("RawText")
                         .IsRequired()
                         .HasColumnType("text")
@@ -774,6 +827,62 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("source_documents", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Sprints.Sprint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly>("EndsOn")
+                        .HasColumnType("date")
+                        .HasColumnName("ends_on");
+
+                    b.Property<string>("Goal")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("goal");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("name");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("date")
+                        .HasColumnName("starts_on");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_sprints_one_active_per_user")
+                        .HasFilter("status = 'Active'");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("sprints", "coach");
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -845,6 +954,15 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                     b.ToTable("DataProtectionKeys", "coach");
                 });
 
+            modelBuilder.Entity("InternshipCoach.Domain.Applications.ApplicationEvent", b =>
+                {
+                    b.HasOne("InternshipCoach.Domain.Applications.JobApplication", null)
+                        .WithMany("Events")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("InternshipCoach.Domain.Applications.JobApplication", b =>
                 {
                     b.HasOne("InternshipCoach.Domain.Postings.Posting", null)
@@ -852,6 +970,11 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasForeignKey("PostingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("InternshipCoach.Domain.Sprints.Sprint", null)
+                        .WithMany()
+                        .HasForeignKey("SprintId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("InternshipCoach.Domain.Interview.InterviewAnswer", b =>
@@ -921,6 +1044,11 @@ namespace InternshipCoach.Infrastructure.Persistence.Migrations
                         .HasForeignKey("SourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("InternshipCoach.Domain.Applications.JobApplication", b =>
+                {
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("InternshipCoach.Domain.Postings.Posting", b =>

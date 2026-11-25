@@ -29,6 +29,9 @@ public sealed class Posting : IUserOwned
     public DateOnly? Deadline { get; private set; }
     public DateTimeOffset? InterviewAt { get; private set; }
 
+    /// <summary>Running number among this user's postings, set once by the repository. Shown as the position key (BRI-12).</summary>
+    public int Number { get; private set; }
+
     public bool IsDemo { get; private set; }
 
     /// <summary>A generic chatbot answer for this posting (posting text only, no profile data), shown next to the gap matrix.</summary>
@@ -95,6 +98,17 @@ public sealed class Posting : IUserOwned
 
         return posting;
     }
+
+    /// <summary>Called once, when the posting is stored. A later call is ignored so keys never change.</summary>
+    public void AssignNumber(int number)
+    {
+        if (Number == 0 && number > 0)
+        {
+            Number = number;
+        }
+    }
+
+    public string Key => PositionKey.Of(Company, Number);
 
     public void SetDates(DateOnly? deadline, DateTimeOffset? interviewAt)
     {

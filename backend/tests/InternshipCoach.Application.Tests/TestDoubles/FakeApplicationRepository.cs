@@ -12,8 +12,18 @@ public sealed class FakeApplicationRepository(FakePostingRepository postings) : 
     private ApplicationCard? ToCard(JobApplication application)
     {
         var posting = postings.Items.FirstOrDefault(p => p.Id == application.PostingId);
-        return posting is null ? null : new ApplicationCard(application, posting.Company, posting.Title, posting.City, posting.Deadline);
+        return posting is null ? null : new ApplicationCard(application, posting.Company, posting.Title, posting.City, posting.Deadline, posting.Key);
     }
+
+    public Task<IReadOnlyList<JobApplication>> ListForSprintAsync(Guid sprintId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<JobApplication>>(Items.Where(a => a.SprintId == sprintId).ToList());
+
+    public Task<IReadOnlyList<ApplicationEvent>> ListEventsAsync(CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<ApplicationEvent>>(Items.SelectMany(a => a.Events).OrderBy(e => e.At).ToList());
+
+    public Task<IReadOnlyList<ApplicationEvent>> ListEventsAsync(Guid applicationId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<ApplicationEvent>>(
+            Items.Where(a => a.Id == applicationId).SelectMany(a => a.Events).OrderBy(e => e.At).ToList());
 
     public Task<IReadOnlyList<ApplicationCard>> ListAsync(CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<ApplicationCard>>(Items.Select(ToCard).OfType<ApplicationCard>()

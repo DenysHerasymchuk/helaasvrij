@@ -1,4 +1,5 @@
 using InternshipCoach.Application.Applications;
+using InternshipCoach.Application.Sprints;
 using InternshipCoach.Contracts.Applications;
 using InternshipCoach.Domain.Applications;
 using Microsoft.AspNetCore.Authorization;
@@ -12,8 +13,21 @@ namespace InternshipCoach.Api.Controllers;
 public sealed class ApplicationsController : ControllerBase
 {
     [HttpGet]
-    public async Task<IReadOnlyList<ApplicationResponse>> List([FromServices] ListApplicationsHandler handler, CancellationToken ct) =>
-        (await handler.HandleAsync(ct)).Select(ToResponse).ToList();
+    public async Task<IReadOnlyList<ApplicationResponse>> List(
+        [FromServices] ListApplicationsHandler handler, CancellationToken ct, [FromQuery] Guid? sprintId = null) =>
+        (await handler.HandleAsync(sprintId, ct)).Select(ToResponse).ToList();
+
+    [HttpGet("{id:guid}/events")]
+    public async Task<IReadOnlyList<ApplicationEventResponse>> Events(
+        Guid id, [FromServices] ListApplicationEventsHandler handler, CancellationToken ct) =>
+        (await handler.HandleAsync(id, ct)).Select(v => new ApplicationEventResponse(
+            v.Event.Type switch
+            {
+                ApplicationEventType.Added => "added",
+                ApplicationEventType.StageChanged => "stageChanged",
+                _ => "sprintChanged"
+            },
+            v.Event.FromStage?.ToCode(), v.Event.ToStage?.ToCode(), v.Event.SprintId, v.SprintName, v.Event.At)).ToList();
 
     [HttpGet("stats")]
     public async Task<IReadOnlyList<ApplicationMonthResponse>> Stats(
@@ -43,6 +57,6 @@ public sealed class ApplicationsController : ControllerBase
         var a = card.Application;
         return new ApplicationResponse(
             a.Id, a.PostingId, card.Company, card.Title, card.City, card.Deadline, a.Stage.ToCode(),
-            a.AppliedAt, a.StageChangedAt, a.Notes, a.CreatedAt.Value);
+            a.AppliedAt, a.StageChangedAt, a.Notes, a.CreatedAt.Value, a.SprintId, card.Key);
     }
 }

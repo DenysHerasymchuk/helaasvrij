@@ -8,6 +8,7 @@ using InternshipCoach.Domain.Llm;
 using InternshipCoach.Domain.Settings;
 using InternshipCoach.Domain.Profile;
 using InternshipCoach.Domain.Sources;
+using InternshipCoach.Domain.Sprints;
 using InternshipCoach.Domain.Postings;
 using InternshipCoach.Domain.Users;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
@@ -62,6 +63,10 @@ public class InternshipCoachDbContext : DbContext, IDataProtectionKeyContext
     // Shared and anonymous (not IUserOwned): no query filter, never deleted with an account.
     public DbSet<CompanyQuestion> CompanyQuestions => Set<CompanyQuestion>();
     public DbSet<JobApplication> Applications => Set<JobApplication>();
+
+    public DbSet<ApplicationEvent> ApplicationEvents => Set<ApplicationEvent>();
+
+    public DbSet<Sprint> Sprints => Set<Sprint>();
 
     public DbSet<ScoreSnapshot> ScoreSnapshots => Set<ScoreSnapshot>();
 
