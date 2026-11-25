@@ -31,7 +31,6 @@ Run commands from the repo root unless stated otherwise.
 ```sh
 git clone https://github.com/DenysHerasymchuk/internship-coach.git
 cd internship-coach
-git checkout develop
 cp .env.example .env
 ```
 
