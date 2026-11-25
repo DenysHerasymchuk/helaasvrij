@@ -6,10 +6,9 @@ import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Input } from "@/components/base/input/input";
 import { api } from "@/core/api";
-import { ErrorState, LoadingState, PageHeader, cardClass } from "@/core/ui";
+import { ErrorState, LoadingState, cardClass } from "@/core/ui";
 import { type Application, stages } from "@/features/applications/types";
 import { AddPostingModal } from "@/features/postings/add-posting-modal";
-import { PostingsTabs } from "@/features/postings/postings-tabs";
 import { type PostingSummary, formatDate } from "@/features/postings/types";
 import { SprintBand } from "@/features/sprints/sprint-band";
 import { StartSprintModal } from "@/features/sprints/start-sprint-modal";
@@ -141,17 +140,18 @@ export function BacklogPage() {
     const loading = sprints === null || inSprint === null || backlog === null;
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
-            <PageHeader
-                title="Backlog"
-                description="Every position you are considering. Pull the ones you will chase this round into a sprint."
-                action={
+        <div className="flex w-full flex-col gap-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-2xl text-md text-tertiary">Every position you are considering. Pull the ones you will chase this round into a sprint.</p>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                    <Button size="md" color="secondary" href="/backlog/find">
+                        Find positions
+                    </Button>
                     <Button size="md" iconLeading={Plus} onPress={() => setAdding(true)}>
                         Add position
                     </Button>
-                }
-            />
-            <PostingsTabs />
+                </div>
+            </div>
 
             {notice && (
                 <p role="alert" className="rounded-lg bg-error-primary px-4 py-3 text-sm text-error-primary ring-1 ring-error_subtle">

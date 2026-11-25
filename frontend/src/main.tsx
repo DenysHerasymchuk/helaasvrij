@@ -15,6 +15,9 @@ import { DataTab } from '@/features/settings/data-tab'
 import { PostingDetailPage } from '@/features/postings/posting-detail-page'
 import { JobsPage } from '@/features/jobs/jobs-page'
 import { JobDetailPage } from '@/features/jobs/job-detail-page'
+import { ProjectLayout } from '@/features/project/project-layout'
+import { SummaryPage } from '@/features/project/summary-page'
+import { ListPage } from '@/features/project/list-page'
 import { BacklogPage } from '@/features/backlog/backlog-page'
 import { BoardPage } from '@/features/board/board-page'
 import { SprintsPage } from '@/features/sprints/sprints-page'
@@ -53,13 +56,20 @@ const router = createBrowserRouter([
           { path: 'data', element: <DataTab /> },
         ],
       },
-      { path: '/backlog', element: <BacklogPage /> },
-      { path: '/backlog/find', element: <JobsPage /> },
-      { path: '/backlog/find/:jobId', element: <JobDetailPage /> },
+      {
+        element: <ProjectLayout />,
+        children: [
+          { path: '/summary', element: <SummaryPage /> },
+          { path: '/list', element: <ListPage /> },
+          { path: '/board', element: <BoardPage /> },
+          { path: '/backlog', element: <BacklogPage /> },
+          { path: '/backlog/find', element: <JobsPage /> },
+          { path: '/backlog/find/:jobId', element: <JobDetailPage /> },
+          { path: '/sprints', element: <SprintsPage /> },
+          { path: '/sprints/:id', element: <SprintReportPage /> },
+        ],
+      },
       { path: '/positions/:id', element: <PostingDetailPage /> },
-      { path: '/board', element: <BoardPage /> },
-      { path: '/sprints', element: <SprintsPage /> },
-      { path: '/sprints/:id', element: <SprintReportPage /> },
       // Old addresses keep working.
       { path: '/postings', element: <Navigate to="/backlog/find" replace /> },
       { path: '/postings/saved', element: <Navigate to="/backlog" replace /> },

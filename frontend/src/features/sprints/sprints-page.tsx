@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Plus } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { ErrorState, LoadingState, PageHeader, cardClass } from "@/core/ui";
+import { ErrorState, LoadingState, cardClass } from "@/core/ui";
 import { formatDate } from "@/features/postings/types";
 import { StartSprintModal } from "./start-sprint-modal";
 import { type Sprint, daysLeftLabel } from "./types";
@@ -44,18 +44,15 @@ export function SprintsPage() {
     const [starting, setStarting] = useState(false);
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
-            <PageHeader
-                title="Sprints"
-                description="Each sprint is one round of applications. Open one to see what it produced."
-                action={
-                    !active && (
-                        <Button size="md" iconLeading={Plus} onPress={() => setStarting(true)}>
-                            Start a sprint
-                        </Button>
-                    )
-                }
-            />
+        <div className="flex w-full flex-col gap-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-2xl text-md text-tertiary">Each sprint is one round of applications. Open one to see what it produced.</p>
+                {!active && (
+                    <Button size="md" iconLeading={Plus} onPress={() => setStarting(true)}>
+                        Start a sprint
+                    </Button>
+                )}
+            </div>
             {error ? (
                 <ErrorState message={error} onRetry={reload} />
             ) : sprints === null ? (

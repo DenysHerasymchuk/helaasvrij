@@ -39,6 +39,7 @@ Pitch: "Drop in your links, see exactly what each Belgian position wants from yo
 | Gap plan | `/gaps` | All gaps across postings as one checklist, sorted by impact; ticking re-scans and updates scores; closed gaps feed cover letters |
 | Documents | `/documents` | CV (NL/FR/EN, print to PDF), cover letters and recruiter messages (max 300 chars, copy only) per posting |
 | Interview prep | `/interview` | Questions from gaps, from the student's repos, and shared company questions; practice answers with feedback |
+| Job search | `/summary`, `/list`, `/board`, `/backlog`, `/sprints` | One sidebar item with Jira-style tabs: Summary (running sprint, counts, status overview, coming up, best matches), List (every position in one table with status and sprint), Board, Backlog, Sprints. The tabs below are those pages. |
 | Backlog | `/backlog`, `/backlog/find` | Running sprint on top, every other position below; select rows and add them to the sprint; start a sprint; add by paste or URL; "Find positions" tab searches Adzuna |
 | Board | `/board` | Kanban of the running sprint (Saved, Applied, Interview, Offer, Rejected) with the sprint goal, progress and "Complete sprint" (open positions go to the next sprint or back to the backlog) |
 | Sprints | `/sprints`, `/sprints/:id` | History of all sprints; report per sprint (applied, interviews, offers, rejected, average match, gaps closed) |

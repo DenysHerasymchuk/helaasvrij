@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { api } from "@/core/api";
-import { ErrorState, LoadingState, PageHeader, cardClass } from "@/core/ui";
+import { ErrorState, LoadingState, cardClass } from "@/core/ui";
 import { Board } from "@/features/applications/board";
 import { type Application, type Stage, stageLabel } from "@/features/applications/types";
 import { CompleteSprintModal } from "@/features/sprints/complete-sprint-modal";
@@ -61,8 +61,8 @@ export function BoardPage() {
     }
 
     return (
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
-            <PageHeader title="Board" description="Drag a card to a new column, or use Move to. Every move is saved in the position's activity." />
+        <div className="flex w-full flex-col gap-6">
+            <p className="text-md text-tertiary">Drag a card to a new column, or use Move to. Every move is saved in the position's activity.</p>
 
             {notice && (
                 <p role="alert" className="rounded-lg bg-error-primary px-4 py-3 text-sm text-error-primary ring-1 ring-error_subtle">

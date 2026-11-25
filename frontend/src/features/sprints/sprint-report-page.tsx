@@ -45,7 +45,7 @@ export function SprintReportPage() {
     const sprint = report?.sprint;
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="flex w-full flex-col gap-6">
             <Button color="link-gray" size="md" iconLeading={ArrowLeft} href="/sprints" className="self-start">
                 All sprints
             </Button>

@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
-import { PostingsTabs } from "@/features/postings/postings-tabs";
 import { AdzunaLink, CompanyLogo, type Job, JobFacts } from "./job-meta";
-import { fieldClass, PageHeader } from "@/core/ui";
+import { fieldClass } from "@/core/ui";
 
 
 export function JobsPage() {
@@ -33,10 +32,14 @@ export function JobsPage() {
     }, []);
 
     return (
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
-            <PageHeader title="Postings" description="Open positions in Belgium. Open one to read it, then save it to see what it asks from you." />
-
-            <PostingsTabs />
+        <div className="flex w-full max-w-4xl flex-col gap-6">
+            <div className="flex flex-col gap-1">
+                <Button color="link-gray" size="md" href="/backlog" className="self-start">
+                    Back to backlog
+                </Button>
+                <h2 className="text-lg font-semibold text-primary">Find positions</h2>
+                <p className="text-md text-tertiary">Open positions in Belgium. Open one to read it, then add it to your backlog.</p>
+            </div>
 
             <form onSubmit={search} className="flex flex-col gap-3 sm:flex-row">
                 <input aria-label="Role" className={fieldClass} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Role or keyword, e.g. marketing, IT, .NET" />

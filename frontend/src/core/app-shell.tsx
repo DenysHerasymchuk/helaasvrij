@@ -1,4 +1,4 @@
-import { Briefcase01, Calendar, Columns03, Flag01, HomeLine, Tool02, User01 } from "@untitledui/icons";
+import { Briefcase01, Calendar, HomeLine, Tool02, User01 } from "@untitledui/icons";
 import { RouterProvider } from "react-aria-components";
 import { Navigate, Outlet, useHref, useLocation, useNavigate } from "react-router";
 import { MobileNavigationHeader } from "@/components/application/app-navigation/base-components/mobile-header";
@@ -13,9 +13,7 @@ import { ChatWidget } from "@/features/chat/chat-widget";
 const mainItems: NavItemType[] = [
     { label: "Home", href: "/dashboard", icon: HomeLine },
     { label: "Profile", href: "/profile", icon: User01 },
-    { label: "Backlog", href: "/backlog", icon: Briefcase01 },
-    { label: "Board", href: "/board", icon: Columns03 },
-    { label: "Sprints", href: "/sprints", icon: Flag01 },
+    { label: "Job search", href: "/summary", icon: Briefcase01 },
     { label: "Calendar", href: "/calendar", icon: Calendar },
 ];
 
@@ -33,9 +31,9 @@ const toolItems: NavItemType[] = [
     },
 ];
 
-// Backlog, search and position pages highlight Backlog; sprint pages highlight Sprints.
-const navMatch = (path: string) =>
-    path.startsWith("/backlog") || path.startsWith("/positions") ? "/backlog" : path.startsWith("/sprints") ? "/sprints" : path;
+// Every tab of the job search, and the position pages, highlight "Job search".
+const searchPaths = ["/summary", "/list", "/board", "/backlog", "/sprints", "/positions"];
+const navMatch = (path: string) => (searchPaths.some((p) => path.startsWith(p)) ? "/summary" : path);
 
 function Sidebar({ activeUrl, user, onSignOut }: { activeUrl: string; user: CurrentUser; onSignOut: () => void }) {
     return (
