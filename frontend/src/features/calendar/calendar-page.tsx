@@ -1,10 +1,10 @@
-import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { AlarmClock, CalendarPlus01, CheckSquare, ChevronLeft, ChevronRight, MessageChatCircle } from "@untitledui/icons";
+import { AlarmClock, CheckSquare, ChevronLeft, ChevronRight, MessageChatCircle } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { ApiError, api } from "@/core/api";
 import { cx } from "@/utils/cx";
-import { addDays, downloadInterviewIcs, formatBrusselsTime, todayInBrussels } from "./brussels";
+import { addDays, formatBrusselsTime, todayInBrussels } from "./brussels";
 
 type EventType = "interview" | "deadline" | "gapDue";
 
@@ -18,9 +18,14 @@ const kinds: Record<EventType, { label: string; icon: typeof AlarmClock; dot: st
 };
 
 const legend: EventType[] = ["interview", "deadline", "gapDue"];
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const monthFmt = new Intl.DateTimeFormat("en-BE", { month: "long", year: "numeric", timeZone: "UTC" });
+const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const shiftMonth = (date: string, by: number) => {
+    const d = utc(`${date.slice(0, 7)}-01`);
+    d.setUTCMonth(d.getUTCMonth() + by);
+    return d.toISOString().slice(0, 10);
+};
 const dayFmt = new Intl.DateTimeFormat("en-BE", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const utc = (date: string) => new Date(`${date}T00:00:00Z`);
 
@@ -31,11 +36,6 @@ function gridDays(month: string): string[] {
     return Array.from({ length: 42 }, (_, i) => addDays(start, i));
 }
 
-const shiftMonth = (month: string, by: number) => {
-    const d = utc(`${month}-01`);
-    d.setUTCMonth(d.getUTCMonth() + by);
-    return d.toISOString().slice(0, 7);
-};
 
 const message = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong. Try again.");
 
@@ -60,11 +60,32 @@ function useEvents(from: string, to: string) {
     return { events, error, load };
 }
 
+
+function Chip({ e }: { e: CalendarEvent }) {
+    const k = kinds[e.type];
+    return (
+        <Link
+            to={e.link}
+            title={`${k.label}: ${e.title}`}
+            className={cx("flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium ring-1 ring-inset hover:opacity-80", k.chip)}
+        >
+            <k.icon className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">
+                {e.at ? `${formatBrusselsTime(e.at)} ` : ""}
+                {e.title}
+            </span>
+        </Link>
+    );
+}
+
 export function CalendarPage() {
     const today = todayInBrussels();
-    const [month, setMonth] = useState(today.slice(0, 7));
     const [selected, setSelected] = useState(today);
+    const [view, setView] = useState<"month" | "week">("month");
+    const month = selected.slice(0, 7);
     const days = useMemo(() => gridDays(month), [month]);
+    const weekStart = addDays(selected, -((utc(selected).getUTCDay() + 6) % 7));
+    const shown = view === "week" ? Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)) : days;
     const grid = useEvents(days[0], days[41]);
 
     const byDay = useMemo(() => {
@@ -73,72 +94,88 @@ export function CalendarPage() {
         return map;
     }, [grid.events]);
 
-    function select(date: string) {
-        setSelected(date);
-        if (date.slice(0, 7) !== month) setMonth(date.slice(0, 7));
-    }
-
-    function goToMonth(by: number) {
-        const next = shiftMonth(month, by);
-        setMonth(next);
-        setSelected(next === today.slice(0, 7) ? today : `${next}-01`);
-    }
+    const step = (by: number) => setSelected(view === "week" ? addDays(selected, by * 7) : shiftMonth(selected, by));
+    const title = view === "week" ? `${dayFmt.format(utc(shown[0]))} to ${dayFmt.format(utc(shown[6]))}` : monthFmt.format(utc(`${month}-01`));
+    const dayEvents = byDay.get(selected) ?? [];
 
     return (
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-8">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-                <div>
+        <div className="mx-auto flex h-[calc(100dvh-1rem)] max-w-[1600px] flex-col gap-3 px-4 py-4 md:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
                     <h1 className="text-display-xs font-semibold text-primary">Calendar</h1>
-                    <p className="mt-1 text-md text-tertiary">Interviews, deadlines and gap actions from your postings, in Belgian time.</p>
+                    <h2 className="text-lg text-tertiary" aria-live="polite">
+                        {title}
+                    </h2>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button size="sm" color={view === "month" ? "primary" : "secondary"} onPress={() => setView("month")}>
+                        Month
+                    </Button>
+                    <Button size="sm" color={view === "week" ? "primary" : "secondary"} onPress={() => setView("week")}>
+                        Week
+                    </Button>
+                    <Button size="sm" color="secondary" iconLeading={ChevronLeft} aria-label="Previous" onPress={() => step(-1)} />
+                    <Button size="sm" color="secondary" onPress={() => setSelected(today)}>
+                        Today
+                    </Button>
+                    <Button size="sm" color="secondary" iconLeading={ChevronRight} aria-label="Next" onPress={() => step(1)} />
                 </div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-1">
-                    <section aria-labelledby="month-title" className="rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
-                        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary px-4 py-3 md:px-5">
-                            <h2 id="month-title" className="text-lg font-semibold text-primary" aria-live="polite">
-                                {monthFmt.format(utc(`${month}-01`))}
-                            </h2>
-                            <div className="flex items-center gap-2">
-                                <Button size="sm" color="secondary" iconLeading={ChevronLeft} aria-label="Previous month" onPress={() => goToMonth(-1)} />
-                                <Button size="sm" color="secondary" onPress={() => select(today)} isDisabled={selected === today}>
-                                    Today
-                                </Button>
-                                <Button size="sm" color="secondary" iconLeading={ChevronRight} aria-label="Next month" onPress={() => goToMonth(1)} />
-                            </div>
-                        </header>
-
-                        {grid.error ? (
-                            <div className="flex flex-col items-start gap-3 p-5">
-                                <p role="alert" className="text-md text-error-primary">
-                                    {grid.error}
-                                </p>
-                                <Button size="sm" color="secondary" onPress={grid.load}>
-                                    Try again
-                                </Button>
-                            </div>
-                        ) : (
-                            <MonthGrid days={days} month={month} today={today} selected={selected} byDay={byDay} loading={grid.events === null} onSelect={select} />
-                        )}
-
-                        <ul aria-label="Legend" className="flex flex-wrap gap-x-4 gap-y-2 border-t border-secondary px-4 py-3 md:px-5">
-                            {legend.map((type) => {
-                                const k = kinds[type];
+            <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                {grid.error ? (
+                    <div className="flex flex-col items-start gap-3">
+                        <p role="alert" className="text-md text-error-primary">
+                            {grid.error}
+                        </p>
+                        <Button size="sm" color="secondary" onPress={grid.load}>
+                            Try again
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="min-h-0 overflow-auto rounded-xl bg-primary shadow-xs ring-1 ring-secondary">
+                        <div className={cx("grid h-full min-w-[720px] grid-cols-7", view === "month" ? "grid-rows-[auto_repeat(6,minmax(0,1fr))]" : "grid-rows-[auto_minmax(0,1fr)]")}>
+                            {weekdays.map((d) => (
+                                <div key={d} className="border-b border-secondary px-3 py-2 text-sm font-medium text-tertiary">
+                                    {d}
+                                </div>
+                            ))}
+                            {shown.map((date, i) => {
+                                const inMonth = date.slice(0, 7) === month;
+                                const events = byDay.get(date) ?? [];
+                                const max = view === "week" ? events.length : 2;
                                 return (
-                                    <li key={type} className="flex items-center gap-1.5 text-sm text-tertiary">
-                                        <span className={cx("size-2 rounded-full", k.dot)} aria-hidden="true" />
-                                        <k.icon className={cx("size-4", k.icon_)} aria-hidden="true" />
-                                        {k.label}
-                                    </li>
+                                    <div
+                                        key={date}
+                                        onClick={() => setSelected(date)}
+                                        className={cx(
+                                            "flex min-h-0 cursor-pointer flex-col gap-1 overflow-hidden border-secondary p-1.5 hover:bg-secondary/50",
+                                            i % 7 !== 6 && "border-r",
+                                            view === "month" && i < 35 && "border-b",
+                                            view === "month" && !inMonth && "bg-secondary/40",
+                                            date === selected && "bg-brand-primary/40",
+                                        )}
+                                    >
+                                        <span
+                                            className={cx(
+                                                "flex size-6 shrink-0 items-center justify-center self-start rounded-full text-sm",
+                                                date === today ? "bg-brand-solid font-semibold text-white" : inMonth ? "text-secondary" : "text-quaternary",
+                                            )}
+                                        >
+                                            {Number(date.slice(8))}
+                                        </span>
+                                        {events.slice(0, max).map((e, n) => (
+                                            <Chip key={`${e.type}-${e.postingId}-${n}`} e={e} />
+                                        ))}
+                                        {events.length > max && <span className="px-1 text-xs text-tertiary">+{events.length - max} more</span>}
+                                    </div>
                                 );
                             })}
-                        </ul>
-                    </section>
+                        </div>
+                    </div>
+                )}
 
-                </div>
-
-                <aside aria-labelledby="day-title" className="order-1 self-start rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary md:p-5 lg:order-2">
+                <aside aria-labelledby="day-title" className="min-h-0 overflow-auto rounded-xl bg-primary p-4 shadow-xs ring-1 ring-secondary">
                     <h2 id="day-title" className="text-md font-semibold text-primary">
                         {selected === today ? "Today, " : ""}
                         {dayFmt.format(utc(selected))}
@@ -147,153 +184,35 @@ export function CalendarPage() {
                         <p role="status" className="mt-2 text-sm text-tertiary">
                             Loading...
                         </p>
-                    ) : (byDay.get(selected) ?? []).length === 0 ? (
+                    ) : dayEvents.length === 0 ? (
                         <p className="mt-2 text-sm text-tertiary">Nothing on this day.</p>
                     ) : (
-                        <EventList events={byDay.get(selected)!} />
+                        <ul className="mt-3 flex flex-col gap-2">
+                            {dayEvents.map((e, n) => (
+                                <li key={`${e.type}-${e.postingId}-${n}`} className="flex flex-col gap-1">
+                                    <span className="text-xs text-tertiary">{kinds[e.type].label}</span>
+                                    <Link to={e.link} className={cx("rounded-lg px-2.5 py-2 text-sm font-medium ring-1 ring-inset hover:opacity-80", kinds[e.type].chip)}>
+                                        {e.at ? `${formatBrusselsTime(e.at)} ` : ""}
+                                        {e.title}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </aside>
             </div>
+
+            <ul aria-label="Legend" className="flex flex-wrap gap-x-4 gap-y-1">
+                {legend.map((type) => {
+                    const k = kinds[type];
+                    return (
+                        <li key={type} className="flex items-center gap-1.5 text-sm text-tertiary">
+                            <k.icon className={cx("size-4", k.icon_)} aria-hidden="true" />
+                            {k.label}
+                        </li>
+                    );
+                })}
+            </ul>
         </div>
     );
 }
-
-type GridProps = {
-    days: string[];
-    month: string;
-    today: string;
-    selected: string;
-    byDay: Map<string, CalendarEvent[]>;
-    loading: boolean;
-    onSelect: (date: string) => void;
-};
-
-/** Month grid with one tab stop: Tab lands on the selected day, arrows move, Enter or Space picks. */
-function MonthGrid({ days, month, today, selected, byDay, loading, onSelect }: GridProps) {
-    const ref = useRef<HTMLDivElement>(null);
-    const keyMoved = useRef(false);
-
-    useEffect(() => {
-        if (!keyMoved.current) return;
-        keyMoved.current = false;
-        ref.current?.querySelector<HTMLButtonElement>(`[data-date="${selected}"]`)?.focus();
-    }, [selected, month]);
-
-    function onKeyDown(e: KeyboardEvent<HTMLButtonElement>, date: string) {
-        const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
-        if (step === undefined) return;
-        e.preventDefault();
-        keyMoved.current = true;
-        onSelect(addDays(date, step));
-    }
-
-    const weeks = Array.from({ length: 6 }, (_, w) => days.slice(w * 7, w * 7 + 7));
-
-    return (
-        <div ref={ref} role="grid" aria-labelledby="month-title" aria-busy={loading} className="px-2 pb-2 md:px-3">
-            <div role="row" className="grid grid-cols-7">
-                {weekdays.map((d) => (
-                    <div key={d} role="columnheader" className="py-2 text-center text-xs font-medium text-quaternary">
-                        {d}
-                    </div>
-                ))}
-            </div>
-            {weeks.map((week) => (
-                <div key={week[0]} role="row" className="grid grid-cols-7 gap-1">
-                    {week.map((date) => {
-                        const events = byDay.get(date) ?? [];
-                        const inMonth = date.slice(0, 7) === month;
-                        const isToday = date === today;
-                        const isSelected = date === selected;
-                        const label = `${dayFmt.format(utc(date))}${isToday ? ", today" : ""}, ${events.length === 0 ? "no events" : events.length === 1 ? "1 event" : `${events.length} events`}`;
-                        return (
-                            <div key={date} role="gridcell" aria-selected={isSelected}>
-                                <button
-                                    type="button"
-                                    data-date={date}
-                                    tabIndex={isSelected ? 0 : -1}
-                                    aria-label={label}
-                                    onClick={() => onSelect(date)}
-                                    onKeyDown={(e) => onKeyDown(e, date)}
-                                    className={cx(
-                                        "flex h-14 w-full flex-col items-center gap-0.5 rounded-lg p-1 text-left outline-focus-ring transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 md:h-[4.25rem] md:items-stretch md:p-1",
-                                        isSelected ? "bg-secondary ring-2 ring-brand ring-inset" : "hover:bg-primary_hover",
-                                    )}
-                                >
-                                    <span
-                                        className={cx(
-                                            "flex size-7 shrink-0 items-center justify-center rounded-full text-sm tabular-nums",
-                                            isToday ? "bg-brand-solid font-semibold text-white" : inMonth ? "text-secondary" : "text-quaternary",
-                                        )}
-                                    >
-                                        {Number(date.slice(8))}
-                                    </span>
-                                    {/* Phone: dots. Wider: short labels. */}
-                                    <span className="flex flex-wrap justify-center gap-0.5 md:hidden" aria-hidden="true">
-                                        {events.slice(0, 3).map((e, i) => (
-                                            <span key={i} className={cx("size-1.5 rounded-full", kinds[e.type].dot)} />
-                                        ))}
-                                    </span>
-                                    <span className="hidden min-w-0 flex-col gap-0.5 md:flex" aria-hidden="true">
-                                        {events.slice(0, 2).map((e, i) => {
-                                            const k = kinds[e.type];
-                                            return (
-                                                <span key={i} className={cx("flex min-w-0 items-center gap-1 rounded px-1 py-0.5 text-xs ring-1 ring-inset", k.chip, !inMonth && "opacity-60")}>
-                                                    <k.icon className="size-3 shrink-0" />
-                                                    <span className="truncate">{e.type === "interview" ? e.title.replace(/^Interview at /, "") : e.title}</span>
-                                                </span>
-                                            );
-                                        })}
-                                        {events.length > 2 && <span className="px-1 text-xs text-tertiary">+{events.length - 2} more</span>}
-                                    </span>
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function EventList({ events }: { events: CalendarEvent[] }) {
-    return (
-        <ul className="mt-3 flex flex-col gap-2">
-            {events.map((e, i) => (
-                <EventRow key={`${e.type}-${e.postingId}-${i}`} event={e} />
-            ))}
-        </ul>
-    );
-}
-
-function EventRow({ event }: { event: CalendarEvent }) {
-    const k = kinds[event.type];
-    return (
-        <li className="flex items-start gap-3 rounded-lg p-2 ring-1 ring-secondary">
-            <span className={cx("mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset", k.chip)}>
-                <k.icon className="size-4" aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-                <Link to={event.link} className="block text-sm font-semibold break-words text-primary outline-focus-ring hover:underline focus-visible:outline-2">
-                    {event.title}
-                </Link>
-                <p className="text-xs text-tertiary">
-                    {k.label}
-                    {event.at && ` at ${formatBrusselsTime(event.at)}`}
-                </p>
-                {event.type === "interview" && event.at && (
-                    <Button
-                        color="link-color"
-                        size="sm"
-                        iconLeading={CalendarPlus01}
-                        className="mt-1"
-                        onPress={() => downloadInterviewIcs({ id: event.postingId, title: event.title, at: event.at!, postingId: event.postingId })}
-                    >
-                        Add to my calendar
-                    </Button>
-                )}
-            </div>
-        </li>
-    );
-}
-
